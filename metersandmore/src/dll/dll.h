@@ -5,7 +5,7 @@
     Microchip Technology Inc.
 
   File Name:
-    LLC.h
+    dll.h
 
   Summary:
     Interface definition of Meters&More DLL (Data Link Layer) driver.
@@ -71,8 +71,6 @@ Microchip or any third party.
 // *****************************************************************************
 // *****************************************************************************
 
-#define LLC_INSTANCES_NUMBER          1U
-
 /* Sizes */
 
 /* Max LSDU Data length according to Meters&More */
@@ -113,25 +111,6 @@ typedef enum
     LLC_STATUS_UNINITIALIZED = SYS_STATUS_UNINITIALIZED,
     LLC_STATUS_READY = SYS_STATUS_READY,
 } LLC_STATUS;
-
-// *****************************************************************************
-/* LLC State Machine Definition
-
-  Summary:
-    Defines the states of the MAC State Machine.
-
-  Description:
-    None.
-
-  Remarks:
-    None.
-*/
-typedef enum
-{
-    LLC_STATE_IDLE,
-    LLC_STATE_WAIT_MAC_READY,
-    LLC_STATE_WAITING_TX_CFM,
-} LLC_STATE;
 
 /* CTL PF Bit for Meters&More LLC 432 layer
    - Request-response for RA, RB & RC disciplines.
@@ -248,7 +227,7 @@ typedef struct {
     enum LLC_SSAP_RW ssapRw,
     /* Destination 432 Address */
     uint16_t dstAddress,
-    /* Tx status (see mac_defs.h) ToDo: REVIEW */
+    /* Tx status */
     LLC_TX_STATUS txStatus
 } LLC_DL_DATA_CONFIRM_PARAMS;
 
@@ -371,7 +350,6 @@ typedef void ( *LLC_DL_DATA_IND_CALLBACK )( LLC_DL_DATA_IND_PARAMS *indParams );
     <code>
     void APP_MyDataCfmEventHandler( LLC_DL_DATA_CONFIRM_PARAMS *cfmParams )
     {
-        ToDo: REVIEW
         switch(cfmParams->uc_tx_status)
         {
             case LLC_TX_STATUS_SUCCESS:
@@ -449,64 +427,10 @@ typedef void ( *LLC_DL_DATA_CONFIRM_CALLBACK )( LLC_DL_DATA_CONFIRM_PARAMS *cfmP
 */
 SYS_MODULE_OBJ LLC_Initialize(const SYS_MODULE_INDEX index, const SYS_MODULE_INIT * const init);
 
-// *****************************************************************************
-/* Function:
-    LLC_RESULT LLC_Open (    );
-
-  Summary:
-    Opens the LLC driver according to the mode parameter.
-
-  Description:
-
-
-  Precondition:
-    None.
-
-  Parameters:
-    None.
-
-  Returns:
-    If successful, returns LLC_SUCCESS. Otherwise, it returns LLC_ERROR.
-
-  Example:
-
-
-  Remarks:
-    None.
-*/
-LLC_RESULT LLC_Open(void);
-
-// *****************************************************************************
-/* Function:
-    LLC_RESULT LLC_Close (void);
-
-  Summary:
-    Closes the LLC driver.
-
-  Description:
-    This routine closes the LLC driver making it unusable.
-
-  Precondition:
-    None.
-
-  Parameters:
-    None.
-
-  Returns:
-    If successful, returns LLC_SUCCESS. Otherwise, it returns LLC_ERROR.
-
-  Example:
-
-
-  Remarks:
-    None.
-*/
-LLC_RESULT LLC_Close (void);
 
 // *****************************************************************************
 /* Function:
     LLC_RESULT LLC_dl_data_ind_CallbackRegister(
-        const DRV_HANDLE handle,
         LLC_DL_DATA_IND_CALLBACK callback
     );
 
@@ -519,19 +443,10 @@ LLC_RESULT LLC_Close (void);
     handling function for the driver to call back when a Meters&More LLC data indication event
     occurs.
 
-    The event handler should be set before the client submits any transmission
-    requests that could generate events. The callback once set, persists until
-    the client closes the driver or sets another callback (which could be a
-    "NULL" pointer to indicate no callback).
-
-  Precondition:
-    LLC_Open must have been called to obtain a valid opened device
-    handle.
+    The callback once set, persists until the client closes the driver or sets another callback
+    (which could be a "NULL" pointer to indicate no callback).
 
   Parameters:
-    handle   - A valid open-instance handle, returned from the driver's open
-               routine.
-
     callback - Pointer to the callback function.
 
   Returns:
@@ -558,14 +473,12 @@ LLC_RESULT LLC_Close (void);
 */
 
 LLC_RESULT LLC_dl_data_ind_CallbackRegister(
-    const DRV_HANDLE handle,
     LLC_DL_DATA_IND_CALLBACK callback
 );
 
 // *****************************************************************************
 /* Function:
     LLC_RESULT LLC_dl_data_cfm_CallbackRegister(
-        const DRV_HANDLE handle,
         LLC_DL_DATA_CONFIRM_CALLBACK callback
     );
 
@@ -578,19 +491,10 @@ LLC_RESULT LLC_dl_data_ind_CallbackRegister(
     handling function for the driver to call back when a Meters&More LLC data confirm event
     occurs.
 
-    The event handler should be set before the client submits any transmission
-    requests that could generate events. The callback once set, persists until
-    the client closes the driver or sets another callback (which could be a
-    "NULL" pointer to indicate no callback).
-
-  Precondition:
-    LLC_Open must have been called to obtain a valid opened device
-    handle.
+    The callback once set, persists until the client closes the driver or sets another callback
+    (which could be a "NULL" pointer to indicate no callback).
 
   Parameters:
-    handle   - A valid open-instance handle, returned from the driver's open
-               routine.
-
     callback - Pointer to the callback function.
 
   Returns:
@@ -622,7 +526,6 @@ LLC_RESULT LLC_dl_data_ind_CallbackRegister(
 */
 
 LLC_RESULT LLC_dl_data_cfm_CallbackRegister(
-    const DRV_HANDLE handle,
     LLC_DL_DATA_CONFIRM_CALLBACK callback
 );
 
@@ -657,14 +560,7 @@ LLC_RESULT LLC_dl_data_cfm_CallbackRegister(
         {
             if (LLC_GetStatus() == LLC_STATUS_READY)
             {
-                if (LLC_Start() == LLC_SUCCESS)
-                {
-                    app_LLCData.state = APP_LLC_STATE_RUNNING;
-                }
-                else
-                {
-                    app_LLCData.state = APP_LLC_STATE_ERROR;
-                }
+              app_LLCData.state = APP_LLC_STATE_RUNNING;
             }
 
             break;

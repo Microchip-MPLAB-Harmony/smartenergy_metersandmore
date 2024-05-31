@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 Copyright (C) 2024, Microchip Technology Inc., and its subsidiaries. All rights reserved.
 
@@ -20,23 +21,39 @@ source software license terms, no license or other rights, whether express or
 implied, are granted under any patent or other intellectual property rights of
 Microchip or any third party.
 """
+mm_dll_helpkeyword = "mm_dll_configurations"
 
-######################  Harmony Meters&More Stack  ######################
-def loadModule():
+def instantiateComponent(mmDllComponent):
 
-    print("Load Module: Harmony Smart Energy Meters&More Stack")
-    processor = Variables.get("__PROCESSOR")
+    Log.writeInfoMessage("Loading M&M Dll module")
 
-    ## Meters&More PAL
-    mmPalComponent = Module.CreateComponent("mmPal", "Meters&More PAL", "/SmartEnergy/Meters&More/PAL", "pal/config/pal.py")
-    mmPalComponent.addCapability("mmPal", "Meters&More PAL", True)
-    mmPalComponent.addDependency("mmPal_DrvPhy_dependency", "DRV_PLC_PHY", True, True)
-    mmPalComponent.addDependency("mmPal_PCoup_dependency", "PCOUP", True, True)
-    mmPalComponent.setDisplayType("Meters&More PAL")
+    ############################################################################
+    #### Code Generation ####
+    ############################################################################
+    configName = Variables.get("__CONFIGURATION_NAME")
 
-    ###########  Meters&More Stack Configurations  ###########
-    global mmDllConfigComponent
-    mmDllConfigComponent = Module.CreateComponent("mmDll", "Meters&More DLL", "/SmartEnergy/Meters&More/DLL", "dll/config/dll.py")
-    mmDllConfigComponent.setDisplayType("Meters&More DLL")
-    mmDllConfigComponent.addCapability("mmDllCapability", "Meters&More DLL", True)
-    mmDllConfigComponent.addDependency("mm_pal_dependency", "Meters&More PAL", True, False)
+    # ToDo Create Symbols
+
+    #####################################################################################################################################
+    # Meters&More DLL FILES
+
+    mmDllHdrFile = mmDllComponent.createFileSymbol("MM_DLL_HEADER", None)
+    mmDllHdrFile.setSourcePath("dll/dll.h")
+    mmDllHdrFile.setOutputName("dll.h")
+    mmDllHdrFile.setDestPath("stack/metersandmore/dll")
+    mmDllHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/dll/")
+    mmDllHdrFile.setType("HEADER")
+
+    #####################################################################################################################################
+    # Meters&More DLL TEMPLATES
+
+    # ToDo
+
+# Handle messages from other components
+def handleMessage(messageID, args):
+    global mmPalPVDDMonitor
+    retDict = {}
+
+    # ToDo fill if needed
+
+    return retDict

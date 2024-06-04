@@ -74,7 +74,14 @@ Microchip or any third party.
 /* Sizes */
 
 /* Max LSDU Data length according to Meters&More */
-#define MAX_LENGTH_432_DATA 128
+#define MAX_LENGTH_432_DATA         (128U)
+
+/* DLL object sizes */
+#define DLL_MAC_ROUTE_SIZE          (9U)
+#define DLL_MAC_ADDRESS_SIZE        (6U)
+
+/* Maximum length of an IB object */
+#define DLL_IB_MAX_VALUE_LENGTH     (DLL_MAC_ROUTE_SIZE*DLL_MAC_ADDRESS_SIZE)
 
 
 // *****************************************************************************
@@ -148,6 +155,52 @@ typedef enum {
     LLC_TX_STATUS_SUCCESS = 0x25,
     LLC_TX_STATUS_ERROR = 0x27
 } LLC_TX_STATUS;
+
+// *****************************************************************************
+/* DLL Parameter Information Base definition
+
+   Summary:
+    Lists the available objects in the DLL Information Base (IB).
+
+   Description:
+    DLL IB is a collection of objects that can be read/written in order to
+    retrieve information and/or configure the DLL layer.
+
+   Remarks:
+    None.
+*/
+typedef enum
+{
+    MAC_ROUTING_TABLE_IB = 0x200,
+    MAC_ACA_ADDRESS_IB = 0x201,
+    MAC_SCA_ADDRESS_IB = 0x201,
+    LLC_NUM_RETRIES_IB = 0x400,
+
+} DLL_IB_ATTRIBUTE;
+
+/* Masks to distinguish between layer attributes */
+#define MAC_ATTRIBUTE_MASK   0x200
+#define LLC_ATTRIBUTE_MASK   0x400
+
+// *****************************************************************************
+/* DLL IB Value definition
+
+   Summary:
+    Defines the fields of an IB Value object.
+
+   Description:
+    This structure contains the fields which define an IB Value object,
+    which contains information of its length and the value itself coded into an
+    8-bit array format.
+
+   Remarks:
+    None.
+*/
+typedef struct
+{
+    uint8_t length;
+    uint8_t value[DLL_IB_MAX_VALUE_LENGTH];
+} DLL_IB_VALUE;
 
 
 // *****************************************************************************
@@ -606,6 +659,107 @@ LLC_STATUS LLC_GetStatus(void);
     None.
 */
 void LLC_Tasks(SYS_MODULE_OBJ object);
+
+// *****************************************************************************
+/* Function:
+    LLC_RESULT DLL_GetRequest
+    (
+      DLL_IB_ATTRIBUTE attribute,
+      uint16_t index,
+      DLL_IB_VALUE *ibValue
+    )
+
+  Summary:
+    The DLL_GetRequest primitive gets the value of an attribute in the
+    DLL layer Parameter Information Base (IB).
+
+  Description:
+    GetRequestSync primitive is used to get the value of an IB.
+    Result is provided upon function call return, in the ibValue parameter.
+
+  Precondition:
+    None.
+
+  Parameters:
+    attribute - Identifier of the Attribute to retrieve value
+
+    index - Index of element in case Attribute is a table
+            Otherwise index must be set to '0'
+
+    ibValue - Pointer to DLL_IB_VALUE object where value will be returned
+
+  Returns:
+    Result of get operation as an LLC_RESULT code.
+
+  Example:
+    <code>
+    LLC_RESULT result;
+    DLL_IB_VALUE value;
+    result = DLL_GetRequest(LLC_NUM_RETRIES_IB, 0, &value);
+    if (result == LLC_RESULT_SUCCESS)
+    {
+
+    }
+    </code>
+
+  Remarks:
+    None.
+*/
+LLC_RESULT DLL_GetRequest(
+    DLL_IB_ATTRIBUTE attribute, uint16_t index, DLL_IB_VALUE *ibValue);
+
+// *****************************************************************************
+/* Function:
+    LLC_RESULT DLL_SetRequest
+    (
+      DLL_IB_ATTRIBUTE attribute,
+      uint16_t index,
+      const DLL_IB_VALUE *ibValue
+    )
+
+  Summary:
+    The DLL_SetRequest primitive sets the value of an attribute in the
+    DLL layer Parameter Information Base (IB).
+
+  Description:
+    SetRequestSync primitive is used to set the value of an IB.
+    Result of set operation is provided upon function call return,
+    in the return result code.
+
+  Precondition:
+    None.
+
+  Parameters:
+    attribute - Identifier of the Attribute to provide value
+
+    index - Index of element in case Attribute is a table
+            Otherwise index must be set to '0'
+
+    ibValue - Pointer to DLL_IB_VALUE object where value is contained
+
+  Returns:
+    Result of set operation as an LLC_RESULT code.
+
+  Example:
+    <code>
+    LLC_RESULT result;
+    const DLL_IB_VALUE value = {
+        .length = 1,
+        .value = 6
+    };
+
+    result = DLL_SetRequest(LLC_NUM_RETRIES_IB, 0, &value);
+    if (result == LLC_RESULT_SUCCESS)
+    {
+
+    }
+    </code>
+
+  Remarks:
+    None.
+*/
+LLC_RESULT DLL_SetRequest(
+    DLL_IB_ATTRIBUTE attribute, uint16_t index, const DLL_IB_VALUE *ibValue);
 
 #ifdef __cplusplus
  }

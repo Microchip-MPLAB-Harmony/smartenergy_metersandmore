@@ -173,7 +173,7 @@ typedef enum
 {
     MAC_ROUTING_TABLE_IB = 0x200,
     MAC_ACA_ADDRESS_IB = 0x201,
-    MAC_SCA_ADDRESS_IB = 0x201,
+    MAC_SCA_ADDRESS_IB = 0x202,
     LLC_NUM_RETRIES_IB = 0x400,
 
 } DLL_IB_ATTRIBUTE;
@@ -214,21 +214,21 @@ typedef struct
 */
 typedef struct {
   /* Control pf bit */
-  LLC_CTL_PF ctrlPF,
+  LLC_CTL_PF ctrlPF;
   /* Destination LSAP */
-  LLC_DSAP dsap,
+  LLC_DSAP dsap;
   /* Source LSAP - Encryption */
-  LLC_SSAP_ENCRYPTION ssapEncryption,
+  LLC_SSAP_ENCRYPTION ssapEncryption;
   /* Source LSAP - Read/Write key. */
-  LLC_SSAP_RW ssapRw,
+  LLC_SSAP_RW ssapRw;
   /* Destination 432 Address */
-  uint16_t dstAddress,
+  uint16_t dstAddress;
   /* Pointer to the data to be sent (max length: MAX_LENGTH_432_DATA) */
-  struct LLC_BUFFER *lsdu,
+  struct LLC_BUFFER *lsdu;
   /* Length of the data */
-  uint16_t lsduLen,
+  uint16_t lsduLen;
   /* Link class (non used) */
-  uint8_t linkClass
+  uint8_t linkClass;
 } LLC_DL_DATA_REQUEST_PARAMS;
 
 
@@ -243,23 +243,23 @@ typedef struct {
 */
 typedef struct {
   /* Control pf bit */
-  LLC_CTL_PF ctrlPF,
+  LLC_CTL_PF ctrlPF;
   /* Destination LSAP */
-  LLC_DSAP dsap,
+  LLC_DSAP dsap;
   /* Source LSAP - Encryption */
-  LLC_SSAP_ENCRYPTION ssapEncryption,
+  LLC_SSAP_ENCRYPTION ssapEncryption;
   /* Source LSAP - Read/Write key. */
-  LLC_SSAP_RW ssapRw,
+  LLC_SSAP_RW ssapRw;
   /* Destination 432 Address */
-  uint16_t dstAddress,
+  uint16_t dstAddress;
   /* Source 432 Address */
-  uint16_t srcAddress,
+  uint16_t srcAddress;
   /* Pointer to received data (max length: MAX_LENGTH_432_DATA)*/
-  uint8_t *lsdu,
+  uint8_t *lsdu;
   /* Length of the data */
-  uint16_t lsduLen,
+  uint16_t lsduLen;
   /* Link class (non used) */
-  uint8_t linkClass
+  uint8_t linkClass;
 } LLC_DL_DATA_IND_PARAMS;
 
 // *****************************************************************************
@@ -272,16 +272,18 @@ typedef struct {
     None.
 */
 typedef struct {
+    /* Control pf bit */
+    LLC_CTL_PF ctrlPF;
     /* Destination LSAP */
-    enum LLC_DSAP dsap,
+    LLC_DSAP dsap;
     /* Source LSAP - Encryption */
-    enum LLC_SSAP_ENCRYPTION ssapEncryption,
+    LLC_SSAP_ENCRYPTION ssapEncryption;
     /* Source LSAP - Read/Write key. */
-    enum LLC_SSAP_RW ssapRw,
+    LLC_SSAP_RW ssapRw;
     /* Destination 432 Address */
-    uint16_t dstAddress,
+    uint16_t dstAddress;
     /* Tx status */
-    LLC_TX_STATUS txStatus
+    LLC_TX_STATUS txStatus;
 } LLC_DL_DATA_CONFIRM_PARAMS;
 
 

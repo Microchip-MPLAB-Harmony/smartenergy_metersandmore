@@ -52,6 +52,7 @@ Microchip or any third party.
 #include "system/system.h"
 #include "driver/driver.h"
 #include "driver/plc/phy/drv_plc_phy_comm.h"
+#include "service/pcoup/srv_pcoup.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -152,44 +153,6 @@ typedef struct
     uint8_t rssi;
 
 } PAL_RX_PARAMS;
-
-// *****************************************************************************
-/* PAL Data
-
-  Summary:
-    Holds PAL internal data.
-
-  Description:
-    This data type defines all data required to handle the PAL module.
-
-  Remarks:
-    None.
-*/
-typedef struct
-{
-    DRV_HANDLE drvHandle;
-
-    PAL_HANDLERS initHandlers;
-
-    PAL_STATUS status;
-
-    PAL_STATE state;
-
-    SRV_PLC_PCOUP_BRANCH plcBranch;
-
-    uint8_t statsErrorUnexpectedKey;
-
-    uint8_t statsErrorReset;
-
-    uint8_t statsErrorDebug;
-
-    uint8_t statsErrorCritical;
-
-    bool waitingTxCfm;
-
-    bool pvddMonTxEnable;
-
-} PAL_DATA;
 
 // *****************************************************************************
 /* PAL Data Indication Event Handler Function Pointer
@@ -359,6 +322,44 @@ typedef struct
     PAL_TxConfirm                palTxConfirm;
     PAL_RxParamsIndication       palRxParamsIndication;
 } PAL_HANDLERS;
+
+// *****************************************************************************
+/* PAL Data
+
+  Summary:
+    Holds PAL internal data.
+
+  Description:
+    This data type defines all data required to handle the PAL module.
+
+  Remarks:
+    None.
+*/
+typedef struct
+{
+    DRV_HANDLE drvHandle;
+
+    PAL_HANDLERS initHandlers;
+
+    PAL_STATUS status;
+
+    PAL_STATE state;
+
+    SRV_PLC_PCOUP_BRANCH plcBranch;
+
+    uint8_t statsErrorUnexpectedKey;
+
+    uint8_t statsErrorReset;
+
+    uint8_t statsErrorDebug;
+
+    uint8_t statsErrorCritical;
+
+    bool waitingTxCfm;
+
+    bool pvddMonTxEnable;
+
+} PAL_DATA;
 
 // *****************************************************************************
 /* PLC PAL Initialization Data

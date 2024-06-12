@@ -34,6 +34,15 @@ def instantiateComponent(mmDllComponent):
 
     # ToDo Create Symbols
 
+   # Default LLC repeats
+    mmDllRxQueueLimit = mmDllComponent.createIntegerSymbol("METERSANDMORE_LLC_REPEATS", None)
+    mmDllRxQueueLimit.setHelp("mmDll_helpkeyword")
+    mmDllRxQueueLimit.setLabel("Repeats")
+    mmDllRxQueueLimit.setDescription("Default LLC packet repeats")
+    mmDllRxQueueLimit.setDefaultValue(2)
+    mmDllRxQueueLimit.setMin(0)
+    mmDllRxQueueLimit.setMax(10)
+
     #####################################################################################################################################
     # Meters&More DLL FILES
 
@@ -46,8 +55,13 @@ def instantiateComponent(mmDllComponent):
 
     #####################################################################################################################################
     # Meters&More DLL TEMPLATES
+    mmDllSystemDefFile = mmDllComponent.createFileSymbol("MM_DLL_DEF", None)
+    mmDllSystemDefFile.setType("STRING")
+    mmDllSystemDefFile.setOutputName("core.LIST_SYSTEM_DEFINITIONS_H_INCLUDES")
+    mmDllSystemDefFile.setSourcePath("dll/templates/system/definitions.h.ftl")
+    mmDllSystemDefFile.setMarkup(True)
 
-    # ToDo
+
 
 # Handle messages from other components
 def handleMessage(messageID, args):

@@ -122,13 +122,15 @@ typedef enum
 /* CTL PF Bit for Meters&More LLC 432 layer
    - Request-response for RA, RB & RC disciplines.
    - Send-No reply for S discipline. */
-typedef enum {
+typedef enum
+{
     LLC_CTL_SEND_NOREPLY = 0x0,
     LLC_CTL_REQUEST_RESPONSE = 0x1
 } LLC_CTL_PF;
 
 /* DSAP (Destination Service Access Point) values for Meters&More LLC 432 layer */
-typedef enum {
+typedef enum
+{
     LLC_DSAP_APPLICATION_FRAME = 0x0,
     LLC_DSAP_NETWORK_MANAGEMENT = 0x2
 } LLC_DSAP;
@@ -137,7 +139,8 @@ typedef enum {
    - Disabled for network commands
    - AES CTR for LMON recovery
    - AES ECB for common application messages */
-typedef enum {
+typedef enum
+{
     LLC_SSAP_ENCRYPTION_DISABLED = 0x0,
     LLC_SSAP_ENCRYPTION_AES_CTR = 0x1,
     LLC_SSAP_ENCRYPTION_AES_ECB = 0x2
@@ -145,13 +148,15 @@ typedef enum {
 
 /* SSAP (Source Service Access Point) values for Meters&More LLC 432 layer - Read/Write
   Specifies which key is used (Read or Write). */
-typedef enum {
+typedef enum
+{
     LLC_SSAP_ENCRYPTION_READ_KEY = 0x0,
     LLC_SSAP_ENCRYPTION_WRITE_KEY = 0x1
 } LLC_SSAP_RW;
 
 /* Transmission errors defined in LLC 432 layer */
-typedef enum {
+typedef enum
+{
     LLC_TX_STATUS_SUCCESS = 0x25,
     LLC_TX_STATUS_ERROR = 0x27
 } LLC_TX_STATUS;
@@ -173,7 +178,7 @@ typedef enum
 {
     MAC_ROUTING_TABLE_IB = 0x200,
     MAC_ACA_ADDRESS_IB = 0x201,
-    MAC_SCA_ADDRESS_IB = 0x202,
+    MAC_SCA_ADDRESS_IB = 0x201,
     LLC_NUM_RETRIES_IB = 0x400,
 
 } DLL_IB_ATTRIBUTE;
@@ -212,7 +217,8 @@ typedef struct
   Remarks:
     None.
 */
-typedef struct {
+typedef struct
+{
   /* Control pf bit */
   LLC_CTL_PF ctrlPF;
   /* Destination LSAP */
@@ -222,9 +228,9 @@ typedef struct {
   /* Source LSAP - Read/Write key. */
   LLC_SSAP_RW ssapRw;
   /* Destination 432 Address */
-  uint16_t dstAddress;
+  MAC_ADDRESS dstAddress;
   /* Pointer to the data to be sent (max length: MAX_LENGTH_432_DATA) */
-  struct LLC_BUFFER *lsdu;
+  uint8_t *lsdu;
   /* Length of the data */
   uint16_t lsduLen;
   /* Link class (non used) */
@@ -241,7 +247,8 @@ typedef struct {
   Remarks:
     None.
 */
-typedef struct {
+typedef struct
+{
   /* Control pf bit */
   LLC_CTL_PF ctrlPF;
   /* Destination LSAP */
@@ -251,9 +258,9 @@ typedef struct {
   /* Source LSAP - Read/Write key. */
   LLC_SSAP_RW ssapRw;
   /* Destination 432 Address */
-  uint16_t dstAddress;
+  MAC_ADDRESS dstAddress;
   /* Source 432 Address */
-  uint16_t srcAddress;
+  MAC_ADDRESS srcAddress;
   /* Pointer to received data (max length: MAX_LENGTH_432_DATA)*/
   uint8_t *lsdu;
   /* Length of the data */
@@ -271,9 +278,10 @@ typedef struct {
   Remarks:
     None.
 */
-typedef struct {
-    /* Control pf bit */
-    LLC_CTL_PF ctrlPF;
+typedef struct
+{
+  /* Control pf bit */
+  LLC_CTL_PF ctrlPF;
     /* Destination LSAP */
     LLC_DSAP dsap;
     /* Source LSAP - Encryption */
@@ -281,7 +289,7 @@ typedef struct {
     /* Source LSAP - Read/Write key. */
     LLC_SSAP_RW ssapRw;
     /* Destination 432 Address */
-    uint16_t dstAddress;
+    MAC_ADDRESS dstAddress;
     /* Tx status */
     LLC_TX_STATUS txStatus;
 } LLC_DL_DATA_CONFIRM_PARAMS;
@@ -298,7 +306,8 @@ typedef struct {
   Remarks:
     None.
 */
-typedef struct {
+typedef struct
+{
   uint8_t taskRateMs;
 } LLC_INIT;
 
@@ -331,7 +340,7 @@ typedef struct {
   Remarks:
     None.
 */
-void LLC_dl_data_request( LLC_DL_DATA_REQUEST_PARAMS *drParams );
+void LLC_dl_data_request(LLC_DL_DATA_REQUEST_PARAMS *drParams);
 
 
 // *****************************************************************************
@@ -360,7 +369,7 @@ void LLC_dl_data_request( LLC_DL_DATA_REQUEST_PARAMS *drParams );
 
   Example:
     <code>
-    void APP_MyDataIndEventHandler( LLC_DL_DATA_IND_PARAMS *indParams )
+    void APP_MyDataIndEventHandler(LLC_DL_DATA_IND_PARAMS *indParams)
     {
         ToDo: REVIEW
         switch(indParams->status)
@@ -375,7 +384,7 @@ void LLC_dl_data_request( LLC_DL_DATA_REQUEST_PARAMS *drParams );
     }
     </code>
 */
-typedef void ( *LLC_DL_DATA_IND_CALLBACK )( LLC_DL_DATA_IND_PARAMS *indParams );
+typedef void (*LLC_DL_DATA_IND_CALLBACK)(LLC_DL_DATA_IND_PARAMS *indParams);
 
 // *****************************************************************************
 /* Meters&More LLC 4-32 Driver DL_Data.indication Function Pointer
@@ -403,7 +412,7 @@ typedef void ( *LLC_DL_DATA_IND_CALLBACK )( LLC_DL_DATA_IND_PARAMS *indParams );
 
   Example:
     <code>
-    void APP_MyDataCfmEventHandler( LLC_DL_DATA_CONFIRM_PARAMS *cfmParams )
+    void APP_MyDataCfmEventHandler(LLC_DL_DATA_CONFIRM_PARAMS *cfmParams)
     {
         switch(cfmParams->uc_tx_status)
         {
@@ -422,7 +431,7 @@ typedef void ( *LLC_DL_DATA_IND_CALLBACK )( LLC_DL_DATA_IND_PARAMS *indParams );
     - Otherwise, it means that the data was not transferred successfully.
 
 */
-typedef void ( *LLC_DL_DATA_CONFIRM_CALLBACK )( LLC_DL_DATA_CONFIRM_PARAMS *cfmParams );
+typedef void (*LLC_DL_DATA_CONFIRM_CALLBACK)(LLC_DL_DATA_CONFIRM_PARAMS *cfmParams);
 
 // *****************************************************************************
 
@@ -434,10 +443,7 @@ typedef void ( *LLC_DL_DATA_CONFIRM_CALLBACK )( LLC_DL_DATA_CONFIRM_PARAMS *cfmP
 
 // *****************************************************************************
 /* Function:
-    SYS_MODULE_OBJ LLC_Initialize (
-      const SYS_MODULE_INDEX index,
-      const SYS_MODULE_INIT * const init
-    );
+    SYS_MODULE_OBJ LLC_Initialize (const SYS_MODULE_INDEX index, const SYS_MODULE_INIT * const init);
 
   Summary:
     Initializes the Meters&More LLC driver according to the init parameter and the cause of the reset of the main processor.
@@ -462,19 +468,13 @@ typedef void ( *LLC_DL_DATA_CONFIRM_CALLBACK )( LLC_DL_DATA_CONFIRM_PARAMS *cfmP
 
   Example:
     <code>
-    SYS_MODULE_OBJ   sysObjDrvMet;
-
-    extern uint8_t met_bin_start;
-    extern uint8_t met_bin_end;
+    SYS_MODULE_OBJ   sysObjDrvLlc;
 
     LLC_INIT drvLLCInitData = {
-        .regBaseAddress = LLC_REG_BASE_ADDRESS,
-        .binStartAddress = (uint32_t)&met_bin_start,
-        .binEndAddress = (uint32_t)&met_bin_end,
-
+        .taskRateMs = 1U
     };
 
-    sysObjDrvMet = LLC_Initialize((SYS_MODULE_INIT *)&drvLLCInitData);
+    sysObjDrvLlc = LLC_Initialize((SYS_MODULE_INIT *)&drvLLCInitData);
     </code>
 
   Remarks:
@@ -485,9 +485,7 @@ SYS_MODULE_OBJ LLC_Initialize(const SYS_MODULE_INDEX index, const SYS_MODULE_INI
 
 // *****************************************************************************
 /* Function:
-    LLC_RESULT LLC_dl_data_ind_CallbackRegister(
-        LLC_DL_DATA_IND_CALLBACK callback
-    );
+    LLC_RESULT LLC_dl_data_ind_CallbackRegister(LLC_DL_DATA_IND_CALLBACK callback);
 
   Summary:
     Allows a client to set a Meters&More LLC 4-32 DL_Data.indication event handling function
@@ -527,15 +525,11 @@ SYS_MODULE_OBJ LLC_Initialize(const SYS_MODULE_INDEX index, const SYS_MODULE_INI
 
 */
 
-LLC_RESULT LLC_dl_data_ind_CallbackRegister(
-    LLC_DL_DATA_IND_CALLBACK callback
-);
+LLC_RESULT LLC_dl_data_ind_CallbackRegister(LLC_DL_DATA_IND_CALLBACK callback);
 
 // *****************************************************************************
 /* Function:
-    LLC_RESULT LLC_dl_data_cfm_CallbackRegister(
-        LLC_DL_DATA_CONFIRM_CALLBACK callback
-    );
+    LLC_RESULT LLC_dl_data_cfm_CallbackRegister(LLC_DL_DATA_CONFIRM_CALLBACK callback);
 
   Summary:
     Allows a client to set a Meters&More LLC 4-32 DL_Data.confirm event handling function
@@ -580,9 +574,7 @@ LLC_RESULT LLC_dl_data_ind_CallbackRegister(
 
 */
 
-LLC_RESULT LLC_dl_data_cfm_CallbackRegister(
-    LLC_DL_DATA_CONFIRM_CALLBACK callback
-);
+LLC_RESULT LLC_dl_data_cfm_CallbackRegister(LLC_DL_DATA_CONFIRM_CALLBACK callback);
 
 // *****************************************************************************
 /* Function:
@@ -628,9 +620,7 @@ LLC_RESULT LLC_dl_data_cfm_CallbackRegister(
 LLC_STATUS LLC_GetStatus(void);
 
 /* Function:
-    SYS_MODULE_OBJ LLC_Tasks (
-        SYS_MODULE_OBJ object
-    );
+    SYS_MODULE_OBJ LLC_Tasks (SYS_MODULE_OBJ object);
 
   Summary:
     Routine that performs the tasks necessary to maintain a state machine in
@@ -664,12 +654,7 @@ void LLC_Tasks(SYS_MODULE_OBJ object);
 
 // *****************************************************************************
 /* Function:
-    LLC_RESULT DLL_GetRequest
-    (
-      DLL_IB_ATTRIBUTE attribute,
-      uint16_t index,
-      DLL_IB_VALUE *ibValue
-    )
+    LLC_RESULT DLL_GetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, DLL_IB_VALUE *ibValue)
 
   Summary:
     The DLL_GetRequest primitive gets the value of an attribute in the
@@ -707,17 +692,11 @@ void LLC_Tasks(SYS_MODULE_OBJ object);
   Remarks:
     None.
 */
-LLC_RESULT DLL_GetRequest(
-    DLL_IB_ATTRIBUTE attribute, uint16_t index, DLL_IB_VALUE *ibValue);
+LLC_RESULT DLL_GetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, DLL_IB_VALUE *ibValue);
 
 // *****************************************************************************
 /* Function:
-    LLC_RESULT DLL_SetRequest
-    (
-      DLL_IB_ATTRIBUTE attribute,
-      uint16_t index,
-      const DLL_IB_VALUE *ibValue
-    )
+    LLC_RESULT DLL_SetRequest(LL_IB_ATTRIBUTE attribute, uint16_t index, const DLL_IB_VALUE *ibValue)
 
   Summary:
     The DLL_SetRequest primitive sets the value of an attribute in the
@@ -760,8 +739,7 @@ LLC_RESULT DLL_GetRequest(
   Remarks:
     None.
 */
-LLC_RESULT DLL_SetRequest(
-    DLL_IB_ATTRIBUTE attribute, uint16_t index, const DLL_IB_VALUE *ibValue);
+LLC_RESULT DLL_SetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, const DLL_IB_VALUE *ibValue);
 
 #ifdef __cplusplus
  }

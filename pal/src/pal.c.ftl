@@ -252,7 +252,7 @@ void PAL_Init(PAL_INIT *init)
     palData.state = PAL_STATE_INIT;
 
     /* PLC branch */
-    palData.plcBranch = SRV_PLC_PCOUP_AUXILIARY_BRANCH;
+    palData.plcBranch = SRV_PLC_PCOUP_MAIN_BRANCH;
 }
 
 <#if core.COVERITY_SUPPRESS_DEVIATION?? && core.COVERITY_SUPPRESS_DEVIATION>
@@ -306,7 +306,7 @@ void PAL_TxRequest(uint8_t *pData, uint16_t length, uint8_t nbFrame)
         txObj.attenuation = 0;
         txObj.nbFrame = nbFrame;
         /* Send frame */
-        DRV_PLC_PHY_TxRequest(palData.drvHandle, &appPlcTx.plcPhyTx);
+        DRV_PLC_PHY_TxRequest(palData.drvHandle, &txObj);
     }
     else
     {

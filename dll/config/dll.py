@@ -45,6 +45,12 @@ def instantiateComponent(mmDllComponent):
 
     #####################################################################################################################################
     # Meters&More DLL FILES
+    global macPlcLibFile
+    macPlcLibFile = mmDllComponent.createLibrarySymbol("MM_DLL_LIBRARY", None)
+    macPlcLibFile.setSourcePath("libs/metersandmore_lib_dll.a")
+    macPlcLibFile.setOutputName("metersandmore_lib_dll.a")
+    macPlcLibFile.setDestPath("stack/metersandmore/dll")
+    macPlcLibFile.setEnabled(True)
 
     mmDllHdrFile = mmDllComponent.createFileSymbol("MM_DLL_HEADER", None)
     mmDllHdrFile.setSourcePath("dll/dll.h")

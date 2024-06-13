@@ -9,7 +9,7 @@
     Platform Abstraction Layer (PAL) Interface header file.
 
   Description:
-    Platform Abstraction Layer (PAL) Interface header file. The PLC PAL
+    Platform Abstraction Layer (PAL) Interface header file. The PAL
     module provides a simple interface to manage the M&M PHY layer.
 *******************************************************************************/
 
@@ -50,9 +50,7 @@ Microchip or any third party.
 #include <stdbool.h>
 #include <stdint.h>
 #include "system/system.h"
-#include "driver/driver.h"
 #include "driver/plc/phy/drv_plc_phy_comm.h"
-#include "service/pcoup/srv_pcoup.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -104,26 +102,6 @@ typedef enum
     PAL_STATUS_READY = SYS_STATUS_READY,
     PAL_STATUS_ERROR = SYS_STATUS_ERROR,
 } PAL_STATUS;
-
-// *****************************************************************************
-/* PAL states
-
-  Summary:
-    PAL states enumeration
-
-  Description:
-    This enumeration defines the valid PAL states. These states
-    determine the behavior of the PAL at different stages.
-*/
-
-typedef enum
-{
-    PAL_STATE_IDLE=0,
-    PAL_STATE_INIT,
-    PAL_STATE_OPEN,
-    PAL_STATE_ERROR
-
-} PAL_STATE;
 
 // *****************************************************************************
 /* PAL Rx Parameters
@@ -322,44 +300,6 @@ typedef struct
     PAL_TxConfirm                palTxConfirm;
     PAL_RxParamsIndication       palRxParamsIndication;
 } PAL_HANDLERS;
-
-// *****************************************************************************
-/* PAL Data
-
-  Summary:
-    Holds PAL internal data.
-
-  Description:
-    This data type defines all data required to handle the PAL module.
-
-  Remarks:
-    None.
-*/
-typedef struct
-{
-    DRV_HANDLE drvHandle;
-
-    PAL_HANDLERS initHandlers;
-
-    PAL_STATUS status;
-
-    PAL_STATE state;
-
-    SRV_PLC_PCOUP_BRANCH plcBranch;
-
-    uint8_t statsErrorUnexpectedKey;
-
-    uint8_t statsErrorReset;
-
-    uint8_t statsErrorDebug;
-
-    uint8_t statsErrorCritical;
-
-    bool waitingTxCfm;
-
-    bool pvddMonTxEnable;
-
-} PAL_DATA;
 
 // *****************************************************************************
 /* PLC PAL Initialization Data

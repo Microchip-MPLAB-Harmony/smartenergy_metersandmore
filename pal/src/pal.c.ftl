@@ -54,6 +54,7 @@ Microchip or any third party.
 <#if MM_PAL_PVDD_MONITOR == true>
 #include "service/pvddmon/srv_pvddmon.h"
 </#if>
+#include "pal_local.h"
 #include "pal.h"
 
 // *****************************************************************************

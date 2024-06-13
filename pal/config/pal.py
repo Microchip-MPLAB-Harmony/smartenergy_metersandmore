@@ -72,6 +72,13 @@ def instantiateComponent(mmPalComponent):
     mmPalHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/pal/")
     mmPalHdrFile.setType("HEADER")
 
+    mmPalLocalHdrFile = mmPalComponent.createFileSymbol("MM_PAL_LOCAL_HEADER", None)
+    mmPalLocalHdrFile.setSourcePath("pal/pal_local.h")
+    mmPalLocalHdrFile.setOutputName("pal_local.h")
+    mmPalLocalHdrFile.setDestPath("stack/metersandmore/pal")
+    mmPalLocalHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/pal/")
+    mmPalLocalHdrFile.setType("HEADER")
+
     #####################################################################################################################################
     # Meters&More PAL TEMPLATES
 

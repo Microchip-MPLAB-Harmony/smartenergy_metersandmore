@@ -230,7 +230,7 @@ typedef struct
   /* Destination 432 Address */
   uint16_t dstAddress;
   /* Pointer to the data to be sent (max length: MAX_LENGTH_432_DATA) */
-  struct LLC_BUFFER *lsdu;
+  uint8_t *lsdu;
   /* Length of the data */
   uint16_t lsduLen;
   /* Link class (non used) */

@@ -52,6 +52,7 @@ Microchip or any third party.
 #include "system/system.h"
 #include "driver/driver.h"
 #include "service/pcoup/srv_pcoup.h"
+#include "pal.h"
 
 // *****************************************************************************
 // *****************************************************************************

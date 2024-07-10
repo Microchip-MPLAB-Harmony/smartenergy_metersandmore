@@ -77,12 +77,14 @@ Microchip or any third party.
 #define MAX_LENGTH_432_DATA         (128U)
 
 /* DLL object sizes */
-#define DLL_MAC_ROUTE_SIZE          (9U)
-#define DLL_MAC_ADDRESS_SIZE        (6U)
+#define MAX_ROUTE_SIZE              (9U)
+#define MAC_ADDRESS_SIZE            (6U)
 
 /* Maximum length of an IB object */
-#define DLL_IB_MAX_VALUE_LENGTH     (DLL_MAC_ROUTE_SIZE*DLL_MAC_ADDRESS_SIZE)
+#define DLL_IB_MAX_VALUE_LENGTH     (MAX_ROUTE_SIZE*MAC_ADDRESS_SIZE)
 
+/* Maximum length of a MAC Event Value */
+#define MAC_EVENT_VALUE_MAX_LENGTH  (MAC_ADDRESS_SIZE)
 
 // *****************************************************************************
 /* Meters&More LLC Driver Result
@@ -119,47 +121,81 @@ typedef enum
     LLC_STATUS_READY = SYS_STATUS_READY,
 } LLC_STATUS;
 
-/* CTL PF Bit for Meters&More LLC 432 layer
-   - Request-response for RA, RB & RC disciplines.
-   - Send-No reply for S discipline. */
-typedef enum
-{
-    LLC_CTL_SEND_NOREPLY = 0x0,
-    LLC_CTL_REQUEST_RESPONSE = 0x1
-} LLC_CTL_PF;
 
 /* DSAP (Destination Service Access Point) values for Meters&More LLC 432 layer */
 typedef enum
 {
-    LLC_DSAP_APPLICATION_FRAME = 0x0,
-    LLC_DSAP_NETWORK_MANAGEMENT = 0x2
+    LLC_DSAP_APPLICATION_FRAME  = 0x0,
+    LLC_DSAP_NETWORK_MANAGEMENT = 0x1
 } LLC_DSAP;
 
-/* SSAP (Source Service Access Point) values for Meters&More LLC 432 layer - Encryption type:
-   - Disabled for network commands
-   - AES CTR for LMON recovery
-   - AES ECB for common application messages */
+/* ECC (Encryption Coding Control) values for Meters&More LLC 432 layer
+   It is used to discriminate what kind of encryption method is used to protect
+   the payload field. The encryption functionality is available in both directions.
+   The only value defined is:
+   - Disabled
+   (Other values are reserved).
+   Replaces SSAP (Source Service Access Point) from 4-32 */
 typedef enum
 {
-    LLC_SSAP_ENCRYPTION_DISABLED = 0x0,
-    LLC_SSAP_ENCRYPTION_AES_CTR = 0x1,
-    LLC_SSAP_ENCRYPTION_AES_ECB = 0x2
-} LLC_SSAP_ENCRYPTION;
+    LLC_ECC_DISABLED = 0x0,
+} LLC_ECC;
 
-/* SSAP (Source Service Access Point) values for Meters&More LLC 432 layer - Read/Write
-  Specifies which key is used (Read or Write). */
+/* Service class values for Meters&More.
+   This parameter is used by the MAC layer. */
 typedef enum
 {
-    LLC_SSAP_ENCRYPTION_READ_KEY = 0x0,
-    LLC_SSAP_ENCRYPTION_WRITE_KEY = 0x1
-} LLC_SSAP_RW;
+    SERVICE_CLASS_S  = 0x00,
+    SERVICE_CLASS_RA = 0x01,
+    SERVICE_CLASS_RB = 0x02,
+    SERVICE_CLASS_RC = 0x03
+} SERVICE_CLASS;
 
 /* Transmission errors defined in LLC 432 layer */
 typedef enum
 {
-    LLC_TX_STATUS_SUCCESS = 0x25,
-    LLC_TX_STATUS_ERROR = 0x27
+    LLC_TX_STATUS_SUCCESS = 0x00,
+    LLC_TX_STATUS_ERROR   = 0x01
 } LLC_TX_STATUS;
+
+// *****************************************************************************
+/* MAC Address definition
+
+   Summary:
+    Defines the Address as an array of 6 unsigned 8-bit integers.
+
+   Description:
+    Creates an unsigned 8-bit integer array specific type for Address
+    definition.
+
+   Remarks:
+    None.
+*/
+typedef struct
+{
+    uint8_t address[MAC_ADDRESS_SIZE];
+} MAC_ADDRESS;
+
+// *****************************************************************************
+/* Routing Table Entry definition
+
+   Summary:
+    Defines the fields of an entry in the Routing Table.
+
+   Description:
+    This structure contains the fields which define a Routing Table entry.
+    This table contains a route to every node in the Network.
+
+   Remarks:
+    A Routing Table Entry is pased to LLC in DL_Data.request, containing
+    the destination address and the ordered list of the addresses of the
+    involved repeaters.
+*/
+typedef struct
+{
+    MAC_ADDRESS macAddress[MAX_ROUTE_SIZE];
+    uint8_t routeSize;
+} ROUTING_ENTRY;
 
 // *****************************************************************************
 /* DLL Parameter Information Base definition
@@ -211,6 +247,40 @@ typedef struct
     uint8_t value[DLL_IB_MAX_VALUE_LENGTH];
 } DLL_IB_VALUE;
 
+// *****************************************************************************
+/* MAC Event IDs
+
+   Summary:
+    Identifies the possible MAC Event identifiers.
+
+   Description:
+    This enumeration identifies the possible MAC Event identifiers.
+
+   Remarks:
+    None.
+*/
+typedef enum
+{
+    MAC_EVENT_ID_ACA = 0
+} MAC_EVENT_ID;
+
+// *****************************************************************************
+/* MAC Event Values
+
+   Summary:
+    Identifies the possible MAC Event values.
+
+   Description:
+    This enumeration identifies the possible MAC Event values.
+
+   Remarks:
+    None.
+*/
+typedef enum
+{
+    uint8_t length;
+    uint8_t value[MAC_EVENT_VALUE_MAX_LENGTH];
+} MAC_EVENT_VALUE;
 
 // *****************************************************************************
 /* Meters&More LLC 4-32 Data request struct
@@ -223,22 +293,22 @@ typedef struct
 */
 typedef struct
 {
-  /* Control pf bit */
-  LLC_CTL_PF ctrlPF;
-  /* Destination LSAP */
-  LLC_DSAP dsap;
-  /* Source LSAP - Encryption */
-  LLC_SSAP_ENCRYPTION ssapEncryption;
-  /* Source LSAP - Read/Write key. */
-  LLC_SSAP_RW ssapRw;
-  /* Destination 432 Address */
-  uint16_t dstAddress;
   /* Pointer to the data to be sent (max length: MAX_LENGTH_432_DATA) */
   uint8_t *lsdu;
+  /* Destination LSAP */
+  LLC_DSAP dsap;
+  /* ECC (Encryption Coding Control) */
+  LLC_ECC ecc;
+  /* Service class - MASTER ONLY */
+  SERVICE_CLASS service_class;
+  /* Destination route - MASTER ONLY */
+  ROUTING_ENTRY dstAddress;
+  /* Max length of the response - MASTER ONLY */
+  uint16_t max_resp_len;
+  /* Number of time slots alocated in data request with Service_Class RC - MASTER ONLY */
+  uint16_t t_slot_num ;
   /* Length of the data */
   uint16_t lsduLen;
-  /* Link class (non used) */
-  uint8_t linkClass;
 } LLC_DL_DATA_REQUEST_PARAMS;
 
 
@@ -253,24 +323,16 @@ typedef struct
 */
 typedef struct
 {
-  /* Control pf bit */
-  LLC_CTL_PF ctrlPF;
   /* Destination LSAP */
   LLC_DSAP dsap;
-  /* Source LSAP - Encryption */
-  LLC_SSAP_ENCRYPTION ssapEncryption;
-  /* Source LSAP - Read/Write key. */
-  LLC_SSAP_RW ssapRw;
-  /* Destination 432 Address */
-  uint16_t dstAddress;
-  /* Source 432 Address */
-  uint16_t srcAddress;
+  /* ECC (Encryption Coding Control) */
+  LLC_ECC ecc;
+  /* Source address */
+  MAC_ADDRESS srcAddress;
   /* Pointer to received data (max length: MAX_LENGTH_432_DATA)*/
   uint8_t *lsdu;
   /* Length of the data */
   uint16_t lsduLen;
-  /* Link class (non used) */
-  uint8_t linkClass;
 } LLC_DL_DATA_IND_PARAMS;
 
 // *****************************************************************************
@@ -284,20 +346,32 @@ typedef struct
 */
 typedef struct
 {
-    /* Control pf bit */
-    LLC_CTL_PF ctrlPF;
     /* Destination LSAP */
     LLC_DSAP dsap;
-    /* Source LSAP - Encryption */
-    LLC_SSAP_ENCRYPTION ssapEncryption;
-    /* Source LSAP - Read/Write key. */
-    LLC_SSAP_RW ssapRw;
-    /* Destination 432 Address */
-    uint16_t dstAddress;
+    /* ECC (Encryption Coding Control) */
+    LLC_ECC ecc;
+    /* Destination address */
+    MAC_ADDRESS dstAddress;
     /* Tx status */
     LLC_TX_STATUS txStatus;
 } LLC_DL_DATA_CONFIRM_PARAMS;
 
+// *****************************************************************************
+/* Meters&More LLC 4-32 DL_Event.indication struct
+
+  Summary:
+    This struct includes LLC 4-32 Event indication
+
+  Remarks:
+    None.
+*/
+typedef struct
+{
+    /* Event Identifier */
+    MAC_EVENT_ID eventId;
+    /* First additional information */
+    MAC_EVENT_VALUE eventValue;
+} LLC_DL_EVENT_IND_PARAMS;
 
 /* Meters&More LLC Driver Initialization Data
 
@@ -312,7 +386,11 @@ typedef struct
 */
 typedef struct
 {
+  /* ADP task rate in milliseconds */
   uint8_t taskRateMs;
+
+  /* Is master node (false in slave node) */
+  bool    isMaster;
 } LLC_INIT;
 
 /* Function:
@@ -339,14 +417,10 @@ typedef struct
     <code>
 
     LLC_DL_DATA_REQUEST_PARAMS drParams;
-    drParams.ctrlPF = LLC_CTL_SEND_NOREPLY;
     drParams.dsap = LLC_DSAP_APPLICATION_FRAME;
-    drParams.ssapEncryption = LLC_SSAP_ENCRYPTION_DISABLED;
-    drParams.ssapRw = LLC_SSAP_ENCRYPTION_READ_KEY;
-    drParams.dstAddress = 0x01;
+    drParams.ecc = LLC_ECC_DISABLED;
     drParams.lsdu = appPlcTxDataBuffer;
     drParams.lsduLen = 10;
-    drParams.linkClass = 0;
     LLC_dl_data_request(&drParams);
     </code>
 
@@ -384,15 +458,9 @@ void LLC_dl_data_request( LLC_DL_DATA_REQUEST_PARAMS *drParams );
     <code>
     void APP_MyDataIndEventHandler( LLC_DL_DATA_IND_PARAMS *indParams )
     {
-        ToDo: REVIEW
-        switch(indParams->status)
+        if(indParams->lsduLen > 0)
         {
-            case LLC_RT_STATUS_SUCCESS:
-                break;
-            case LLC_RT_STATUS_CHANNEL_ACCESS_FAILURE:
-                break;
-            case LLC_RT_STATUS_NO_ACK:
-                break;
+
         }
     }
     </code>
@@ -445,6 +513,44 @@ typedef void ( *LLC_DL_DATA_IND_CALLBACK )( LLC_DL_DATA_IND_PARAMS *indParams );
 
 */
 typedef void ( *LLC_DL_DATA_CONFIRM_CALLBACK )( LLC_DL_DATA_CONFIRM_PARAMS *cfmParams );
+
+
+// *****************************************************************************
+/* Meters&More LLC 4-32 Driver DL_Event.indication Function Pointer
+
+  Summary:
+    Pointer to a Meters&More LLC 4-32 Driver DL_Event.indication Function Pointer.
+
+  Description:
+    This data type defines the required function signature for the Meters&More LLC 4-32
+    driver DL_Event.indication callback function. A client must
+    register a pointer using the callback register function whose function
+    signature (parameter and return value types) match the types specified by
+    this function pointer in order to receive transfer related event calls back
+    from the driver.
+
+    The parameters and return values are described here and a partial example
+    implementation is provided.
+
+  Parameters:
+    indParams - Pointer to the object containing any data necessary to process the
+             DL_Event.indication primitive.
+
+  Returns:
+    None.
+
+  Example:
+    <code>
+    void APP_MyEventIndEventHandler( LLC_DL_EVENT_IND_PARAMS *indParams )
+    {
+        if (indParams->lsduLen > 0){
+
+        }
+    }
+    </code>
+*/
+typedef void ( *LLC_DL_EVENT_IND_CALLBACK )( LLC_DL_EVENT_IND_PARAMS *indParams );
+
 
 // *****************************************************************************
 
@@ -580,6 +686,45 @@ LLC_RESULT LLC_dl_data_ind_CallbackRegister(LLC_DL_DATA_IND_CALLBACK callback);
 */
 
 LLC_RESULT LLC_dl_data_cfm_CallbackRegister(LLC_DL_DATA_CONFIRM_CALLBACK callback);
+
+
+// *****************************************************************************
+/* Function:
+    LLC_RESULT LLC_dl_event_ind_CallbackRegister(LLC_DL_EVENT_IND_CALLBACK callback);
+
+  Summary:
+    Allows a client to set a Meters&More LLC 4-32 DL_Event.indication event handling function
+    for the driver to call back when DLL generates a new event.
+
+  Description:
+    This function allows a client to register a Meters&More LLC 4-32 DL_Event.indication event
+    handling function for the driver to call back when a Meters&More LLC event occurs.
+
+    The callback once set, persists until the client closes the driver or sets another callback
+    (which could be a "NULL" pointer to indicate no callback).
+
+  Parameters:
+    callback - Pointer to the callback function.
+
+  Returns:
+    None.
+
+  Example:
+    <code>
+    void APP_Event_Ind_callback(LLC_DL_EVENT_IND_CALLBACK *indParams)
+    {
+        if (indParams->lsduLen > 0){
+
+        }
+    }
+
+    LLC_dl_event_ind_CallbackRegister( APP_Event_Ind_callback );
+    </code>
+
+*/
+
+LLC_RESULT LLC_dl_event_ind_CallbackRegister(LLC_DL_EVENT_IND_CALLBACK callback);
+
 
 // *****************************************************************************
 /* Function:

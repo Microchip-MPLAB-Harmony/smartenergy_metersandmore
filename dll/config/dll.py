@@ -162,7 +162,7 @@ def instantiateComponent(mmDllComponent):
     mmDllLibFile.setEnabled(True)
 
     mmDllHdrFile = mmDllComponent.createFileSymbol("METERSANDMORE_DLL_HEADER", None)
-    mmDllHdrFile.setSourcePath("dll/dll.h.ftl")
+    mmDllHdrFile.setSourcePath("dll/dll.h")
     mmDllHdrFile.setOutputName("dll.h")
     mmDllHdrFile.setDestPath("stack/metersandmore/dll")
     mmDllHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/dll/")

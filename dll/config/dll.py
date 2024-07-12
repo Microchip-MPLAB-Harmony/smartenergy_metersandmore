@@ -38,7 +38,6 @@ def instantiateComponent(mmDllComponent):
     mmRole.setLabel("Role for Meters & More node")
     mmRole.setVisible(True)
     mmRole.setDescription("Select Meters & More Mode")
-    mmRole.setDefaultValue("Slave node")
     mmRole.setHelp(mm_dll_helpkeyword)
 
     # Meters & More Task rate control

@@ -1,5 +1,5 @@
 /* Meters & More Initialization Data */
-static LLC_INIT drvLLCInitData = {
+static LLC_INIT llcInitData = {
 
 <#if (HarmonyCore.SELECT_RTOS)?? && (HarmonyCore.SELECT_RTOS != "BareMetal")>
     /* RTOS enabled: ADP task executed always */
@@ -10,7 +10,7 @@ static LLC_INIT drvLLCInitData = {
 </#if>
 
     /* Is master node (false in slave node) */
-<#if (METERSANDMORE_ROLE != "Master node")>
+<#if (METERSANDMORE_ROLE == "Master node")>
         .isMaster = true
 <#else>
         .isMaster = false

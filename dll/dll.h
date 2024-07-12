@@ -590,13 +590,13 @@ typedef void ( *LLC_DL_EVENT_IND_CALLBACK )( LLC_DL_EVENT_IND_PARAMS *indParams 
 
   Example:
     <code>
-    SYS_MODULE_OBJ   sysObjDrvLlc;
+    SYS_MODULE_OBJ   sysObjMetersandmore;
 
-    LLC_INIT drvLLCInitData = {
+    LLC_INIT llcInitData = {
         .taskRateMs = 1U
     };
 
-    sysObjDrvLlc = LLC_Initialize((SYS_MODULE_INIT *)&drvLLCInitData);
+    sysObjMetersandmore = LLC_Initialize((SYS_MODULE_INIT *)&llcInitData);
     </code>
 
   Remarks:
@@ -794,7 +794,7 @@ LLC_STATUS LLC_GetStatus(void);
   Example:
     <code>
 
-    LLC_Tasks(sysObj.drvLLC);
+    LLC_Tasks(sysObj.metersandmore);
     </code>
 
   Remarks:

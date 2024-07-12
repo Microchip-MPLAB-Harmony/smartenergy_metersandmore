@@ -1,6 +1,8 @@
 /* Meters & More Initialization Data */
 static LLC_INIT llcInitData = {
 
+    .repeats = MM_STACK_LLC_REPEATS,
+
 <#if (HarmonyCore.SELECT_RTOS)?? && (HarmonyCore.SELECT_RTOS != "BareMetal")>
     /* RTOS enabled: ADP task executed always */
     .taskRateMs = 0U ,

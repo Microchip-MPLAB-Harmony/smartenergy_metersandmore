@@ -386,6 +386,9 @@ typedef struct
 */
 typedef struct
 {
+  /* LLC repeats */
+  uint8_t repeats;
+
   /* ADP task rate in milliseconds */
   uint8_t taskRateMs;
 

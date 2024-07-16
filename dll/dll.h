@@ -95,7 +95,6 @@ Microchip or any third party.
   Description:
     Identifies the result of certain Meters&More LLC driver operations.
 */
-
 typedef enum
 {
     LLC_SUCCESS,
@@ -103,6 +102,7 @@ typedef enum
 } LLC_RESULT;
 
 
+// *****************************************************************************
 /* LLC Driver Status
 
   Summary:
@@ -121,28 +121,62 @@ typedef enum
     LLC_STATUS_READY = SYS_STATUS_READY,
 } LLC_STATUS;
 
+// *****************************************************************************
+/* DSAP definition
 
-/* DSAP (Destination Service Access Point) values for Meters&More LLC 432 layer */
+   Summary:
+    DSAP (Destination Service Access Point) values for Meters&More LLC layer.
+
+   Description:
+    This enumeration identifies the possible DSAP values
+    0 - Application Frame
+    1 - Network Management
+
+   Remarks:
+    None.
+*/
 typedef enum
 {
     LLC_DSAP_APPLICATION_FRAME  = 0x0,
     LLC_DSAP_NETWORK_MANAGEMENT = 0x1
 } LLC_DSAP;
 
-/* ECC (Encryption Coding Control) values for Meters&More LLC 432 layer
-   It is used to discriminate what kind of encryption method is used to protect
-   the payload field. The encryption functionality is available in both directions.
-   The only value defined is:
-   - Disabled
-   (Other values are reserved).
-   Replaces SSAP (Source Service Access Point) from 4-32 */
+// *****************************************************************************
+/* ECC definition
+
+   Summary:
+    ECC (Encryption Coding Control) values for Meters&More LLC layer.
+
+   Description:
+    This enumeration identifies the possible ECC values
+    The only value defined is:
+    - Disabled
+    (Other values are reserved).
+
+   Remarks:
+    None.
+*/
 typedef enum
 {
     LLC_ECC_DISABLED = 0x0,
 } LLC_ECC;
 
-/* Service class values for Meters&More.
-   This parameter is used by the MAC layer. */
+// *****************************************************************************
+/* Service Class definition
+
+   Summary:
+    Identifies the possible MAC Service Class values.
+
+   Description:
+    This enumeration identifies the possible MAC Service Class values
+    S - Send/NoReply
+    RA - Request/Respond on A subnetwork
+    RB - Request/Respond involving A and B subnetworks
+    RC - Request/MultiRespond
+
+   Remarks:
+    None.
+*/
 typedef enum
 {
     SERVICE_CLASS_S  = 0x00,
@@ -151,7 +185,20 @@ typedef enum
     SERVICE_CLASS_RC = 0x03
 } SERVICE_CLASS;
 
-/* Transmission errors defined in LLC 432 layer */
+// *****************************************************************************
+/* Tx Status definition
+
+   Summary:
+    Transmission results defined in LLC layer.
+
+   Description:
+    This enumeration identifies the possible Transmission result values
+    0 - Success
+    1 - Error
+
+   Remarks:
+    None.
+*/
 typedef enum
 {
     LLC_TX_STATUS_SUCCESS = 0x00,
@@ -373,6 +420,7 @@ typedef struct
     MAC_EVENT_VALUE eventValue;
 } LLC_DL_EVENT_IND_PARAMS;
 
+// *****************************************************************************
 /* Meters&More LLC Driver Initialization Data
 
   Summary:
@@ -393,45 +441,8 @@ typedef struct
   uint8_t taskRateMs;
 
   /* Is master node (false in slave node) */
-  bool    isMaster;
+  bool isMaster;
 } LLC_INIT;
-
-/* Function:
-    void LLC_dl_data_request(LLC_DL_DATA_REQUEST_PARAMS *drParams);
-
-  Summary:
-    LLC 4-32 Data request
-
-  Description:
-    Function that implements the LLC 4-32 DL_Data.request primitive
-
-  Precondition:
-    The low-level board initialization must have been completed and
-    the module's initialization function must have been called before
-    the system can call the tasks routine for any module.
-
-  Parameters:
-    drParams - Pointer to structure containing parameters related to DL_Data.request
-
-  Returns:
-    None.
-
-  Example:
-    <code>
-
-    LLC_DL_DATA_REQUEST_PARAMS drParams;
-    drParams.dsap = LLC_DSAP_APPLICATION_FRAME;
-    drParams.ecc = LLC_ECC_DISABLED;
-    drParams.lsdu = appPlcTxDataBuffer;
-    drParams.lsduLen = 10;
-    LLC_dl_data_request(&drParams);
-    </code>
-
-  Remarks:
-    None.
-*/
-void LLC_dl_data_request( LLC_DL_DATA_REQUEST_PARAMS *drParams );
-
 
 // *****************************************************************************
 /* Meters&More LLC 4-32 Driver DL_Data.indication Function Pointer
@@ -643,7 +654,6 @@ SYS_MODULE_OBJ LLC_Initialize(const SYS_MODULE_INDEX index, const SYS_MODULE_INI
     </code>
 
 */
-
 LLC_RESULT LLC_dl_data_ind_CallbackRegister(LLC_DL_DATA_IND_CALLBACK callback);
 
 // *****************************************************************************
@@ -687,9 +697,7 @@ LLC_RESULT LLC_dl_data_ind_CallbackRegister(LLC_DL_DATA_IND_CALLBACK callback);
     </code>
 
 */
-
 LLC_RESULT LLC_dl_data_cfm_CallbackRegister(LLC_DL_DATA_CONFIRM_CALLBACK callback);
-
 
 // *****************************************************************************
 /* Function:
@@ -725,9 +733,44 @@ LLC_RESULT LLC_dl_data_cfm_CallbackRegister(LLC_DL_DATA_CONFIRM_CALLBACK callbac
     </code>
 
 */
-
 LLC_RESULT LLC_dl_event_ind_CallbackRegister(LLC_DL_EVENT_IND_CALLBACK callback);
 
+// *****************************************************************************
+/* Function:
+    void LLC_dl_data_request(LLC_DL_DATA_REQUEST_PARAMS *drParams);
+
+  Summary:
+    LLC 4-32 Data request
+
+  Description:
+    Function that implements the LLC 4-32 DL_Data.request primitive
+
+  Precondition:
+    The low-level board initialization must have been completed and
+    the module's initialization function must have been called before
+    the system can call the tasks routine for any module.
+
+  Parameters:
+    drParams - Pointer to structure containing parameters related to DL_Data.request
+
+  Returns:
+    None.
+
+  Example:
+    <code>
+
+    LLC_DL_DATA_REQUEST_PARAMS drParams;
+    drParams.dsap = LLC_DSAP_APPLICATION_FRAME;
+    drParams.ecc = LLC_ECC_DISABLED;
+    drParams.lsdu = appPlcTxDataBuffer;
+    drParams.lsduLen = 10;
+    LLC_dl_data_request(&drParams);
+    </code>
+
+  Remarks:
+    None.
+*/
+void LLC_dl_data_request(LLC_DL_DATA_REQUEST_PARAMS *drParams);
 
 // *****************************************************************************
 /* Function:
@@ -772,6 +815,7 @@ LLC_RESULT LLC_dl_event_ind_CallbackRegister(LLC_DL_EVENT_IND_CALLBACK callback)
 */
 LLC_STATUS LLC_GetStatus(void);
 
+// *****************************************************************************
 /* Function:
     SYS_MODULE_OBJ LLC_Tasks (SYS_MODULE_OBJ object);
 

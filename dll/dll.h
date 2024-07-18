@@ -311,18 +311,18 @@ typedef enum
 } MAC_EVENT_ID;
 
 // *****************************************************************************
-/* MAC Event Values
+/* MAC Event Struct
 
    Summary:
-    Identifies the possible MAC Event values.
+    Contains fields defining a MAC Event
 
    Description:
-    This enumeration identifies the possible MAC Event values.
+    Contains fields of a MAC Event, its length and value itself.
 
    Remarks:
     None.
 */
-typedef enum
+typedef struct
 {
     uint8_t length;
     uint8_t value[MAC_EVENT_VALUE_MAX_LENGTH];

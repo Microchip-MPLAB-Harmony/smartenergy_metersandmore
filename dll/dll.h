@@ -758,12 +758,18 @@ LLC_RESULT LLC_dl_event_ind_CallbackRegister(LLC_DL_EVENT_IND_CALLBACK callback)
 
   Example:
     <code>
-
     LLC_DL_DATA_REQUEST_PARAMS drParams;
+    ROUTING_ENTRY addr;
+
     drParams.dsap = LLC_DSAP_APPLICATION_FRAME;
     drParams.ecc = LLC_ECC_DISABLED;
     drParams.lsdu = appPlcTxDataBuffer;
+    drParams.service_class = SERVICE_CLASS_RA;
+    drParams.dstAddress = addr;
+    drParams.max_resp_len = 128;
+    drParams.t_slot_num = 8;
     drParams.lsduLen = 10;
+
     LLC_dl_data_request(&drParams);
     </code>
 
@@ -771,6 +777,55 @@ LLC_RESULT LLC_dl_event_ind_CallbackRegister(LLC_DL_EVENT_IND_CALLBACK callback)
     None.
 */
 void LLC_dl_data_request(LLC_DL_DATA_REQUEST_PARAMS *drParams);
+
+// *****************************************************************************
+/* Function:
+    uint32_t DLL_GetTxTimeout(void);
+
+  Summary:
+    Gets the timeout that Upper Layer has to wait after a Data Request,
+    according to previous Data Request info
+
+  Description:
+    This function returns the timeout that Upper Layer has to wait after issuing
+    a Data Request before allowing further transmission.
+    Function is implemented inside DLL layer, as it has all the information needed
+    to perform the calculations.
+
+  Precondition:
+    DLL_DataRequest has to be called before calling this function, so DLL has the
+    correct parameters information before performing the calculation.
+
+  Parameters:
+    None
+
+  Returns:
+    Timeout, in microseconds.
+
+  Example:
+    <code>
+    LLC_DL_DATA_REQUEST_PARAMS drParams;
+    ROUTING_ENTRY addr;
+    uint32_t responseWaitTimeout;
+
+    drParams.dsap = LLC_DSAP_APPLICATION_FRAME;
+    drParams.ecc = LLC_ECC_DISABLED;
+    drParams.lsdu = appPlcTxDataBuffer;
+    drParams.service_class = SERVICE_CLASS_RA;
+    drParams.dstAddress = addr;
+    drParams.max_resp_len = 128;
+    drParams.t_slot_num = 8;
+    drParams.lsduLen = 10;
+
+    LLC_dl_data_request(&drParams);
+
+    responseWaitTimeout = DLL_GetTxTimeout();
+    </code>
+
+  Remarks:
+    None.
+*/
+uint32_t DLL_GetTxTimeout(void);
 
 // *****************************************************************************
 /* Function:

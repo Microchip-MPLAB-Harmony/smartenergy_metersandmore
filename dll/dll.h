@@ -259,7 +259,6 @@ typedef struct
 */
 typedef enum
 {
-    MAC_ROUTING_TABLE_IB = 0x200,
     MAC_ACA_ADDRESS_IB = 0x201,
     MAC_SCA_ADDRESS_IB = 0x202,
     MAC_BAUDRATE_IB = 0x203,

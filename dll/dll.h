@@ -1,5 +1,5 @@
 /*******************************************************************************
-  Interface definition of Meters&More DLL (Data Link Layer) driver.
+  Interface definition of Meters&More DLL (Data Link Layer) module.
 
   Company:
     Microchip Technology Inc.
@@ -8,11 +8,11 @@
     dll.h
 
   Summary:
-    Interface definition of Meters&More DLL (Data Link Layer) driver.
+    Interface definition of Meters&More DLL (Data Link Layer) module.
 
   Description:
     This file defines the interface for the Meters&More DLL (Data Link Layer)
-    driver.
+    module.
 *******************************************************************************/
 
 //DOM-IGNORE-BEGIN
@@ -87,45 +87,45 @@ Microchip or any third party.
 #define MAC_EVENT_VALUE_MAX_LENGTH  (MAC_ADDRESS_SIZE)
 
 // *****************************************************************************
-/* Meters&More LLC Driver Result
+/* Meters&More DLL module Result
 
   Summary:
-    Result of a Meters&More LLC driver interface operation.
+    Result of a Meters&More DLL module interface operation.
 
   Description:
-    Identifies the result of certain Meters&More LLC driver operations.
+    Identifies the result of certain Meters&More DLL module operations.
 */
 typedef enum
 {
-    LLC_SUCCESS,
-    LLC_ERROR
-} LLC_RESULT;
+    DLL_SUCCESS,
+    DLL_ERROR
+} DLL_RESULT;
 
 
 // *****************************************************************************
-/* LLC Driver Status
+/* DLL module Status
 
   Summary:
-    Defines the status of the LLC driver.
+    Defines the status of the DLL module.
 
   Description:
-    This enumeration defines the status of the LLC Driver:
-        - LLC_STATUS_UNINITIALIZED: LLC driver has not been initialized.
-        - LLC_STATUS_READY: LLC driver is ready to be used.
+    This enumeration defines the status of the DLL module:
+        - DLL_STATUS_UNINITIALIZED: DLL module has not been initialized.
+        - DLL_STATUS_READY: DLL module is ready to be used.
   Remarks:
     None.
 */
 typedef enum
 {
-    LLC_STATUS_UNINITIALIZED = SYS_STATUS_UNINITIALIZED,
-    LLC_STATUS_READY = SYS_STATUS_READY,
-} LLC_STATUS;
+    DLL_STATUS_UNINITIALIZED = SYS_STATUS_UNINITIALIZED,
+    DLL_STATUS_READY = SYS_STATUS_READY,
+} DLL_STATUS;
 
 // *****************************************************************************
 /* DSAP definition
 
    Summary:
-    DSAP (Destination Service Access Point) values for Meters&More LLC layer.
+    DSAP (Destination Service Access Point) values for Meters&More DLL layer.
 
    Description:
     This enumeration identifies the possible DSAP values
@@ -137,15 +137,15 @@ typedef enum
 */
 typedef enum
 {
-    LLC_DSAP_APPLICATION_FRAME  = 0x0,
-    LLC_DSAP_NETWORK_MANAGEMENT = 0x1
-} LLC_DSAP;
+    DLL_DSAP_APPLICATION_FRAME  = 0x00,
+    DLL_DSAP_NETWORK_MANAGEMENT = 0x01
+} DLL_DSAP;
 
 // *****************************************************************************
 /* ECC definition
 
    Summary:
-    ECC (Encryption Coding Control) values for Meters&More LLC layer.
+    ECC (Encryption Coding Control) values for Meters&More DLL layer.
 
    Description:
     This enumeration identifies the possible ECC values
@@ -158,8 +158,8 @@ typedef enum
 */
 typedef enum
 {
-    LLC_ECC_DISABLED = 0x0,
-} LLC_ECC;
+    DLL_ECC_DISABLED = 0x00,
+} DLL_ECC;
 
 // *****************************************************************************
 /* Service Class definition
@@ -189,7 +189,7 @@ typedef enum
 /* Tx Status definition
 
    Summary:
-    Transmission results defined in LLC layer.
+    Transmission results defined in DLL layer.
 
    Description:
     This enumeration identifies the possible Transmission result values
@@ -201,9 +201,9 @@ typedef enum
 */
 typedef enum
 {
-    LLC_TX_STATUS_SUCCESS = 0x00,
-    LLC_TX_STATUS_ERROR   = 0x01
-} LLC_TX_STATUS;
+    DLL_TX_STATUS_SUCCESS = 0x00,
+    DLL_TX_STATUS_ERROR   = 0x01
+} DLL_TX_STATUS;
 
 // *****************************************************************************
 /* MAC Address definition
@@ -234,7 +234,7 @@ typedef struct
     This table contains a route to every node in the Network.
 
    Remarks:
-    A Routing Table Entry is pased to LLC in DL_Data.request, containing
+    A Routing Table Entry is pased to DLL in DLL_DataRequest, containing
     the destination address and the ordered list of the addresses of the
     involved repeaters.
 */
@@ -329,10 +329,10 @@ typedef enum
 } MAC_EVENT_VALUE;
 
 // *****************************************************************************
-/* Meters&More LLC 4-32 Data request struct
+/* Meters&More DLL 4-32 Data request struct
 
   Summary:
-    This struct includes LLC 4-32 DL_Data.request
+    This struct includes DLL 4-32 DL_Data.request
 
   Remarks:
     None.
@@ -342,27 +342,27 @@ typedef struct
   /* Pointer to the data to be sent (max length: MAX_LENGTH_432_DATA) */
   uint8_t *lsdu;
   /* Destination LSAP */
-  LLC_DSAP dsap;
+  DLL_DSAP dsap;
   /* ECC (Encryption Coding Control) */
-  LLC_ECC ecc;
+  DLL_ECC ecc;
   /* Service class - MASTER ONLY */
-  SERVICE_CLASS service_class;
+  SERVICE_CLASS serviceClass;
   /* Destination route - MASTER ONLY */
   ROUTING_ENTRY dstAddress;
   /* Max length of the response - MASTER ONLY */
-  uint16_t max_resp_len;
+  uint16_t maxResponseLen;
   /* Number of time slots alocated in data request with Service_Class RC - MASTER ONLY */
-  uint16_t t_slot_num ;
+  uint16_t timeSlotNum ;
   /* Length of the data */
   uint16_t lsduLen;
-} LLC_DL_DATA_REQUEST_PARAMS;
+} DLL_DATA_REQUEST_PARAMS;
 
 
 // *****************************************************************************
-/* Meters&More LLC 4-32 DL_Data.indication struct
+/* Meters&More DLL 4-32 Data Indication struct
 
   Summary:
-    This struct includes LLC 4-32 Data indication
+    This struct includes DLL 4-32 Data indication
 
   Remarks:
     None.
@@ -370,22 +370,22 @@ typedef struct
 typedef struct
 {
   /* Destination LSAP */
-  LLC_DSAP dsap;
+  DLL_DSAP dsap;
   /* ECC (Encryption Coding Control) */
-  LLC_ECC ecc;
+  DLL_ECC ecc;
   /* Source address */
   MAC_ADDRESS srcAddress;
   /* Pointer to received data (max length: MAX_LENGTH_432_DATA)*/
   uint8_t *lsdu;
   /* Length of the data */
   uint16_t lsduLen;
-} LLC_DL_DATA_IND_PARAMS;
+} DLL_DATA_IND_PARAMS;
 
 // *****************************************************************************
-/* Meters&More LLC 4-32 DL_Data.confirm struct
+/* Meters&More DLL 4-32 Data Confirm struct
 
   Summary:
-    This struct includes LLC 4-32 Data confirm
+    This struct includes DLL 4-32 Data onfirm
 
   Remarks:
     None.
@@ -393,20 +393,20 @@ typedef struct
 typedef struct
 {
     /* Destination LSAP */
-    LLC_DSAP dsap;
+    DLL_DSAP dsap;
     /* ECC (Encryption Coding Control) */
-    LLC_ECC ecc;
+    DLL_ECC ecc;
     /* Destination address */
     MAC_ADDRESS dstAddress;
     /* Tx status */
-    LLC_TX_STATUS txStatus;
-} LLC_DL_DATA_CONFIRM_PARAMS;
+    DLL_TX_STATUS txStatus;
+} DLL_DATA_CONFIRM_PARAMS;
 
 // *****************************************************************************
-/* Meters&More LLC 4-32 DL_Event.indication struct
+/* Meters&More DLL 4-32 Event Indication struct
 
   Summary:
-    This struct includes LLC 4-32 Event indication
+    This struct includes DLL 4-32 Event indication
 
   Remarks:
     None.
@@ -417,13 +417,13 @@ typedef struct
     MAC_EVENT_ID eventId;
     /* First additional information */
     MAC_EVENT_VALUE eventValue;
-} LLC_DL_EVENT_IND_PARAMS;
+} DLL_EVENT_IND_PARAMS;
 
 // *****************************************************************************
-/* Meters&More LLC Driver Initialization Data
+/* Meters&More DLL module Initialization Data
 
   Summary:
-    Defines the data required to initialize the Meters&More LLC driver
+    Defines the data required to initialize the Meters&More DLL module
 
   Description:
 
@@ -433,7 +433,7 @@ typedef struct
 */
 typedef struct
 {
-  /* LLC repeats */
+  /* DLL repeats */
   uint8_t repeats;
 
   /* ADP task rate in milliseconds */
@@ -441,21 +441,21 @@ typedef struct
 
   /* Is master node (false in slave node) */
   bool isMaster;
-} LLC_INIT;
+} DLL_INIT;
 
 // *****************************************************************************
-/* Meters&More LLC 4-32 Driver DL_Data.indication Function Pointer
+/* Meters&More DLL 4-32 module Data Indication Function Pointer
 
   Summary:
-    Pointer to a Meters&More LLC 4-32 Driver DL_Data.indication Function Pointer.
+    Pointer to a Meters&More DLL 4-32 module DL_Data.indication Function Pointer.
 
   Description:
-    This data type defines the required function signature for the Meters&More LLC 4-32
-    driver DL_Data.indication callback function. A client must
+    This data type defines the required function signature for the Meters&More DLL 4-32
+    module DL_Data.indication callback function. A client must
     register a pointer using the callback register function whose function
     signature (parameter and return value types) match the types specified by
     this function pointer in order to receive transfer related event calls back
-    from the driver.
+    from the module.
 
     The parameters and return values are described here and a partial example
     implementation is provided.
@@ -469,7 +469,7 @@ typedef struct
 
   Example:
     <code>
-    void APP_MyDataIndEventHandler( LLC_DL_DATA_IND_PARAMS *indParams )
+    void APP_MyDataIndEventHandler( DLL_DATA_IND_PARAMS *indParams )
     {
         if(indParams->lsduLen > 0)
         {
@@ -478,21 +478,21 @@ typedef struct
     }
     </code>
 */
-typedef void ( *LLC_DL_DATA_IND_CALLBACK )( LLC_DL_DATA_IND_PARAMS *indParams );
+typedef void ( *DLL_DATA_IND_CALLBACK )( DLL_DATA_IND_PARAMS *indParams );
 
 // *****************************************************************************
-/* Meters&More LLC 4-32 Driver DL_Data.indication Function Pointer
+/* Meters&More DLL 4-32 module Data Confirm Function Pointer
 
   Summary:
-    Pointer to a Meters&More LLC 4-32 Driver DL_Data.indication Function Pointer.
+    Pointer to a Meters&More DLL 4-32 module Data Confirmn Function Pointer.
 
   Description:
-    This data type defines the required function signature for the Meters&More LLC 4-32
-    driver DL_Data.indication callback function. A client must
+    This data type defines the required function signature for the Meters&More DLL 4-32
+    module Data Confirm callback function. A client must
     register a pointer using the callback register function whose function
     signature (parameter and return value types) match the types specified by
     this function pointer in order to receive transfer related event calls back
-    from the driver.
+    from the module.
 
     The parameters and return values are described here and a partial example
     implementation is provided.
@@ -506,55 +506,55 @@ typedef void ( *LLC_DL_DATA_IND_CALLBACK )( LLC_DL_DATA_IND_PARAMS *indParams );
 
   Example:
     <code>
-    void APP_MyDataCfmEventHandler( LLC_DL_DATA_CONFIRM_PARAMS *cfmParams )
+    void APP_MyDataCfmEventHandler( DLL_DATA_CONFIRM_PARAMS *cfmParams )
     {
         switch(cfmParams->uc_tx_status)
         {
-            case LLC_TX_STATUS_SUCCESS:
+            case DLL_TX_STATUS_SUCCESS:
                 break;
-            case LLC_TX_STATUS_ERROR:
+            case DLL_TX_STATUS_ERROR:
                 break;
         }
     }
     </code>
 
   Remarks:
-    - If the status field is LLC_TX_STATUS_SUCCESS, it means that the data was
+    - If the status field is DLL_TX_STATUS_SUCCESS, it means that the data was
       transferred successfully.
 
     - Otherwise, it means that the data was not transferred successfully.
 
 */
-typedef void ( *LLC_DL_DATA_CONFIRM_CALLBACK )( LLC_DL_DATA_CONFIRM_PARAMS *cfmParams );
+typedef void ( *DLL_DATA_CONFIRM_CALLBACK )( DLL_DATA_CONFIRM_PARAMS *cfmParams );
 
 
 // *****************************************************************************
-/* Meters&More LLC 4-32 Driver DL_Event.indication Function Pointer
+/* Meters&More DLL 4-32 module Event Indication Function Pointer
 
   Summary:
-    Pointer to a Meters&More LLC 4-32 Driver DL_Event.indication Function Pointer.
+    Pointer to a Meters&More DLL 4-32 module Event Indication Function Pointer.
 
   Description:
-    This data type defines the required function signature for the Meters&More LLC 4-32
-    driver DL_Event.indication callback function. A client must
+    This data type defines the required function signature for the Meters&More DLL 4-32
+    module Event Indication callback function. A client must
     register a pointer using the callback register function whose function
     signature (parameter and return value types) match the types specified by
     this function pointer in order to receive transfer related event calls back
-    from the driver.
+    from the module.
 
     The parameters and return values are described here and a partial example
     implementation is provided.
 
   Parameters:
     indParams - Pointer to the object containing any data necessary to process the
-             DL_Event.indication primitive.
+             Event Indication primitive.
 
   Returns:
     None.
 
   Example:
     <code>
-    void APP_MyEventIndEventHandler( LLC_DL_EVENT_IND_PARAMS *indParams )
+    void APP_MyEventIndEventHandler( DLL_EVENT_IND_PARAMS *indParams )
     {
         if (indParams->lsduLen > 0){
 
@@ -562,31 +562,31 @@ typedef void ( *LLC_DL_DATA_CONFIRM_CALLBACK )( LLC_DL_DATA_CONFIRM_PARAMS *cfmP
     }
     </code>
 */
-typedef void ( *LLC_DL_EVENT_IND_CALLBACK )( LLC_DL_EVENT_IND_PARAMS *indParams );
+typedef void ( *DLL_EVENT_IND_CALLBACK )( DLL_EVENT_IND_PARAMS *indParams );
 
 
 // *****************************************************************************
 
 // *****************************************************************************
 // *****************************************************************************
-// Section: Driver System Interface Routines
+// Section: Interface Routines
 // *****************************************************************************
 // *****************************************************************************
 
 // *****************************************************************************
 /* Function:
-    SYS_MODULE_OBJ LLC_Initialize (
+    SYS_MODULE_OBJ DLL_Initialize (
       const SYS_MODULE_INDEX index,
       const SYS_MODULE_INIT * const init
     );
 
   Summary:
-    Initializes the Meters&More LLC driver according to the init parameter and the cause of the reset of the main processor.
+    Initializes the Meters&More DLL module according to the init parameter and the cause of the reset of the main processor.
 
   Description:
-    This routine initializes the Meters&More LLC driver making it ready for clients to open and use.
+    This routine initializes the Meters&More DLL module making it ready for clients to open and use.
     The initialization data is specified by the init parameter.
-    It is a single instance driver.
+    It is a single instance module.
 
   Precondition:
     The low-level processor and board initialization must be completed before the
@@ -594,44 +594,44 @@ typedef void ( *LLC_DL_EVENT_IND_CALLBACK )( LLC_DL_EVENT_IND_PARAMS *indParams 
 
   Parameters:
     index - Identifier for the instance to be initialized (single instance allowed)
-    init  - Pointer to the init data structure containing any data necessary to initialize the driver.
+    init  - Pointer to the init data structure containing any data necessary to initialize the module.
     resetCause - Reset cause of the main processor.
 
   Returns:
-    If successful, returns a valid handle to a driver instance object.
+    If successful, returns a valid handle to a module instance object.
     Otherwise, it returns SYS_MODULE_OBJ_INVALID.
 
   Example:
     <code>
     SYS_MODULE_OBJ   sysObjMetersandmore;
 
-    LLC_INIT llcInitData = {
+    DLL_INIT dllInitData = {
         .taskRateMs = 1U
     };
 
-    sysObjMetersandmore = LLC_Initialize((SYS_MODULE_INIT *)&llcInitData);
+    sysObjMetersandmore = DLL_Initialize((SYS_MODULE_INIT *)&dllInitData);
     </code>
 
   Remarks:
-    This routine must be called before any other LLC routine is called.
+    This routine must be called before any other DLL routine is called.
 */
-SYS_MODULE_OBJ LLC_Initialize(const SYS_MODULE_INDEX index, const SYS_MODULE_INIT * const init);
+SYS_MODULE_OBJ DLL_Initialize(const SYS_MODULE_INDEX index, const SYS_MODULE_INIT * const init);
 
 
 // *****************************************************************************
 /* Function:
-    LLC_RESULT LLC_dl_data_ind_CallbackRegister(LLC_DL_DATA_IND_CALLBACK callback);
+    DLL_RESULT DLL_DataIndicationCallbackRegister(DLL_DATA_IND_CALLBACK callback);
 
   Summary:
-    Allows a client to set a Meters&More LLC 4-32 DL_Data.indication event handling function
-    for the driver to call back when the requested transmission has finished.
+    Allows a client to set a Meters&More DLL 4-32 DL_Data.indication event handling function
+    for the module to call back when the requested transmission has finished.
 
   Description:
-    This function allows a client to register a Meters&More LLC 4-32 DL_Data.indication event
-    handling function for the driver to call back when a Meters&More LLC data indication event
+    This function allows a client to register a Meters&More DLL 4-32 DL_Data.indication event
+    handling function for the module to call back when a Meters&More DLL data indication event
     occurs.
 
-    The callback once set, persists until the client closes the driver or sets another callback
+    The callback once set, persists until the client closes the module or sets another callback
     (which could be a "NULL" pointer to indicate no callback).
 
   Parameters:
@@ -642,33 +642,33 @@ SYS_MODULE_OBJ LLC_Initialize(const SYS_MODULE_INDEX index, const SYS_MODULE_INI
 
   Example:
     <code>
-    void APP_Rx_Ind_callback(LLC_DL_DATA_IND_PARAMS *indParams)
+    void APP_Rx_Ind_callback(DLL_DATA_IND_PARAMS *indParams)
     {
         if (indParams->lsduLen > 0){
 
         }
     }
 
-    LLC_dl_data_ind_CallbackRegister( APP_Rx_Ind_callback );
+    DLL_DataIndicationCallbackRegister( APP_Rx_Ind_callback );
     </code>
 
 */
-LLC_RESULT LLC_dl_data_ind_CallbackRegister(LLC_DL_DATA_IND_CALLBACK callback);
+DLL_RESULT DLL_DataIndicationCallbackRegister(DLL_DATA_IND_CALLBACK callback);
 
 // *****************************************************************************
 /* Function:
-    LLC_RESULT LLC_dl_data_cfm_CallbackRegister(LLC_DL_DATA_CONFIRM_CALLBACK callback);
+    DLL_RESULT DLL_DataConfirmCallbackRegister(DLL_DATA_CONFIRM_CALLBACK callback);
 
   Summary:
-    Allows a client to set a Meters&More LLC 4-32 DL_Data.confirm event handling function
-    for the driver to call back when the requested transmission has finished.
+    Allows a client to set a Meters&More DLL 4-32 DL_Data.confirm event handling function
+    for the module to call back when the requested transmission has finished.
 
   Description:
-    This function allows a client to register a Meters&More LLC 4-32 DL_Data.confirm event
-    handling function for the driver to call back when a Meters&More LLC data confirm event
+    This function allows a client to register a Meters&More DLL 4-32 DL_Data.confirm event
+    handling function for the module to call back when a Meters&More DLL data confirm event
     occurs.
 
-    The callback once set, persists until the client closes the driver or sets another callback
+    The callback once set, persists until the client closes the module or sets another callback
     (which could be a "NULL" pointer to indicate no callback).
 
   Parameters:
@@ -679,9 +679,9 @@ LLC_RESULT LLC_dl_data_ind_CallbackRegister(LLC_DL_DATA_IND_CALLBACK callback);
 
   Example:
     <code>
-    void APP_Tx_Cfm_callback(LLC_DL_DATA_CONFIRM_PARAMS *cfmParams)
+    void APP_Tx_Cfm_callback(DLL_DATA_CONFIRM_PARAMS *cfmParams)
     {
-        if (cfmParams->result == LLC_SUCCESS)
+        if (cfmParams->result == DLL_SUCCESS)
         {
 
         }
@@ -691,26 +691,26 @@ LLC_RESULT LLC_dl_data_ind_CallbackRegister(LLC_DL_DATA_IND_CALLBACK callback);
         }
     }
 
-    LLC_dl_data_cfm_CallbackRegister( APP_Tx_Cfm_callback );
+    DLL_DataConfirmCallbackRegister( APP_Tx_Cfm_callback );
 
     </code>
 
 */
-LLC_RESULT LLC_dl_data_cfm_CallbackRegister(LLC_DL_DATA_CONFIRM_CALLBACK callback);
+DLL_RESULT DLL_DataConfirmCallbackRegister(DLL_DATA_CONFIRM_CALLBACK callback);
 
 // *****************************************************************************
 /* Function:
-    LLC_RESULT LLC_dl_event_ind_CallbackRegister(LLC_DL_EVENT_IND_CALLBACK callback);
+    DLL_RESULT DLL_EventIndicationCallbackRegister(DLL_EVENT_IND_CALLBACK callback);
 
   Summary:
-    Allows a client to set a Meters&More LLC 4-32 DL_Event.indication event handling function
-    for the driver to call back when DLL generates a new event.
+    Allows a client to set a Meters&More DLL 4-32 DL_Event.indication event handling function
+    for the module to call back when DLL generates a new event.
 
   Description:
-    This function allows a client to register a Meters&More LLC 4-32 DL_Event.indication event
-    handling function for the driver to call back when a Meters&More LLC event occurs.
+    This function allows a client to register a Meters&More DLL 4-32 DL_Event.indication event
+    handling function for the module to call back when a Meters&More DLL event occurs.
 
-    The callback once set, persists until the client closes the driver or sets another callback
+    The callback once set, persists until the client closes the module or sets another callback
     (which could be a "NULL" pointer to indicate no callback).
 
   Parameters:
@@ -721,28 +721,28 @@ LLC_RESULT LLC_dl_data_cfm_CallbackRegister(LLC_DL_DATA_CONFIRM_CALLBACK callbac
 
   Example:
     <code>
-    void APP_Event_Ind_callback(LLC_DL_EVENT_IND_CALLBACK *indParams)
+    void APP_Event_Ind_callback(DLL_EVENT_IND_CALLBACK *indParams)
     {
         if (indParams->lsduLen > 0){
 
         }
     }
 
-    LLC_dl_event_ind_CallbackRegister( APP_Event_Ind_callback );
+    DLL_EventIndicationCallbackRegister( APP_Event_Ind_callback );
     </code>
 
 */
-LLC_RESULT LLC_dl_event_ind_CallbackRegister(LLC_DL_EVENT_IND_CALLBACK callback);
+DLL_RESULT DLL_EventIndicationCallbackRegister(DLL_EVENT_IND_CALLBACK callback);
 
 // *****************************************************************************
 /* Function:
-    void LLC_dl_data_request(LLC_DL_DATA_REQUEST_PARAMS *drParams);
+    void DLL_DataRequest(DLL_DATA_REQUEST_PARAMS *drParams);
 
   Summary:
-    LLC 4-32 Data request
+    DLL 4-32 Data request
 
   Description:
-    Function that implements the LLC 4-32 DL_Data.request primitive
+    Function that implements the DLL 4-32 DL_Data.request primitive
 
   Precondition:
     The low-level board initialization must have been completed and
@@ -757,25 +757,25 @@ LLC_RESULT LLC_dl_event_ind_CallbackRegister(LLC_DL_EVENT_IND_CALLBACK callback)
 
   Example:
     <code>
-    LLC_DL_DATA_REQUEST_PARAMS drParams;
+    DLL_DATA_REQUEST_PARAMS drParams;
     ROUTING_ENTRY addr;
 
-    drParams.dsap = LLC_DSAP_APPLICATION_FRAME;
-    drParams.ecc = LLC_ECC_DISABLED;
+    drParams.dsap = DLL_DSAP_APPLICATION_FRAME;
+    drParams.ecc = DLL_ECC_DISABLED;
     drParams.lsdu = appPlcTxDataBuffer;
-    drParams.service_class = SERVICE_CLASS_RA;
+    drParams.serviceClass = SERVICE_CLASS_RA;
     drParams.dstAddress = addr;
-    drParams.max_resp_len = 128;
-    drParams.t_slot_num = 8;
+    drParams.maxResponseLen = 128;
+    drParams.timeSlotNum = 8;
     drParams.lsduLen = 10;
 
-    LLC_dl_data_request(&drParams);
+    DLL_DataRequest(&drParams);
     </code>
 
   Remarks:
     None.
 */
-void LLC_dl_data_request(LLC_DL_DATA_REQUEST_PARAMS *drParams);
+void DLL_DataRequest(DLL_DATA_REQUEST_PARAMS *drParams);
 
 // *****************************************************************************
 /* Function:
@@ -803,20 +803,20 @@ void LLC_dl_data_request(LLC_DL_DATA_REQUEST_PARAMS *drParams);
 
   Example:
     <code>
-    LLC_DL_DATA_REQUEST_PARAMS drParams;
+    DLL_DATA_REQUEST_PARAMS drParams;
     ROUTING_ENTRY addr;
     uint32_t responseWaitTimeout;
 
-    drParams.dsap = LLC_DSAP_APPLICATION_FRAME;
-    drParams.ecc = LLC_ECC_DISABLED;
+    drParams.dsap = DLL_DSAP_APPLICATION_FRAME;
+    drParams.ecc = DLL_ECC_DISABLED;
     drParams.lsdu = appPlcTxDataBuffer;
-    drParams.service_class = SERVICE_CLASS_RA;
+    drParams.serviceClass = SERVICE_CLASS_RA;
     drParams.dstAddress = addr;
-    drParams.max_resp_len = 128;
-    drParams.t_slot_num = 8;
+    drParams.maxResponseLen = 128;
+    drParams.timeSlotNum = 8;
     drParams.lsduLen = 10;
 
-    LLC_dl_data_request(&drParams);
+    DLL_DataRequest(&drParams);
 
     responseWaitTimeout = DLL_GetTxTimeout();
     </code>
@@ -828,19 +828,19 @@ uint32_t DLL_GetTxTimeout(void);
 
 // *****************************************************************************
 /* Function:
-    LLC_STATUS LLC_GetStatus(void);
+    DLL_STATUS DLL_GetStatus(void);
 
   Summary:
-    Get the status of the LLC driver.
+    Get the status of the DLL module.
 
   Description:
-    LLC function status:
-        - LLC_STATUS_UNINITIALIZED: LLC driver has not been initialized.
-        - LLC_STATUS_IDLE: LLC library is idle.
+    DLL function status:
+        - DLL_STATUS_UNINITIALIZED: DLL module has not been initialized.
+        - DLL_STATUS_IDLE: DLL module is idle.
         acquisition is performed.
 
-    These status values are closely related to the Meters&Mores LLC library states.
-    For further information about the Meters&Mores LLC library state diagram, refer to online documentation.
+    These status values are closely related to the Meters&Mores DLL module states.
+    For further information about the Meters&Mores DLL module state diagram, refer to online documentation.
 
   Precondition:
     None.
@@ -849,15 +849,15 @@ uint32_t DLL_GetTxTimeout(void);
     None.
 
   Returns:
-    Returns the status of the Meters&Mores LLC driver.
+    Returns the status of the Meters&Mores DLL module.
 
   Example:
     <code>
-        case APP_LLC_STATE_START:
+        case APP_DLL_STATE_START:
         {
-            if (LLC_GetStatus() == LLC_STATUS_READY)
+            if (DLL_GetStatus() == DLL_STATUS_READY)
             {
-              app_LLCData.state = APP_LLC_STATE_RUNNING;
+              app_DLLData.state = APP_DLL_STATE_RUNNING;
             }
 
             break;
@@ -867,19 +867,19 @@ uint32_t DLL_GetTxTimeout(void);
   Remarks:
     None.
 */
-LLC_STATUS LLC_GetStatus(void);
+DLL_STATUS DLL_GetStatus(void);
 
 // *****************************************************************************
 /* Function:
-    SYS_MODULE_OBJ LLC_Tasks (SYS_MODULE_OBJ object);
+    SYS_MODULE_OBJ DLL_Tasks (SYS_MODULE_OBJ object);
 
   Summary:
     Routine that performs the tasks necessary to maintain a state machine in
-    the Meters&Mores LLC driver.
+    the Meters&Mores DLL module.
 
   Description:
     Routine that performs the tasks necessary to maintain a state machine in
-    the Meters&Mores LLC driver.
+    the Meters&Mores DLL module.
 
   Precondition:
     The low-level board initialization must have been completed and
@@ -895,17 +895,17 @@ LLC_STATUS LLC_GetStatus(void);
   Example:
     <code>
 
-    LLC_Tasks(sysObj.metersandmore);
+    DLL_Tasks(sysObj.metersandmore);
     </code>
 
   Remarks:
     None.
 */
-void LLC_Tasks(SYS_MODULE_OBJ object);
+void DLL_Tasks(SYS_MODULE_OBJ object);
 
 // *****************************************************************************
 /* Function:
-    LLC_RESULT DLL_GetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, DLL_IB_VALUE *ibValue)
+    DLL_RESULT DLL_GetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, DLL_IB_VALUE *ibValue)
 
   Summary:
     The DLL_GetRequest primitive gets the value of an attribute in the
@@ -927,14 +927,14 @@ void LLC_Tasks(SYS_MODULE_OBJ object);
     ibValue - Pointer to DLL_IB_VALUE object where value will be returned
 
   Returns:
-    Result of get operation as an LLC_RESULT code.
+    Result of get operation as an DLL_RESULT code.
 
   Example:
     <code>
-    LLC_RESULT result;
+    DLL_RESULT result;
     DLL_IB_VALUE value;
     result = DLL_GetRequest(LLC_NUM_RETRIES_IB, 0, &value);
-    if (result == LLC_RESULT_SUCCESS)
+    if (result == DLL_RESULT_SUCCESS)
     {
 
     }
@@ -943,11 +943,11 @@ void LLC_Tasks(SYS_MODULE_OBJ object);
   Remarks:
     None.
 */
-LLC_RESULT DLL_GetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, DLL_IB_VALUE *ibValue);
+DLL_RESULT DLL_GetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, DLL_IB_VALUE *ibValue);
 
 // *****************************************************************************
 /* Function:
-    LLC_RESULT DLL_SetRequest(LL_IB_ATTRIBUTE attribute, uint16_t index, const DLL_IB_VALUE *ibValue)
+    DLL_RESULT DLL_SetRequest(LL_IB_ATTRIBUTE attribute, uint16_t index, const DLL_IB_VALUE *ibValue)
 
   Summary:
     The DLL_SetRequest primitive sets the value of an attribute in the
@@ -970,18 +970,18 @@ LLC_RESULT DLL_GetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, DLL_IB_VAL
     ibValue - Pointer to DLL_IB_VALUE object where value is contained
 
   Returns:
-    Result of set operation as an LLC_RESULT code.
+    Result of set operation as an DLL_RESULT code.
 
   Example:
     <code>
-    LLC_RESULT result;
+    DLL_RESULT result;
     const DLL_IB_VALUE value = {
         .length = 1,
         .value = 6
     };
 
     result = DLL_SetRequest(LLC_NUM_RETRIES_IB, 0, &value);
-    if (result == LLC_RESULT_SUCCESS)
+    if (result == DLL_RESULT_SUCCESS)
     {
 
     }
@@ -990,7 +990,7 @@ LLC_RESULT DLL_GetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, DLL_IB_VAL
   Remarks:
     None.
 */
-LLC_RESULT DLL_SetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, const DLL_IB_VALUE *ibValue);
+DLL_RESULT DLL_SetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, const DLL_IB_VALUE *ibValue);
 
 #ifdef __cplusplus
  }

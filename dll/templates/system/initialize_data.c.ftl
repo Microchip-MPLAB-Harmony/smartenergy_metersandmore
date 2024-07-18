@@ -1,5 +1,5 @@
 /* Meters & More Initialization Data */
-static LLC_INIT llcInitData = {
+static DLL_INIT dllInitData = {
 
     .repeats = MM_STACK_LLC_REPEATS,
 

@@ -175,6 +175,12 @@ def instantiateComponent(mmDllComponent):
     mmDllSystemConfigFile.setSourcePath("dll/templates/system/configuration.h.ftl")
     mmDllSystemConfigFile.setMarkup(True)
 
+    mmDllSystemDefFile = mmDllComponent.createFileSymbol("METERSANDMORE_DLL_DEF_OBJ", None)
+    mmDllSystemDefFile.setType("STRING")
+    mmDllSystemDefFile.setOutputName("core.LIST_SYSTEM_DEFINITIONS_H_OBJECTS")
+    mmDllSystemDefFile.setSourcePath("dll/templates/system/definitions_objects.h.ftl")
+    mmDllSystemDefFile.setMarkup(True)
+
     mmDllSystemDefFile = mmDllComponent.createFileSymbol("METERSANDMORE_DLL_DEF", None)
     mmDllSystemDefFile.setType("STRING")
     mmDllSystemDefFile.setOutputName("core.LIST_SYSTEM_DEFINITIONS_H_INCLUDES")

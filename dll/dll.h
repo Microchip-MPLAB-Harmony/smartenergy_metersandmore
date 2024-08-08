@@ -1,5 +1,5 @@
 /*******************************************************************************
-  Interface definition of Meters&More DLL (Data Link Layer) module.
+  Interface definition of Meters And More DLL (Data Link Layer) module.
 
   Company:
     Microchip Technology Inc.
@@ -8,10 +8,10 @@
     dll.h
 
   Summary:
-    Interface definition of Meters&More DLL (Data Link Layer) module.
+    Interface definition of Meters And More DLL (Data Link Layer) module.
 
   Description:
-    This file defines the interface for the Meters&More DLL (Data Link Layer)
+    This file defines the interface for the Meters And More DLL (Data Link Layer)
     module.
 *******************************************************************************/
 
@@ -73,7 +73,7 @@ Microchip or any third party.
 
 /* Sizes */
 
-/* Max LSDU Data length according to Meters&More */
+/* Max LSDU Data length according to Meters And More */
 #define MAX_LENGTH_432_DATA         (128U)
 
 /* DLL object sizes */
@@ -87,13 +87,13 @@ Microchip or any third party.
 #define MAC_EVENT_VALUE_MAX_LENGTH  (MAC_ADDRESS_SIZE)
 
 // *****************************************************************************
-/* Meters&More DLL module Result
+/* Meters And More DLL module Result
 
   Summary:
-    Result of a Meters&More DLL module interface operation.
+    Result of a Meters And More DLL module interface operation.
 
   Description:
-    Identifies the result of certain Meters&More DLL module operations.
+    Lists the possible results of Meters And More DLL module operations.
 */
 typedef enum
 {
@@ -125,7 +125,7 @@ typedef enum
 /* DSAP definition
 
    Summary:
-    DSAP (Destination Service Access Point) values for Meters&More DLL layer.
+    DSAP (Destination Service Access Point) values for Meters And More DLL layer.
 
    Description:
     This enumeration identifies the possible DSAP values
@@ -145,7 +145,7 @@ typedef enum
 /* ECC definition
 
    Summary:
-    ECC (Encryption Coding Control) values for Meters&More DLL layer.
+    ECC (Encryption Coding Control) values for Meters And More DLL layer.
 
    Description:
     This enumeration identifies the possible ECC values
@@ -165,7 +165,8 @@ typedef enum
 /* Service Class definition
 
    Summary:
-    Identifies the possible MAC Service Class values.
+    Identifies the possible MAC Service Class values as defined in
+    Meters And More standard.
 
    Description:
     This enumeration identifies the possible MAC Service Class values
@@ -232,11 +233,13 @@ typedef struct
    Description:
     This structure contains the fields which define a Routing Table entry.
     This table contains a route to every node in the Network.
+    A Routing Table Entry is pased to DLL in DLL_DataRequest, containing
+    the ordered list of the addresses of involved repeaters up to final
+    destination.
 
    Remarks:
-    A Routing Table Entry is pased to DLL in DLL_DataRequest, containing
-    the destination address and the ordered list of the addresses of the
-    involved repeaters.
+    The Routing Table and the Route parameter on Data Request are only
+    present and used in Master Node.
 */
 typedef struct
 {
@@ -266,7 +269,6 @@ typedef enum
     MAC_TIME_ELABORATION_US_IB = 0x205,
     MAC_ADDITIONAL_DELAY_US_IB = 0x206,
     LLC_NUM_RETRIES_IB = 0x400,
-
 } DLL_IB_ATTRIBUTE;
 
 /* Masks to distinguish between layer attributes */
@@ -329,13 +331,17 @@ typedef struct
 } MAC_EVENT_VALUE;
 
 // *****************************************************************************
-/* Meters&More DLL 4-32 Data request struct
+/* Meters And More DLL Data request struct
 
   Summary:
-    This struct includes DLL 4-32 DL_Data.request
+    DLL Data Request Parameters Structure.
+
+   Description:
+    Contains fields which define the DLL Data Request input parameter.
 
   Remarks:
-    None.
+    Fields marked as Master Only are used in Master Node and ignored in
+    Slave Nodes.
 */
 typedef struct
 {
@@ -359,10 +365,14 @@ typedef struct
 
 
 // *****************************************************************************
-/* Meters&More DLL 4-32 Data Indication struct
+/* Meters And More DLL Data Indication struct
 
   Summary:
-    This struct includes DLL 4-32 Data indication
+    DLL Data Indication Parameters Structure.
+
+   Description:
+    Contains fields which define the information returned by the
+    DLL Data Indication Callback.
 
   Remarks:
     None.
@@ -382,10 +392,14 @@ typedef struct
 } DLL_DATA_IND_PARAMS;
 
 // *****************************************************************************
-/* Meters&More DLL 4-32 Data Confirm struct
+/* Meters And More DLL Data Confirm struct
 
   Summary:
-    This struct includes DLL 4-32 Data onfirm
+    DLL Data Confirm Parameters Structure.
+
+   Description:
+    Contains fields which define the information returned by the
+    DLL Data Confirm Callback.
 
   Remarks:
     None.
@@ -403,13 +417,17 @@ typedef struct
 } DLL_DATA_CONFIRM_PARAMS;
 
 // *****************************************************************************
-/* Meters&More DLL 4-32 Event Indication struct
+/* Meters And More DLL Event Indication struct
 
   Summary:
-    This struct includes DLL 4-32 Event indication
+    DLL Event Indication Parameters Structure.
+
+   Description:
+    Contains fields which define the information returned by the
+    DLL Event Indication Callback.
 
   Remarks:
-    None.
+    This Struct is only used in Master Node.
 */
 typedef struct
 {
@@ -420,13 +438,16 @@ typedef struct
 } DLL_EVENT_IND_PARAMS;
 
 // *****************************************************************************
-/* Meters&More DLL module Initialization Data
+/* Meters And More DLL module Initialization Data
 
   Summary:
-    Defines the data required to initialize the Meters&More DLL module
+    Defines the data required to initialize the Meters And More DLL module
 
   Description:
-
+    Contains fields which define the information required by DLL module upon
+    initialization:
+    - The rate at which associated task is executed
+    - The role of the Device, Master or Slave
 
   Remarks:
     None.
@@ -436,7 +457,7 @@ typedef struct
   /* DLL repeats */
   uint8_t repeats;
 
-  /* ADP task rate in milliseconds */
+  /* DLL task rate in milliseconds */
   uint8_t taskRateMs;
 
   /* Is master node (false in slave node) */
@@ -444,17 +465,17 @@ typedef struct
 } DLL_INIT;
 
 // *****************************************************************************
-/* Meters&More DLL 4-32 module Data Indication Function Pointer
+/* Meters And More DLL module Data Indication Function Pointer
 
   Summary:
-    Pointer to a Meters&More DLL 4-32 module DL_Data.indication Function Pointer.
+    Pointer to a Meters And More DLL module DL_Data.indication Function Pointer.
 
   Description:
-    This data type defines the required function signature for the Meters&More DLL 4-32
+    This data type defines the required function signature for the Meters And More DLL
     module DL_Data.indication callback function. A client must
     register a pointer using the callback register function whose function
     signature (parameter and return value types) match the types specified by
-    this function pointer in order to receive transfer related event calls back
+    this function pointer in order to receive related event callbacks
     from the module.
 
     The parameters and return values are described here and a partial example
@@ -481,25 +502,25 @@ typedef struct
 typedef void ( *DLL_DATA_IND_CALLBACK )( DLL_DATA_IND_PARAMS *indParams );
 
 // *****************************************************************************
-/* Meters&More DLL 4-32 module Data Confirm Function Pointer
+/* Meters And More DLL module Data Confirm Function Pointer
 
   Summary:
-    Pointer to a Meters&More DLL 4-32 module Data Confirmn Function Pointer.
+    Pointer to a Meters And More DLL module Data Confirmn Function Pointer.
 
   Description:
-    This data type defines the required function signature for the Meters&More DLL 4-32
+    This data type defines the required function signature for the Meters And More DLL
     module Data Confirm callback function. A client must
     register a pointer using the callback register function whose function
     signature (parameter and return value types) match the types specified by
-    this function pointer in order to receive transfer related event calls back
+    this function pointer in order to receive related event callbacks
     from the module.
 
     The parameters and return values are described here and a partial example
     implementation is provided.
 
   Parameters:
-    cfmParams - Pointer to the object containing any data necessary to identify the
-             result of the last transmission.
+    cfmParams - Pointer to the object containing data related to the
+             result of last transmission.
 
   Returns:
     None.
@@ -508,7 +529,7 @@ typedef void ( *DLL_DATA_IND_CALLBACK )( DLL_DATA_IND_PARAMS *indParams );
     <code>
     void APP_MyDataCfmEventHandler( DLL_DATA_CONFIRM_PARAMS *cfmParams )
     {
-        switch(cfmParams->uc_tx_status)
+        switch(cfmParams->txStatus)
         {
             case DLL_TX_STATUS_SUCCESS:
                 break;
@@ -529,17 +550,17 @@ typedef void ( *DLL_DATA_CONFIRM_CALLBACK )( DLL_DATA_CONFIRM_PARAMS *cfmParams 
 
 
 // *****************************************************************************
-/* Meters&More DLL 4-32 module Event Indication Function Pointer
+/* Meters And More DLL module Event Indication Function Pointer
 
   Summary:
-    Pointer to a Meters&More DLL 4-32 module Event Indication Function Pointer.
+    Pointer to a Meters And More DLL module Event Indication Function Pointer.
 
   Description:
-    This data type defines the required function signature for the Meters&More DLL 4-32
+    This data type defines the required function signature for the Meters And More DLL
     module Event Indication callback function. A client must
     register a pointer using the callback register function whose function
     signature (parameter and return value types) match the types specified by
-    this function pointer in order to receive transfer related event calls back
+    this function pointer in order to receive related event callbacks
     from the module.
 
     The parameters and return values are described here and a partial example
@@ -556,11 +577,15 @@ typedef void ( *DLL_DATA_CONFIRM_CALLBACK )( DLL_DATA_CONFIRM_PARAMS *cfmParams 
     <code>
     void APP_MyEventIndEventHandler( DLL_EVENT_IND_PARAMS *indParams )
     {
-        if (indParams->lsduLen > 0){
+        if (indParams->eventId == MAC_EVENT_ID_ACA){
 
         }
     }
     </code>
+
+  Remarks:
+    This Callback is only generated in Master Node. There is no need to handle
+    it on Slave Nodes.
 */
 typedef void ( *DLL_EVENT_IND_CALLBACK )( DLL_EVENT_IND_PARAMS *indParams );
 
@@ -581,21 +606,23 @@ typedef void ( *DLL_EVENT_IND_CALLBACK )( DLL_EVENT_IND_PARAMS *indParams );
     );
 
   Summary:
-    Initializes the Meters&More DLL module according to the init parameter and the cause of the reset of the main processor.
+    Initializes the Meters And More DLL module according to initialization
+    parameters.
 
   Description:
-    This routine initializes the Meters&More DLL module making it ready for clients to open and use.
+    This routine initializes the Meters And More DLL module.
     The initialization data is specified by the init parameter.
-    It is a single instance module.
+    It is a single instance module and thus only one index is allowed.
 
   Precondition:
-    The low-level processor and board initialization must be completed before the
-    system can call the initialization functions for any modules.
+    The low-level processor and board initialization must be completed before
+    the system can call the initialization functions for any modules.
 
   Parameters:
-    index - Identifier for the instance to be initialized (single instance allowed)
-    init  - Pointer to the init data structure containing any data necessary to initialize the module.
-    resetCause - Reset cause of the main processor.
+    index - Identifier for the instance to be initialized
+            (single instance allowed)
+    init  - Pointer to the init data structure containing any data
+            necessary to initialize the module.
 
   Returns:
     If successful, returns a valid handle to a module instance object.
@@ -606,33 +633,35 @@ typedef void ( *DLL_EVENT_IND_CALLBACK )( DLL_EVENT_IND_PARAMS *indParams );
     SYS_MODULE_OBJ   sysObjMetersandmore;
 
     DLL_INIT dllInitData = {
-        .taskRateMs = 1U
+        .taskRateMs = 1U,
+        .isMaster = false
     };
 
-    sysObjMetersandmore = DLL_Initialize((SYS_MODULE_INIT *)&dllInitData);
+    sysObjMetersandmore = DLL_Initialize(0, (SYS_MODULE_INIT *)&dllInitData);
     </code>
 
   Remarks:
     This routine must be called before any other DLL routine is called.
 */
-SYS_MODULE_OBJ DLL_Initialize(const SYS_MODULE_INDEX index, const SYS_MODULE_INIT * const init);
+SYS_MODULE_OBJ DLL_Initialize(const SYS_MODULE_INDEX index,
+                              const SYS_MODULE_INIT * const init);
 
 
 // *****************************************************************************
 /* Function:
-    DLL_RESULT DLL_DataIndicationCallbackRegister(DLL_DATA_IND_CALLBACK callback);
+    DLL_RESULT DLL_DataIndicationCallbackRegister (
+        DLL_DATA_IND_CALLBACK callback
+    );
 
   Summary:
-    Allows a client to set a Meters&More DLL 4-32 DL_Data.indication event handling function
-    for the module to call back when the requested transmission has finished.
+    Allows a client to set a Meters And More DLL DL_Data.indication
+    event handling function for the module to call back when the requested
+    transmission has finished.
 
   Description:
-    This function allows a client to register a Meters&More DLL 4-32 DL_Data.indication event
-    handling function for the module to call back when a Meters&More DLL data indication event
-    occurs.
-
-    The callback once set, persists until the client closes the module or sets another callback
-    (which could be a "NULL" pointer to indicate no callback).
+    This function allows a client to register a Meters And More
+    DLL DL_Data.indication event handling function for the module to call back
+    when a Meters And More DLL data indication event occurs.
 
   Parameters:
     callback - Pointer to the callback function.
@@ -649,27 +678,29 @@ SYS_MODULE_OBJ DLL_Initialize(const SYS_MODULE_INDEX index, const SYS_MODULE_INI
         }
     }
 
-    DLL_DataIndicationCallbackRegister( APP_Rx_Ind_callback );
+    DLL_DataIndicationCallbackRegister(APP_Rx_Ind_callback);
     </code>
 
+  Remarks:
+    Callback can be set to a NULL pointer to stop receiving notifications.
 */
 DLL_RESULT DLL_DataIndicationCallbackRegister(DLL_DATA_IND_CALLBACK callback);
 
 // *****************************************************************************
 /* Function:
-    DLL_RESULT DLL_DataConfirmCallbackRegister(DLL_DATA_CONFIRM_CALLBACK callback);
+    DLL_RESULT DLL_DataConfirmCallbackRegister (
+        DLL_DATA_CONFIRM_CALLBACK callback
+    );
 
   Summary:
-    Allows a client to set a Meters&More DLL 4-32 DL_Data.confirm event handling function
-    for the module to call back when the requested transmission has finished.
+    Allows a client to set a Meters And More DLL DL_Data.confirm
+    event handling function for the module to call back when the requested
+    transmission has finished.
 
   Description:
-    This function allows a client to register a Meters&More DLL 4-32 DL_Data.confirm event
-    handling function for the module to call back when a Meters&More DLL data confirm event
-    occurs.
-
-    The callback once set, persists until the client closes the module or sets another callback
-    (which could be a "NULL" pointer to indicate no callback).
+    This function allows a client to register a Meters And More
+    DLL DL_Data.confirm event handling function for the module to call back
+    when a Meters And More DLL data confirm event occurs.
 
   Parameters:
     callback - Pointer to the callback function.
@@ -691,27 +722,30 @@ DLL_RESULT DLL_DataIndicationCallbackRegister(DLL_DATA_IND_CALLBACK callback);
         }
     }
 
-    DLL_DataConfirmCallbackRegister( APP_Tx_Cfm_callback );
+    DLL_DataConfirmCallbackRegister(APP_Tx_Cfm_callback);
 
     </code>
 
+  Remarks:
+    Callback can be set to a NULL pointer to stop receiving notifications.
 */
 DLL_RESULT DLL_DataConfirmCallbackRegister(DLL_DATA_CONFIRM_CALLBACK callback);
 
 // *****************************************************************************
 /* Function:
-    DLL_RESULT DLL_EventIndicationCallbackRegister(DLL_EVENT_IND_CALLBACK callback);
+    DLL_RESULT DLL_EventIndicationCallbackRegister (
+        DLL_EVENT_IND_CALLBACK callback
+    );
 
   Summary:
-    Allows a client to set a Meters&More DLL 4-32 DL_Event.indication event handling function
-    for the module to call back when DLL generates a new event.
+    Allows a client to set a Meters And More DLL DL_Event.indication
+    event handling function for the module to call back
+    when DLL generates a new event.
 
   Description:
-    This function allows a client to register a Meters&More DLL 4-32 DL_Event.indication event
-    handling function for the module to call back when a Meters&More DLL event occurs.
-
-    The callback once set, persists until the client closes the module or sets another callback
-    (which could be a "NULL" pointer to indicate no callback).
+    This function allows a client to register a Meters And More
+    DLL DL_Event.indication event handling function for the module to call back
+    when a Meters And More DLL event occurs.
 
   Parameters:
     callback - Pointer to the callback function.
@@ -723,26 +757,32 @@ DLL_RESULT DLL_DataConfirmCallbackRegister(DLL_DATA_CONFIRM_CALLBACK callback);
     <code>
     void APP_Event_Ind_callback(DLL_EVENT_IND_CALLBACK *indParams)
     {
-        if (indParams->lsduLen > 0){
+        if (indParams->eventId == MAC_EVENT_ID_ACA){
 
         }
     }
 
-    DLL_EventIndicationCallbackRegister( APP_Event_Ind_callback );
+    DLL_EventIndicationCallbackRegister(APP_Event_Ind_callback);
     </code>
 
+  Remarks:
+    Callback can be set to a NULL pointer to stop receiving notifications.
+    This Callback is only generated in Master Node. There is no need to set
+    a handling function on Slave Nodes.
 */
 DLL_RESULT DLL_EventIndicationCallbackRegister(DLL_EVENT_IND_CALLBACK callback);
 
 // *****************************************************************************
 /* Function:
-    void DLL_DataRequest(DLL_DATA_REQUEST_PARAMS *drParams);
+    void DLL_DataRequest (
+        DLL_DATA_REQUEST_PARAMS *drParams
+    );
 
   Summary:
-    DLL 4-32 Data request
+    DLL Data request
 
   Description:
-    Function that implements the DLL 4-32 DL_Data.request primitive
+    Function that implements the DLL DL_Data.request primitive
 
   Precondition:
     The low-level board initialization must have been completed and
@@ -831,16 +871,11 @@ uint32_t DLL_GetTxTimeout(void);
     DLL_STATUS DLL_GetStatus(void);
 
   Summary:
-    Get the status of the DLL module.
+    Gets the status of the DLL module.
 
   Description:
-    DLL function status:
-        - DLL_STATUS_UNINITIALIZED: DLL module has not been initialized.
-        - DLL_STATUS_IDLE: DLL module is idle.
-        acquisition is performed.
-
-    These status values are closely related to the Meters&Mores DLL module states.
-    For further information about the Meters&Mores DLL module state diagram, refer to online documentation.
+    This function allows to retieve DLL module status.
+    It must be used to ensure the module is Ready before start using it.
 
   Precondition:
     None.
@@ -849,19 +884,21 @@ uint32_t DLL_GetTxTimeout(void);
     None.
 
   Returns:
-    Returns the status of the Meters&Mores DLL module.
+    Returns the status of the Meters And Mores DLL module.
+    - DLL_STATUS_UNINITIALIZED: DLL module has not been initialized.
+    - DLL_STATUS_READY: DLL module is ready to be used.
 
   Example:
     <code>
-        case APP_DLL_STATE_START:
+    case APP_DLL_STATE_START:
+    {
+        if (DLL_GetStatus() == DLL_STATUS_READY)
         {
-            if (DLL_GetStatus() == DLL_STATUS_READY)
-            {
-              app_DLLData.state = APP_DLL_STATE_RUNNING;
-            }
-
-            break;
+            app_DLLData.state = APP_DLL_STATE_RUNNING;
         }
+
+        break;
+    }
     </code>
 
   Remarks:
@@ -871,15 +908,16 @@ DLL_STATUS DLL_GetStatus(void);
 
 // *****************************************************************************
 /* Function:
-    SYS_MODULE_OBJ DLL_Tasks (SYS_MODULE_OBJ object);
+    SYS_MODULE_OBJ DLL_Tasks (
+        SYS_MODULE_OBJ object
+    );
 
   Summary:
-    Routine that performs the tasks necessary to maintain a state machine in
-    the Meters&Mores DLL module.
+    Routine that maintains the state machine in the DLL module.
 
   Description:
-    Routine that performs the tasks necessary to maintain a state machine in
-    the Meters&Mores DLL module.
+    Routine that performs the tasks necessary to maintain the state machine in
+    the Meters And More DLL module.
 
   Precondition:
     The low-level board initialization must have been completed and
@@ -894,8 +932,16 @@ DLL_STATUS DLL_GetStatus(void);
 
   Example:
     <code>
+    SYS_MODULE_OBJ   sysObjMetersandmore;
 
-    DLL_Tasks(sysObj.metersandmore);
+    DLL_INIT dllInitData = {
+        .taskRateMs = 1U,
+        .isMaster = false
+    };
+
+    sysObjMetersandmore = DLL_Initialize(0, (SYS_MODULE_INIT *)&dllInitData);
+
+    DLL_Tasks(sysObjMetersandmore);
     </code>
 
   Remarks:
@@ -905,14 +951,18 @@ void DLL_Tasks(SYS_MODULE_OBJ object);
 
 // *****************************************************************************
 /* Function:
-    DLL_RESULT DLL_GetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, DLL_IB_VALUE *ibValue)
+    DLL_RESULT DLL_GetRequest (
+        DLL_IB_ATTRIBUTE attribute,
+        uint16_t index,
+        DLL_IB_VALUE *ibValue
+    );
 
   Summary:
     The DLL_GetRequest primitive gets the value of an attribute in the
     DLL layer Parameter Information Base (IB).
 
   Description:
-    GetRequestSync primitive is used to get the value of an IB.
+    GetRequest primitive is used to get the value of an IB.
     Result is provided upon function call return, in the ibValue parameter.
 
   Precondition:
@@ -927,13 +977,13 @@ void DLL_Tasks(SYS_MODULE_OBJ object);
     ibValue - Pointer to DLL_IB_VALUE object where value will be returned
 
   Returns:
-    Result of get operation as an DLL_RESULT code.
+    Result of get operation as a DLL_RESULT Enum.
 
   Example:
     <code>
     DLL_RESULT result;
     DLL_IB_VALUE value;
-    result = DLL_GetRequest(LLC_NUM_RETRIES_IB, 0, &value);
+    result = DLL_GetRequest(MAC_ADDITIONAL_DELAY_US_IB, 0, &value);
     if (result == DLL_RESULT_SUCCESS)
     {
 
@@ -943,18 +993,23 @@ void DLL_Tasks(SYS_MODULE_OBJ object);
   Remarks:
     None.
 */
-DLL_RESULT DLL_GetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, DLL_IB_VALUE *ibValue);
+DLL_RESULT DLL_GetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index,
+                          DLL_IB_VALUE *ibValue);
 
 // *****************************************************************************
 /* Function:
-    DLL_RESULT DLL_SetRequest(LL_IB_ATTRIBUTE attribute, uint16_t index, const DLL_IB_VALUE *ibValue)
+    DLL_RESULT DLL_SetRequest (
+        DLL_IB_ATTRIBUTE attribute,
+        uint16_t index,
+        const DLL_IB_VALUE *ibValue
+    );
 
   Summary:
     The DLL_SetRequest primitive sets the value of an attribute in the
     DLL layer Parameter Information Base (IB).
 
   Description:
-    SetRequestSync primitive is used to set the value of an IB.
+    SetRequest primitive is used to set the value of an IB.
     Result of set operation is provided upon function call return,
     in the return result code.
 
@@ -970,17 +1025,18 @@ DLL_RESULT DLL_GetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, DLL_IB_VAL
     ibValue - Pointer to DLL_IB_VALUE object where value is contained
 
   Returns:
-    Result of set operation as an DLL_RESULT code.
+    Result of set operation as a DLL_RESULT Enum.
 
   Example:
     <code>
     DLL_RESULT result;
-    const DLL_IB_VALUE value = {
-        .length = 1,
-        .value = 6
-    };
+    uint32_t time = 20000;
+    const DLL_IB_VALUE value;
 
-    result = DLL_SetRequest(LLC_NUM_RETRIES_IB, 0, &value);
+    value.length = 4;
+    memcpy(value.value, time, sizeof(time));
+
+    result = DLL_SetRequest(MAC_ADDITIONAL_DELAY_US_IB, 0, &value);
     if (result == DLL_RESULT_SUCCESS)
     {
 
@@ -990,7 +1046,8 @@ DLL_RESULT DLL_GetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, DLL_IB_VAL
   Remarks:
     None.
 */
-DLL_RESULT DLL_SetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index, const DLL_IB_VALUE *ibValue);
+DLL_RESULT DLL_SetRequest(DLL_IB_ATTRIBUTE attribute, uint16_t index,
+                          const DLL_IB_VALUE *ibValue);
 
 #ifdef __cplusplus
  }

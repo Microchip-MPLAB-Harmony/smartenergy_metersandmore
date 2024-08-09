@@ -421,9 +421,19 @@ void PAL_Tasks(void)
                 DRV_PLC_PHY_EnableTX(palData.drvHandle, true);
                 palData.pvddMonTxEnable = true;
 </#if>
-                /* Set Ready Status */
+                /* Go to Wait Pvdd state */
+                /* Even if PVdd not used, conditions will set following state correctly */
+                palData.state = PAL_STATE_WAIT_PVDD_MON;
+            }
+            break;
+        }
+
+        case PAL_STATE_WAIT_PVDD_MON:
+        {
+            /* Check flag before setting Ready status and Idle state */
+            if (palData.pvddMonTxEnable)
+            {
                 palData.status = PAL_STATUS_READY;
-                /* Go to Idle state */
                 palData.state = PAL_STATE_IDLE;
             }
             break;

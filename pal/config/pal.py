@@ -55,7 +55,7 @@ def instantiateComponent(mmPalComponent):
     mmPalDummySymbol.setDependencies(activatesDependencies, ["MM_PAL_PVDD_MONITOR"])
 
     #####################################################################################################################################
-    # Meters&More PAL FILES
+    # Meters And More PAL FILES
 
     mmPalSrcFile = mmPalComponent.createFileSymbol("MM_PAL_SOURCE", None)
     mmPalSrcFile.setSourcePath("pal/src/pal.c.ftl")
@@ -80,7 +80,7 @@ def instantiateComponent(mmPalComponent):
     mmPalLocalHdrFile.setType("HEADER")
 
     #####################################################################################################################################
-    # Meters&More PAL TEMPLATES
+    # Meters And More PAL TEMPLATES
 
     mmPalSystemDefFile = mmPalComponent.createFileSymbol("MM_PAL_DEF", None)
     mmPalSystemDefFile.setType("STRING")

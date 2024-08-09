@@ -21,22 +21,22 @@ implied, are granted under any patent or other intellectual property rights of
 Microchip or any third party.
 """
 
-######################  Harmony Meters&More Stack  ######################
+######################  Harmony Meters And More Stack  ######################
 def loadModule():
 
-    print("Load Module: Harmony Smart Energy Meters&More Stack")
+    print("Load Module: Harmony Smart Energy Meters And More Stack")
     processor = Variables.get("__PROCESSOR")
 
-    ## Meters&More PAL
-    mmPalComponent = Module.CreateComponent("mmPal", "Meters&More PAL", "/SmartEnergy/Meters&More/PAL", "pal/config/pal.py")
-    mmPalComponent.addCapability("mmPal", "Meters&More PAL", True)
+    ## Meters And More PAL
+    mmPalComponent = Module.CreateComponent("mmPal", "Meters And More PAL", "/SmartEnergy/MetersAndMore/PAL", "pal/config/pal.py")
+    mmPalComponent.addCapability("mmPal", "Meters And More PAL", True)
     mmPalComponent.addDependency("mmPal_DrvPhy_dependency", "DRV_PLC_PHY", True, True)
     mmPalComponent.addDependency("mmPal_PCoup_dependency", "PCOUP", True, True)
-    mmPalComponent.setDisplayType("Meters&More PAL")
+    mmPalComponent.setDisplayType("Meters And More PAL")
 
-    ###########  Meters&More Stack Configurations  ###########
+    ###########  Meters And More Stack Configurations  ###########
     global mmDllConfigComponent
-    mmDllConfigComponent = Module.CreateComponent("mmDll", "Meters&More DLL", "/SmartEnergy/Meters&More/DLL", "dll/config/dll.py")
-    mmDllConfigComponent.setDisplayType("Meters&More DLL")
-    mmDllConfigComponent.addCapability("mmDllCapability", "Meters&More DLL", True)
-    mmDllConfigComponent.addDependency("mm_pal_dependency", "Meters&More PAL", True, False)
+    mmDllConfigComponent = Module.CreateComponent("mmDll", "Meters And More DLL", "/SmartEnergy/MetersAndMore/DLL", "dll/config/dll.py")
+    mmDllConfigComponent.setDisplayType("Meters And More DLL")
+    mmDllConfigComponent.addCapability("mmDllCapability", "Meters And More DLL", True)
+    mmDllConfigComponent.addDependency("mm_pal_dependency", "Meters And More PAL", True, False)

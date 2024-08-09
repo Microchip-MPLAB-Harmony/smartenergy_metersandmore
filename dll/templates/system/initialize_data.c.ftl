@@ -1,4 +1,4 @@
-/* Meters & More Initialization Data */
+/* Meters And More Initialization Data */
 static DLL_INIT dllInitData = {
 
 <#if (HarmonyCore.SELECT_RTOS)?? && (HarmonyCore.SELECT_RTOS != "BareMetal")>

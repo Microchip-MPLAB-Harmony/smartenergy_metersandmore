@@ -32,18 +32,18 @@ def instantiateComponent(mmDllComponent):
     ############################################################################
     configName = Variables.get("__CONFIGURATION_NAME")
 
-    # Select Meters & More role
-    mmRoles = ["-- Select a Meters & More Stack Mode from list --", "Slave node", "Master node"]
+    # Select Meters And More role
+    mmRoles = ["-- Select a Meters And More Stack Mode from list --", "Slave node", "Master node"]
     mmRole = mmDllComponent.createComboSymbol("METERSANDMORE_ROLE", None, mmRoles)
-    mmRole.setLabel("Role for Meters & More node")
+    mmRole.setLabel("Role for Meters And More node")
     mmRole.setVisible(True)
-    mmRole.setDescription("Select Meters & More Mode")
+    mmRole.setDescription("Select Meters And More Mode")
     mmRole.setHelp(mm_dll_helpkeyword)
 
-    # Meters & More Task rate control
+    # Meters And More Task rate control
     mmTaskRate = mmDllComponent.createIntegerSymbol("METERSANDMORE_TASK_RATE_MS", None)
-    mmTaskRate.setLabel("Meters & More stack task rate (ms)")
-    mmTaskRate.setDescription("Number of milliseconds between Meters & More stack task processing")
+    mmTaskRate.setLabel("Meters And More stack task rate (ms)")
+    mmTaskRate.setDescription("Number of milliseconds between Meters And More stack task processing")
     mmTaskRate.setVisible(getActiveRtos() == "BareMetal")
     mmTaskRate.setDefaultValue(5)
     mmTaskRate.setMin(1)
@@ -81,7 +81,7 @@ def instantiateComponent(mmDllComponent):
 
     mmRTOSDelay = mmDllComponent.createIntegerSymbol("METERSANDMORE_RTOS_TASK_DELAY_MS", mmRTOSUseDelay)
     mmRTOSDelay.setLabel("Task Delay in ms")
-    mmRTOSDelay.setDescription("Specifies the Meters & More stack task delay in ms")
+    mmRTOSDelay.setDescription("Specifies the Meters And More stack task delay in ms")
     mmRTOSDelay.setDefaultValue(5)
     mmRTOSDelay.setMin(1)
     mmRTOSDelay.setMax(20)
@@ -142,7 +142,7 @@ def instantiateComponent(mmDllComponent):
     mmRTOSTaskNoTls.setHelp(mm_dll_helpkeyword)
 
     #####################################################################################################################################
-    # Meters&More DLL FILES
+    # Meters And More DLL FILES
     global mmDllLibFile
     mmDllLibFile = mmDllComponent.createLibrarySymbol("METERSANDMORE_DLL_LIBRARY", None)
     mmDllLibFile.setSourcePath("libs/metersandmore_lib_dll.a")
@@ -158,7 +158,7 @@ def instantiateComponent(mmDllComponent):
     mmDllHdrFile.setType("HEADER")
 
     #####################################################################################################################################
-    # Meters&More DLL TEMPLATES
+    # Meters And More DLL TEMPLATES
     mmDllSystemConfigFile = mmDllComponent.createFileSymbol("METERSANDMORE_DLL_CONFIGURATION", None)
     mmDllSystemConfigFile.setType("STRING")
     mmDllSystemConfigFile.setOutputName("core.LIST_SYSTEM_CONFIG_H_MIDDLEWARE_CONFIGURATION")

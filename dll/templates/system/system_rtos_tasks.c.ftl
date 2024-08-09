@@ -4,7 +4,7 @@
     <#lt>{
     <#lt>    while(true)
     <#lt>    {
-    <#lt>        /* Maintain Meters & More LLC */
+    <#lt>        /* Maintain Meters And More LLC */
     <#lt>        DLL_Tasks(sysObj.metersandmore);
     <#lt>        vTaskDelay(MM_STACK_RTOS_TASK_DELAY_MS / portTICK_PERIOD_MS);
     <#lt>    }
@@ -17,7 +17,7 @@
     <#lt>{
     <#lt>    while(true)
     <#lt>    {
-    <#lt>        /* Maintain Meters & More LLC */
+    <#lt>        /* Maintain Meters And More LLC */
     <#lt>        DLL_Tasks(sysObj.metersandmore);
     <#lt>        tx_thread_sleep((ULONG)(MM_STACK_RTOS_TASK_DELAY_MS / (TX_TICK_PERIOD_MS)));
     <#lt>    }
@@ -31,7 +31,7 @@
     <#lt>    OS_ERR os_err;
     <#lt>    while(true)
     <#lt>    {
-    <#lt>        /* Maintain Meters & More LLC */
+    <#lt>        /* Maintain Meters And More LLC */
     <#lt>        DLL_Tasks(sysObj.metersandmore);
     <#lt>        OSTimeDly(MM_STACK_RTOS_TASK_DELAY_MS, OS_OPT_TIME_DLY, &os_err);
     <#lt>    }
@@ -41,7 +41,7 @@
     <#lt>{
     <#lt>    while(true)
     <#lt>    {
-    <#lt>        /* Maintain Meters & More LLC */
+    <#lt>        /* Maintain Meters And More LLC */
     <#lt>        DLL_Tasks(sysObj.metersandmore);
     <#lt>        thread_sleep_for((uint32_t)(MM_STACK_RTOS_TASK_DELAY_MS / MBED_OS_TICK_PERIOD_MS));
     <#lt>    }

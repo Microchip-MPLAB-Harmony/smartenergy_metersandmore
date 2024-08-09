@@ -1,6 +1,6 @@
 
 <#if !(HarmonyCore.SELECT_RTOS)?? || (HarmonyCore.SELECT_RTOS == "BareMetal")>
-    /* Maintain Meters & More LLC */
+    /* Maintain Meters And More LLC */
     DLL_Tasks(sysObj.metersandmore);
 
 <#elseif HarmonyCore.SELECT_RTOS == "FreeRTOS">

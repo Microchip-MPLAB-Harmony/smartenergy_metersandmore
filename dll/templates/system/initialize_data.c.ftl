@@ -1,8 +1,6 @@
 /* Meters & More Initialization Data */
 static DLL_INIT dllInitData = {
 
-    .repeats = MM_STACK_LLC_REPEATS,
-
 <#if (HarmonyCore.SELECT_RTOS)?? && (HarmonyCore.SELECT_RTOS != "BareMetal")>
     /* RTOS enabled: ADP task executed always */
     .taskRateMs = 0U ,

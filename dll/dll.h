@@ -267,8 +267,7 @@ typedef enum
     MAC_BAUDRATE_IB = 0x203,
     MAC_TIME_SLOT_US_IB = 0x204,
     MAC_TIME_ELABORATION_US_IB = 0x205,
-    MAC_ADDITIONAL_DELAY_US_IB = 0x206,
-    LLC_NUM_RETRIES_IB = 0x400,
+    MAC_ADDITIONAL_DELAY_US_IB = 0x206
 } DLL_IB_ATTRIBUTE;
 
 /* Masks to distinguish between layer attributes */
@@ -454,9 +453,6 @@ typedef struct
 */
 typedef struct
 {
-  /* DLL repeats */
-  uint8_t repeats;
-
   /* DLL task rate in milliseconds */
   uint8_t taskRateMs;
 

@@ -51,16 +51,6 @@ def instantiateComponent(mmDllComponent):
     mmTaskRate.setDependencies(showTaskRate, ["HarmonyCore.SELECT_RTOS"])
     mmTaskRate.setHelp(mm_dll_helpkeyword)
 
-   # Default LLC repeats
-    mmDllRxQueueLimit = mmDllComponent.createIntegerSymbol("METERSANDMORE_LLC_REPEATS", None)
-    mmDllRxQueueLimit.setHelp("mmDll_helpkeyword")
-    mmDllRxQueueLimit.setLabel("Repeats")
-    mmDllRxQueueLimit.setDescription("Default LLC packet repeats")
-    mmDllRxQueueLimit.setDefaultValue(2)
-    mmDllRxQueueLimit.setMin(0)
-    mmDllRxQueueLimit.setMax(10)
-    mmDllRxQueueLimit.setHelp(mm_dll_helpkeyword)
-
 # RTOS CONFIG
     mmRTOSMenu = mmDllComponent.createMenuSymbol("METERSANDMORE_RTOS_MENU", None)
     mmRTOSMenu.setLabel("RTOS settings")

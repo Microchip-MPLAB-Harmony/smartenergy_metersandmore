@@ -350,7 +350,6 @@ typedef struct
   Example:
     <code>
     PAL_INIT palInitData;
-    SYS_MODULE_OBJ palObj;
 
     palInitData.palHandlers.palDataIndication = _plcDataIndication;
     palInitData.palHandlers.palTxConfirm = _plcTxConfirm;
@@ -563,6 +562,46 @@ PAL_RESULT PAL_GetPhyPib(DRV_PLC_PHY_PIB_OBJ *pibObj);
     None.
 */
 PAL_RESULT PAL_SetPhyPib(DRV_PLC_PHY_PIB_OBJ *pibObj);
+
+// *****************************************************************************
+/* Function:
+    void PAL_Tasks(void)
+
+  Summary:
+    Maintains the PAL module state machine.
+
+  Description:
+    This routine maintains the PAL module state machine.
+    It has to be called periodically from upper layer so PAL layer performs its
+    tasks depending on the current state.
+
+  Precondition:
+    The PAL_Init function should have been called before calling
+    this function.
+
+  Parameters:
+    None.
+
+  Returns:
+    None.
+
+  Example:
+    <code>
+    PAL_INIT palInitData;
+
+    palInitData.palHandlers.palDataIndication = _plcDataIndication;
+    palInitData.palHandlers.palTxConfirm = _plcTxConfirm;
+    palInitData.palHandlers.palRxParamsIndication = _plcRxParamsIndication;
+
+    PAL_Init(&palInitData);
+
+    PAL_Tasks();
+    </code>
+
+  Remarks:
+    None.
+*/
+void PAL_Tasks(void);
 
 #endif // #ifndef PAL_H
 /*******************************************************************************

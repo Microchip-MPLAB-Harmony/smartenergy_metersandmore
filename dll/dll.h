@@ -138,7 +138,7 @@ typedef enum
 typedef enum
 {
     DLL_DSAP_APPLICATION_FRAME  = 0x00,
-    DLL_DSAP_NETWORK_MANAGEMENT = 0x01
+    DLL_DSAP_NETWORK_MANAGEMENT = 0x02
 } DLL_DSAP;
 
 // *****************************************************************************

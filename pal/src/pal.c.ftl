@@ -269,7 +269,7 @@ PAL_STATUS PAL_Status(void)
     return palData.status;
 }
 
-void PAL_TxRequest(uint8_t *pData, uint16_t length, uint8_t nbFrame)
+void PAL_TxRequest(uint8_t *pData, uint16_t length, uint8_t nbFrame, uint32_t delay)
 {
     PAL_RESULT result = PAL_RESULT_SUCCESS;
     DRV_PLC_PHY_TRANSMISSION_OBJ txObj;
@@ -301,7 +301,7 @@ void PAL_TxRequest(uint8_t *pData, uint16_t length, uint8_t nbFrame)
         palData.waitingTxCfm = true;
         /* Set Transmission Mode */
         txObj.mode = TX_MODE_RELATIVE;
-        txObj.timeIni = 0;
+        txObj.timeIni = delay;
         txObj.pTransmitData = pData;
         txObj.dataLength = length;
         txObj.attenuation = 0;

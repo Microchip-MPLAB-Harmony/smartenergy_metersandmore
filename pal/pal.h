@@ -411,7 +411,7 @@ PAL_STATUS PAL_Status(void);
 
 // *****************************************************************************
 /* Function:
-    void PAL_TxRequest(uint8_t *pData, uint16_t length, uint8_t nbFrame)
+    void PAL_TxRequest(uint8_t *pData, uint16_t length, uint8_t nbFrame, uint32_t delay)
 
   Summary:
     Allows a client to transmit data through PLC device.
@@ -427,7 +427,9 @@ PAL_STATUS PAL_Status(void);
 
     length -       Length of the data to transmit in bytes.
 
-    nbFrame -       Frame related ZeroCross information.
+    nbFrame -      Frame related ZeroCross information.
+
+    delay -        Delay of transmission in microseconds.
 
   Returns:
     None.
@@ -446,13 +448,13 @@ PAL_STATUS PAL_Status(void);
     memcpy(&txData[headerLength], payloadData, payloadLength);
     totalLength = headerLength + payloadLength;
 
-    PAL_TxRequest(txData, totalLength, 0);
+    PAL_TxRequest(txData, totalLength, 0, 0);
     </code>
 
   Remarks:
     None.
 */
-void PAL_TxRequest(uint8_t *pData, uint16_t length, uint8_t nbFrame);
+void PAL_TxRequest(uint8_t *pData, uint16_t length, uint8_t nbFrame, uint32_t delay);
 
 // *****************************************************************************
 /* Function:

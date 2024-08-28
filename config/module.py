@@ -39,4 +39,5 @@ def loadModule():
     mmDllConfigComponent = Module.CreateComponent("mmDll", "Meters And More DLL", "/SmartEnergy/MetersAndMore/DLL", "dll/config/dll.py")
     mmDllConfigComponent.setDisplayType("Meters And More DLL")
     mmDllConfigComponent.addCapability("mmDllCapability", "Meters And More DLL", True)
-    mmDllConfigComponent.addDependency("mm_pal_dependency", "Meters And More PAL", True, False)
+    mmDllConfigComponent.addDependency("mm_pal_dependency", "Meters And More PAL", True, True)
+    mmDllConfigComponent.addDependency("libsrvRandom", "SE Random", True, True)

@@ -81,7 +81,7 @@ Microchip or any third party.
 #define MAC_ADDRESS_SIZE            (6U)
 
 /* Maximum length of an IB object */
-#define DLL_IB_MAX_VALUE_LENGTH     (MAX_ROUTE_SIZE*MAC_ADDRESS_SIZE)
+#define DLL_IB_MAX_VALUE_LENGTH     (MAC_ADDRESS_SIZE)
 
 /* Maximum length of a MAC Event Value */
 #define MAC_EVENT_VALUE_MAX_LENGTH  (MAC_ADDRESS_SIZE)
@@ -267,7 +267,12 @@ typedef enum
     MAC_BAUDRATE_IB = 0x203,
     MAC_TIME_SLOT_US_IB = 0x204,
     MAC_TIME_ELABORATION_US_IB = 0x205,
-    MAC_ADDITIONAL_DELAY_US_IB = 0x206
+    MAC_ADDITIONAL_DELAY_US_IB = 0x206,
+    MAC_LAST_RX_IN_PHASE_IB = 0x207,
+    MAC_LAST_RX_NB_FRAME_IB = 0x208,
+    MAC_LAST_RX_SIGNAL_LEVEL_IB = 0x209,
+    MAC_LAST_RX_SNR_IB = 0x20A,
+    MAC_ESTIMATED_IMPDEDANCE_IB = 0x20B,
 } DLL_IB_ATTRIBUTE;
 
 /* Masks to distinguish between layer attributes */

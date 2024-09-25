@@ -35,9 +35,11 @@ def loadModule():
     mmPalComponent.setDisplayType("Meters And More PAL")
 
     ###########  Meters And More Stack Configurations  ###########
-    global mmDllConfigComponent
-    mmDllConfigComponent = Module.CreateComponent("mmDll", "Meters And More DLL", "/SmartEnergy/MetersAndMore/DLL", "dll/config/dll.py")
-    mmDllConfigComponent.setDisplayType("Meters And More DLL")
-    mmDllConfigComponent.addCapability("mmDllCapability", "Meters And More DLL", True)
-    mmDllConfigComponent.addDependency("mm_pal_dependency", "Meters And More PAL", True, True)
-    mmDllConfigComponent.addDependency("libsrvRandom", "SE Random", True, True)
+    global mmStackConfigComponent
+    mmStackConfigComponent = Module.CreateComponent("mmStack", "Meters And More Stack", "/SmartEnergy/MetersAndMore/Stack", "config/stack.py")
+    mmStackConfigComponent.setDisplayType("Meters And More Stack")
+    mmStackConfigComponent.addCapability("mmStackCapability", "Meters And More Stack", True)
+    mmStackConfigComponent.addDependency("mm_pal_dependency", "Meters And More PAL", True, True)
+    mmStackConfigComponent.addDependency("libsrvRandom", "SE Random", True, True)
+    mmStackConfigComponent.addDependency("libsrvCrc", "SE CRC", True, True)
+    mmStackConfigComponent.addDependency("libCrypto", "LIB_CRYPTO", True, True)

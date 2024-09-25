@@ -10,7 +10,7 @@
 
   Description:
     Platform Abstraction Layer (PAL) Interface header file. The PAL
-    module provides a simple interface to manage the M&M PHY layer.
+    module provides a simple interface to manage the Meters And More PHY layer.
 *******************************************************************************/
 
 //DOM-IGNORE-BEGIN
@@ -59,13 +59,13 @@ Microchip or any third party.
 // *****************************************************************************
 
 // *****************************************************************************
-/* PAL PIB Result
+/* PAL Result
 
   Summary:
-    Result of a PAL PIB service client interface operation.
+    Result of a PAL service user interface operation.
 
   Description:
-    Identifies the result of PAL PIB service operations.
+    Lists the possible results of PAL service operations.
 
   Remarks:
     None.
@@ -85,10 +85,10 @@ typedef enum
 /* PAL Module Status
 
   Summary:
-    Identifies the current status/state of the PAL module.
+    Defines the current status of the PAL module.
 
   Description:
-    This enumeration identifies the current status/state of the PAL module.
+    This enumeration defines the current status of the PAL module.
 
   Remarks:
     This enumeration is the return type for the PAL_Status routine. The
@@ -100,7 +100,8 @@ typedef enum
     PAL_STATUS_UNINITIALIZED = SYS_STATUS_UNINITIALIZED,
     PAL_STATUS_BUSY = SYS_STATUS_BUSY,
     PAL_STATUS_READY = SYS_STATUS_READY,
-    PAL_STATUS_ERROR = SYS_STATUS_ERROR,
+    PAL_STATUS_ERROR = SYS_STATUS_ERROR
+
 } PAL_STATUS;
 
 // *****************************************************************************
@@ -110,7 +111,7 @@ typedef enum
     Holds PAL reception parameters.
 
   Description:
-    This data type defines the fields containing Rx parameter for last frame.
+    This data type defines the fields containing Rx parameters for last frame.
 
   Remarks:
     None.
@@ -141,7 +142,7 @@ typedef struct
    Description
     This data type defines the required function signature for the PAL
     reception data indication event handling callback function. When
-    PAL_Init is called, a client must register a pointer whose
+    PAL_Init is called, a user must register a pointer whose
     function signature (parameter and return value types) matches the types
     specified by this function pointer in order to receive transfer related
     event calls back from the PAL.
@@ -165,7 +166,6 @@ typedef struct
     }
 
     PAL_INIT palInitData;
-    SYS_MODULE_OBJ palObj;
 
     palInitData.palHandlers.palDataIndication = _plcDataIndication;
     palInitData.palHandlers.palTxConfirm = _plcTxConfirm;
@@ -188,7 +188,7 @@ typedef void (*PAL_DataIndication)(uint8_t *pData, uint16_t length);
    Description
     This data type defines the required function signature for the PAL
     transmission confirm event handling callback function. When
-    PAL_Init is called, a client must register a pointer whose
+    PAL_Init is called, a user must register a pointer whose
     function signature (parameter and return value types) matches the types
     specified by this function pointer in order to receive transfer related
     event calls back from the PAL.
@@ -218,7 +218,6 @@ typedef void (*PAL_DataIndication)(uint8_t *pData, uint16_t length);
     }
 
     PAL_INIT palInitData;
-    SYS_MODULE_OBJ palObj;
 
     palInitData.palHandlers.palDataIndication = _plcDataIndication;
     palInitData.palHandlers.palTxConfirm = _plcTxConfirm;
@@ -244,7 +243,7 @@ typedef void (*PAL_TxConfirm)(PAL_RESULT result);
    Description
     This data type defines the required function signature for the PAL
     reception parameters event handling callback function. When
-    PAL_Init is called, a client must register a pointer whose
+    PAL_Init is called, a user must register a pointer whose
     function signature (parameter and return value types) matches the types
     specified by this function pointer in order to receive transfer related
     event calls back from the PAL.
@@ -268,7 +267,6 @@ typedef void (*PAL_TxConfirm)(PAL_RESULT result);
     }
 
     PAL_INIT palInitData;
-    SYS_MODULE_OBJ palObj;
 
     palInitData.palHandlers.palDataIndication = _plcDataIndication;
     palInitData.palHandlers.palTxConfirm = _plcTxConfirm;
@@ -315,7 +313,7 @@ typedef struct
 */
 typedef struct
 {
-    // PAL Handlers
+    /* PAL Handlers */
     PAL_HANDLERS                 palHandlers;
 } PAL_INIT;
 
@@ -334,7 +332,7 @@ typedef struct
     Initializes the PAL module.
 
   Description:
-    This routine initializes the PAL module, making it ready for clients to
+    This routine initializes the PAL module, making it ready for users to
     use it. The initialization data is specified by the init parameter.
 
   Precondition:
@@ -382,10 +380,10 @@ void PAL_Init(PAL_INIT *init);
 
   Returns:
     PAL_STATUS_READY - Indicates that the module is initialized and is
-    ready to accept new requests from the client.
+    ready to accept new requests from the user.
 
     PAL_STATUS_BUSY - Indicates that the module is busy with a previous
-    initialization request from the client.
+    initialization request from the user.
 
     PAL_STATUS_ERROR - Indicates that the module is in an error state.
     Any value lower than SYS_STATUS_ERROR is also an error state.
@@ -414,7 +412,7 @@ PAL_STATUS PAL_Status(void);
     void PAL_TxRequest(uint8_t *pData, uint16_t length, uint8_t nbFrame, uint32_t delay)
 
   Summary:
-    Allows a client to transmit data through PLC device.
+    Allows a user to transmit data through PLC device.
 
   Description:
     This routine sends a new data message through PLC using the PAL module.
@@ -427,7 +425,7 @@ PAL_STATUS PAL_Status(void);
 
     length -       Length of the data to transmit in bytes.
 
-    nbFrame -      Frame related ZeroCross information.
+    nbFrame -      Frame related ZeroCross information (managed by DLL).
 
     delay -        Delay of transmission in microseconds.
 
@@ -461,10 +459,11 @@ void PAL_TxRequest(uint8_t *pData, uint16_t length, uint8_t nbFrame, uint32_t de
     void PAL_Reset(void)
 
   Summary:
-    Allows a client to reset the PAL module.
+    Allows a user to reset the PAL module.
 
   Description:
-    This routine performs a reset of the PLC device.
+    This routine performs a reset of the PAL module and the
+    underlying PLC device.
 
   Precondition:
     None.
@@ -477,7 +476,10 @@ void PAL_TxRequest(uint8_t *pData, uint16_t length, uint8_t nbFrame, uint32_t de
 
   Example:
     <code>
-    PAL_Reset();
+    if (PAL_Status == PAL_STATUS_ERROR)
+    {
+        PAL_Reset();
+    }
     </code>
 
   Remarks:
@@ -490,10 +492,10 @@ void PAL_Reset(void);
     PAL_RESULT PAL_GetPhyPib(DRV_PLC_PHY_PIB_OBJ *pibObj)
 
   Summary:
-    Gets value of M&M PHY PIB attribute.
+    Gets value of Meters And More PHY PIB attribute.
 
   Description:
-    This routine allows a client to get information from PLC transceiver about
+    This routine allows a user to get information from PLC transceiver via
     PHY information base (PIB).
 
   Precondition:
@@ -530,10 +532,10 @@ PAL_RESULT PAL_GetPhyPib(DRV_PLC_PHY_PIB_OBJ *pibObj);
     PAL_RESULT PAL_SetPhyPib(DRV_PLC_PHY_PIB_OBJ *pibObj)
 
   Summary:
-    Sets value of M&M PHY PIB attribute.
+    Sets value of Meters And More PHY PIB attribute.
 
   Description:
-    This routine allows a client to set information to PLC transceiver on
+    This routine allows a user to set information to PLC transceiver on
     PHY information base (PIB).
 
   Precondition:
@@ -597,7 +599,10 @@ PAL_RESULT PAL_SetPhyPib(DRV_PLC_PHY_PIB_OBJ *pibObj);
 
     PAL_Init(&palInitData);
 
-    PAL_Tasks();
+    while (1)
+    {
+        PAL_Tasks();
+    }
     </code>
 
   Remarks:

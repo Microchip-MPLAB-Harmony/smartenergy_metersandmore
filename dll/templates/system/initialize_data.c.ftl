@@ -10,7 +10,7 @@ static DLL_INIT dllInitData = {
 </#if>
 
     /* Is master node (false in slave node) */
-<#if (METERSANDMORE_ROLE == "Master node")>
+<#if (METERSANDMORE_ROLE == "DCU")>
         .isMaster = true
 <#else>
         .isMaster = false

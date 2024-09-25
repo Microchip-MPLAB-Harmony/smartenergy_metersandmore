@@ -33,7 +33,7 @@ def instantiateComponent(mmDllComponent):
     configName = Variables.get("__CONFIGURATION_NAME")
 
     # Select Meters And More role
-    mmRoles = ["-- Select a Meters And More Stack Mode from list --", "Slave node", "Master node"]
+    mmRoles = ["-- Select a Role from list --", "Meter", "DCU"]
     mmRole = mmDllComponent.createComboSymbol("METERSANDMORE_ROLE", None, mmRoles)
     mmRole.setLabel("Role for Meters And More node")
     mmRole.setVisible(True)

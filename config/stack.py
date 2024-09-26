@@ -158,6 +158,30 @@ def instantiateComponent(mmStackComponent):
     mmDllHdrFile.setType("HEADER")
 
     #####################################################################################################################################
+    # Meters And More Application Layer FILES
+
+    mmAppSrcFile = mmStackComponent.createFileSymbol("METERSANDMORE_APP_LAYER_SOURCE", None)
+    mmAppSrcFile.setSourcePath("app_layer/app_layer.c")
+    mmAppSrcFile.setOutputName("app_layer.c")
+    mmAppSrcFile.setDestPath("stack/metersandmore/app_layer")
+    mmAppSrcFile.setProjectPath("config/" + configName + "/stack/metersandmore/app_layer/")
+    mmAppSrcFile.setType("SOURCE")
+
+    mmAppHdrFile = mmStackComponent.createFileSymbol("METERSANDMORE_APP_LAYER_HEADER", None)
+    mmAppHdrFile.setSourcePath("app_layer/app_layer.h")
+    mmAppHdrFile.setOutputName("app_layer.h")
+    mmAppHdrFile.setDestPath("stack/metersandmore/app_layer")
+    mmAppHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/app_layer/")
+    mmAppHdrFile.setType("HEADER")
+
+    mmAlHdrFile = mmStackComponent.createFileSymbol("METERSANDMORE_AL_HEADER", None)
+    mmAlHdrFile.setSourcePath("app_layer/al.h")
+    mmAlHdrFile.setOutputName("al.h")
+    mmAlHdrFile.setDestPath("stack/metersandmore/app_layer")
+    mmAlHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/app_layer/")
+    mmAlHdrFile.setType("HEADER")
+
+    #####################################################################################################################################
     # Meters And More DLL TEMPLATES
     mmDllSystemConfigFile = mmStackComponent.createFileSymbol("METERSANDMORE_DLL_CONFIGURATION", None)
     mmDllSystemConfigFile.setType("STRING")

@@ -28,10 +28,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "al.h"
-#include "crc.h"
+#include "service/pcrc/srv_pcrc.h"
 #include "system/time/sys_time.h"
-#include "config/default/crypto/common_crypto/MCHP_Crypto_Sym_Cipher.h"
-#include "config/default/crypto/common_crypto/MCHP_Crypto_Mac_Cipher.h"
+#include "crypto/common_crypto/MCHP_Crypto_Sym_Cipher.h"
+#include "crypto/common_crypto/MCHP_Crypto_Mac_Cipher.h"
 
 
 /* Provide C++ Compatibility */

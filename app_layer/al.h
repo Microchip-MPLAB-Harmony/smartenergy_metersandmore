@@ -25,8 +25,8 @@
 /* ************************************************************************** */
 /* ************************************************************************** */
 
-#include "dll.h"
-#include "config/default/crypto/common_crypto/MCHP_Crypto_Sym_Cipher.h"
+#include "stack/metersandmore/dll/dll.h"
+#include "crypto/common_crypto/MCHP_Crypto_Sym_Cipher.h"
 
 /* Provide C++ Compatibility */
 #ifdef __cplusplus

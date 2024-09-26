@@ -1,9 +1,9 @@
 /* ************************************************************************** */
 
-#include "dll.h"
+#include "stack/metersandmore/dll/dll.h"
 #include <string.h>
 #include "app_layer.h"
-#include "app_process_definitions.h"
+#include "service/random/srv_random.h"
 
 
 
@@ -190,26 +190,6 @@ AL_M_STATUS AL_data_config_process( AL_CONFIG_DATA *configParams )
     return AL_SUCCESS;
 }
 
-static void SRV_RANDOM_Get128bits(uint8_t *rndValue)
-{
-    uint32_t seed;
-    uint32_t randNum;
-    uint8_t n;
-
-    seed = SYS_TIME_CounterGet();
-    srand(seed);
-
-    for (n = 0; n < 4; n ++)
-    {
-        randNum = rand();
-
-        *rndValue++ = (uint8_t)(randNum >> 24);
-        *rndValue++ = (uint8_t)(randNum >> 16);
-        *rndValue++ = (uint8_t)(randNum >> 8);
-        *rndValue++ = (uint8_t)randNum;
-    }
-}
-
 void counter_block_generation( uint64_t Msg_Order )
 {
     memset(keys.Counter_block, 0, KEY_LENGTH);
@@ -370,7 +350,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                     crc.dataLen = ACA_LENGTH;
                     memcpy(&crc.buffer[crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
                     crc.dataLen += reqParams->Txdata_Len-1;
-                    crc.result = CRC_Get32(crc.buffer, crc.dataLen, 1);                                         /* CRC Calculation */  
+                    crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);    /* CRC Calculation */  
                     
                     memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
                     cmac.inputBuf[0] = reqParams->Txdata[0];                                                    /* CM */
@@ -449,7 +429,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                     crc.dataLen = ACA_LENGTH;
                     memcpy(&crc.buffer[crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
                     crc.dataLen += reqParams->Txdata_Len-1;
-                    crc.result = CRC_Get32(crc.buffer, crc.dataLen, 1);                                         /* CRC Calculation */  
+                    crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);     /* CRC Calculation */  
 
                     memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
                     cmac.inputBuf[0] = reqParams->Txdata[0];                                                    /* CM */
@@ -544,7 +524,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                         crc.dataLen = ACA_LENGTH;
                         memcpy(&crc.buffer[crc.dataLen], lmon_recovery.random_num, 16);
                         crc.dataLen += 16;
-                        crc.result = CRC_Get32(crc.buffer, crc.dataLen, 1);                         /* CRC Calculation */  
+                        crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);      /* CRC Calculation */  
 
                         memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
                         cmac.inputBuf[0] = reqParams->Txdata[0];                                    /* CM */
@@ -633,7 +613,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                     crc.dataLen = ACA_LENGTH;
                     memcpy(&crc.buffer[crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
                     crc.dataLen += reqParams->Txdata_Len-1;
-                    crc.result = CRC_Get32(crc.buffer, crc.dataLen, 1);                                     /* CRC Calculation */  
+                    crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);    /* CRC Calculation */  
 
                     memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
                     cmac.inputBuf[0] = reqParams->Txdata[0];                                                /* CM */
@@ -697,7 +677,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                     crc.dataLen = ACA_LENGTH;
                     memcpy(&crc.buffer[crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
                     crc.dataLen += reqParams->Txdata_Len-1;
-                    crc.result = CRC_Get32(crc.buffer, crc.dataLen, 1);                                     /* CRC Calculation */  
+                    crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);    /* CRC Calculation */  
 
                     memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
                     cmac.inputBuf[0] = reqParams->Txdata[0];                                                /* CM */
@@ -766,7 +746,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                     crc.dataLen = ACA_LENGTH;
                     memcpy(&crc.buffer[crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
                     crc.dataLen += reqParams->Txdata_Len-1;
-                    crc.result = CRC_Get32(crc.buffer, crc.dataLen, 1);                                     /* CRC Calculation */  
+                    crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);    /* CRC Calculation */  
 
                     memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
                     cmac.inputBuf[0] = reqParams->Txdata[0];                                                /* CM */
@@ -899,7 +879,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                     crc.dataLen = ACA_LENGTH;
                     memcpy(&crc.buffer[6], random_number, 16);                                      /* Random number used in challenge Request */
                     crc.dataLen += 16;
-                    crc.result = CRC_Get32(crc.buffer, crc.dataLen, 1);                             /* CRC Calculation */  
+                    crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1); /* CRC Calculation */  
 
                     memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
                     cmac.inputBuf[0] = indParams->lsdu[0];                                          /* CM */
@@ -994,7 +974,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                         crc.dataLen = ACA_LENGTH;
                         memcpy(&crc.buffer[6], indication.app_data, (decrypt_length-16));           
                         crc.dataLen += decrypt_length-16;
-                        crc.result = CRC_Get32(crc.buffer, crc.dataLen, 1);                             /* CRC Calculation */  
+                        crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1); /* CRC Calculation */  
 
                         memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
                         cmac.inputBuf[0] = indParams->lsdu[0];                                          /* CM */
@@ -1069,7 +1049,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                         crc.dataLen = ACA_LENGTH;
                         memcpy(&crc.buffer[6], indication.app_data, (decrypt_length-16));           
                         crc.dataLen += decrypt_length-16;
-                        crc.result = CRC_Get32(crc.buffer, crc.dataLen, 1);                                 /* CRC Calculation */  
+                        crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1); /* CRC Calculation */  
                     
                         memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
                         cmac.inputBuf[0] = indParams->lsdu[0];                                              /* CM */
@@ -1144,7 +1124,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                         crc.dataLen = ACA_LENGTH;
                         memcpy(&crc.buffer[6], indication.app_data, (decrypt_length-16));           
                         crc.dataLen += decrypt_length-16;
-                        crc.result = CRC_Get32(crc.buffer, crc.dataLen, 1);                                 /* CRC Calculation */  
+                        crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1); /* CRC Calculation */  
                     
                         memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
                         cmac.inputBuf[0] = indParams->lsdu[0];                                              /* CM */
@@ -1407,7 +1387,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                         crc.dataLen += 6;
                         memcpy(&crc.buffer[6], indication.app_data, (decrypt_length-16));           
                         crc.dataLen += decrypt_length-16;
-                        crc.result = CRC_Get32(crc.buffer, crc.dataLen, 1);                             /* CRC Calculation */  
+                        crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1); /* CRC Calculation */  
 
                         memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
                         cmac.inputBuf[0] = indParams->lsdu[0];                                          /* CM */
@@ -1481,7 +1461,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                         crc.dataLen += 6;
                         memcpy(&crc.buffer[6], indication.app_data, (decrypt_length-16));           
                         crc.dataLen += decrypt_length-16;
-                        crc.result = CRC_Get32(crc.buffer, crc.dataLen, 1);                       /* CRC Calculation */  
+                        crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1); /* CRC Calculation */  
                     
                         memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
                         cmac.inputBuf[0] = indParams->lsdu[0];                                    /* CM */

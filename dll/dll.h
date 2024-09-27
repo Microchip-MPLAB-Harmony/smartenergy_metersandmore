@@ -362,7 +362,7 @@ typedef struct
   /* Max length of the response - MASTER ONLY */
   uint16_t maxResponseLen;
   /* Number of time slots alocated in data request with Service_Class RC - MASTER ONLY */
-  uint16_t timeSlotNum ;
+  uint16_t timeSlotNum;
   /* Length of the data */
   uint16_t lsduLen;
 } DLL_DATA_REQUEST_PARAMS;

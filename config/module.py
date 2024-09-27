@@ -41,5 +41,5 @@ def loadModule():
     mmStackConfigComponent.addCapability("mmStackCapability", "Meters And More Stack", True)
     mmStackConfigComponent.addDependency("mm_pal_dependency", "Meters And More PAL", True, True)
     mmStackConfigComponent.addDependency("libsrvRandom", "SE Random", True, True)
-    mmStackConfigComponent.addDependency("libsrvCrc", "SE CRC", True, True)
+    mmStackConfigComponent.addDependency("libsrvCrc", "PCRC", True, True)
     mmStackConfigComponent.addDependency("libCrypto", "LIB_CRYPTO", True, True)

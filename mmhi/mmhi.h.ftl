@@ -116,6 +116,44 @@ typedef enum
 } MMHI_RESULT;
 
 // *****************************************************************************
+/* Meters And More Reset Cause
+
+  Summary:
+    Define the reset cause values
+
+  Description:
+    Identifies the reset cause
+*/
+
+typedef enum
+{
+    // Power-on or HW reset
+    MMHI_RST_HW = 0,
+
+    // Watchdog reset
+    MMHI_RST_WDT,
+
+    // SW reset
+    MMHI_RST_SW,
+
+    // BIO Request
+    MMHI_RST_BIO,
+
+    // Diagnostic: Inconsistent PLC PHY ISR received
+    MMHI_RST_DIAG_PLC_ISR,
+
+    // Diagnostic: Timer and ZERO CROSSING
+    MMHI_RST_DIAG_ZC,
+
+    // Diagnostic: FSM unreachable state
+    MMHI_RST_DIAG_FSM,
+
+    // Diagnostic: No ISR from PLC
+    MMHI_RST_DIAG_NO_ISR,
+
+} MMHI_RESET_CAUSE;
+
+// *****************************************************************************
 /* MMHI module Status
 
   Summary:

@@ -172,6 +172,11 @@ static void lMMHI_USART_WriteCallback( uintptr_t context )
 {
     mmhiData.startFrameTxMask &= ~context;
     mmhiData.statusMessage.status &= ~MMHI_STATUS_TX_Msk;
+    
+    if (mmhiData.swReset == true)
+    {
+        RSTC_Reset(RSTC_ALL_RESET);
+    }
 
     if (context == MMHI_FRAME_START_MASK_STATUS_Msk)
     {
@@ -291,6 +296,18 @@ static bool lMMHI_ProcessRcvCommand(void)
     
     if (pRcvFrameData->commandCode == MMHI_CMD_BIO_RESET_REQ)
     {
+        uint8_t *pData = mmhiTxBuffer;
+        
+        *pData++ = MMHI_FS_COMMAND;
+        *pData++ = 0;
+        *pData++ = MMHI_CMD_BIO_RESET_CFM;
+        *pData++ = 0;
+        
+        mmhiData.startFrameTxMask |= MMHI_FRAME_START_MASK_CMD_Msk;
+        
+        /* Set reset flag to be performed when TX is completed */
+        mmhiData.swReset = true;
+        
         SYS_CONSOLE_Message(SYS_CONSOLE_INDEX_0, "<- BIO_RESET_REQ\r\n");
     }
     else if (pRcvFrameData->commandCode == MMHI_CMD_MIB_WRITE_REQ)
@@ -560,6 +577,48 @@ static MMHI_RESULT lMMHI_CheckRcvFrame(void)
     
 }
 
+static void lMMHI_sendResetIndication(void)
+{
+    uint8_t *pData = mmhiTxBuffer;
+    uint8_t rstCause; 
+    MMHI_RESET_CAUSE mmhcRstCause;
+    
+    /* Get reset cause */
+    rstCause = (uint8_t)(RSTC_ResetCauseGet() >> RSTC_SR_RSTTYP_Pos);
+    
+    switch (rstCause)
+    {
+        case RSTC_SR_RSTTYP_WDT0_RST_Val:
+            mmhcRstCause = MMHI_RST_WDT;
+            break;
+
+        case RSTC_SR_RSTTYP_SOFT_RST_Val:
+            mmhcRstCause = MMHI_RST_BIO;
+            break;
+
+        case RSTC_SR_RSTTYP_GENERAL_RST_Val:
+        case RSTC_SR_RSTTYP_BACKUP_RST_Val:
+        case RSTC_SR_RSTTYP_USER_RST_Val:
+        case RSTC_SR_RSTTYP_CORE_SM_RST_Val:
+        case RSTC_SR_RSTTYP_CPU_FAIL_RST_Val:
+        case RSTC_SR_RSTTYP_SLCK_XTAL_RST_Val:
+        case RSTC_SR_RSTTYP_WDT1_RST_Val:
+        case RSTC_SR_RSTTYP_PORVDD3V3_RST_Val:
+        default:
+            mmhcRstCause = MMHI_RST_HW;
+            break;
+    }
+        
+    *pData++ = MMHI_FS_COMMAND;
+    *pData++ = 0;
+    *pData++ = MMHI_CMD_BIO_RESET_IND;
+    /* All reconfigurable MIB objects has been reconfigured */
+    /* Reconfiguration status (Bit 7) */
+    *pData++ = (1 << 7) | mmhcRstCause;
+
+    mmhiData.startFrameTxMask |= MMHI_FRAME_START_MASK_CMD_Msk;
+}
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: System Interface Functions
@@ -685,6 +744,9 @@ MMHI_HANDLE MMHI_Open( SYS_MODULE_OBJ object )
     PIO_PinInterruptEnable((PIO_PIN)MMHI_EXT_INT_RTS_PIN);
 </#if>
     
+    /* EUT shall issue a reset command each time it exits from reset */
+    lMMHI_sendResetIndication();
+    
     return (MMHI_HANDLE) index;
 }
 
@@ -796,8 +858,12 @@ void MMHI_Tasks ( SYS_MODULE_OBJ object )
             else if (mmhiData.startFrameTxMask & MMHI_FRAME_START_MASK_CMD_Msk)
             {
                 uint16_t crcCalc;
+                MMHI_COMMAND command;
 
                 mmhiData.retryCmd = false;
+                
+                /* Get command */
+                command = mmhiTxBuffer[MMHI_CMD_FRAME_CMD_Pos];
 
                 /* Get payload length */
                 frameLen = mmhiTxBuffer[MMHI_CMD_FRAME_LEN_Pos] + 1;
@@ -814,10 +880,14 @@ void MMHI_Tasks ( SYS_MODULE_OBJ object )
                 context = (uintptr_t) MMHI_FRAME_START_MASK_CMD_Msk;
                 pData = mmhiTxBuffer;
                 
-                /* Launch TACK timer */
-                mmhiData.tackTimer = SYS_TIME_CallbackRegisterMS(lMMHI_TackTimerCallback, (uintptr_t) NULL, 
-                        MMHI_PROTOCOL_TIMEOUT_TACK_MS, SYS_TIME_SINGLE);
-    
+                if (command != MMHI_CMD_BIO_RESET_IND)
+                {
+                    /* Launch TACK timer */
+                    mmhiData.tackTimer = SYS_TIME_CallbackRegisterMS(lMMHI_TackTimerCallback, (uintptr_t) NULL, 
+                            MMHI_PROTOCOL_TIMEOUT_TACK_MS, SYS_TIME_SINGLE);
+                    
+                }
+
                 SYS_CONSOLE_Message(SYS_CONSOLE_INDEX_0, "-> CMD\r\n");
             }
             else if (mmhiData.startFrameTxMask & MMHI_FRAME_START_MASK_CMDRET_Msk)

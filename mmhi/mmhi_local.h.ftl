@@ -278,6 +278,9 @@ typedef struct
     /* MIB Response Data */
     MMHI_MIB_DATA mibData;
     
+    /* Flag to indicate that SW reset must be performed */
+    bool swReset;
+    
 } MMHI_DATA;
 
 // *****************************************************************************

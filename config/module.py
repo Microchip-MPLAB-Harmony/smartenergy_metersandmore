@@ -43,3 +43,10 @@ def loadModule():
     mmStackConfigComponent.addDependency("libsrvRandom", "SE Random", True, True)
     mmStackConfigComponent.addDependency("libsrvCrc", "PCRC", True, True)
     mmStackConfigComponent.addDependency("libCrypto", "LIB_CRYPTO", True, True)
+
+    ###########  Meters And More Stack Host Interface module  ###########
+    mmDllCertComponent = Module.CreateComponent("mmHi", "Meters And More HI", "/SmartEnergy/MetersAndMore/MMHI", "mmhi/config/mmhi.py")
+    mmDllCertComponent.setDisplayType("Meters And More Host Interface")
+    mmDllCertComponent.addDependency("mmHi_stack_dependency", "Meters And More Stack", True, True)
+    mmDllCertComponent.addDependency("mmHi_sysTime_dependency", "SYS_TIME", True, True)
+    mmDllCertComponent.addDependency("mmHi_console_dependency", "UART", False, True)

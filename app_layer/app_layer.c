@@ -5,8 +5,6 @@
 #include "app_layer.h"
 #include "service/random/srv_random.h"
 
-
-
 #define MAX_DATA_LENGTH                     128U
 #define ENCRYPTED_MESSAGE_HEADER_LENGTH     17U
 #define AES_CMAC_LENGTH                     8U
@@ -16,70 +14,18 @@ uint8_t encrypt_length, decrypt_length;
 uint8_t process_buff[MAX_DATA_LENGTH], process_bytes;
 uint8_t dll_Tx_buffer[MAX_DATA_LENGTH];
 
-static uint8_t Transmit_Buff[MAX_DATA_LENGTH];
-
-/* Random Number Generated for LMON Recovery */
-static uint8_t random_number[16];
+static AL_DATA alData;
 
 static DLL_DATA_REQUEST_PARAMS drParams;
 static uint32_t confirmWaitTimeoutUs;
 static uint64_t confirmWaitCount, nextwaitCount;
-
-static AL_STATUS App_Data;
-static AL_HANDLERS al_handlers;
-static AL_CONFIG_DATA config_data;
-static uint8_t configparams_rcvd=0;
-static KEYS keys;
-
 static DATETIME received_time, request_time;  
-static uint64_t nextTaskTimeCount;
 
-/* Incoming TCT (min 1 to max 255) */
-static uint8_t TCT;                                                    /* TO_DO Move to a modem specific structure */
-
-/* Used in CCU AL to store node info(ACA, LMON) received from Concentrator Table, for AUTH & ENCRYPT handling*/
-static NODE_INFO comm_node_configdata;
-
-CRC_DATA crc;
-CMAC_PARAMS cmac;
 crypto_Mac_Status_E Cmac_status;
 
 static ACA_NW_REQ ACA_Request;
 static ACA_NW_RESP ACA_req_resp[4];
 static uint8_t ACA_req_resp_count=0, retry_count;
-
-/* This structure is used in meter side AL to store random number from CCU to Meter */
-static struct
-{
-    uint8_t random_num[KEY_LENGTH];
-    uint8_t challenge_req_received;
-}lmon_recovery;
-
-/* This variable is used only in Concentrator AL */
-static union
-{
-    uint8_t status_byte;
-    
-    struct{
-        int DL_Request_sent                 : 1;
-        int DL_Confirm_rcvd                 : 1;
-        int DL_Indication_req               : 1;
-        int DL_Event_sent                   : 1;
-    }flags;
-}AL_Status;
-
-static union
-{
-    uint8_t status_byte;
-    
-    struct{
-        int ACA_Req_Address_Req_rcvd        : 1;
-        int ACA_Address_Req_Sent            : 1;
-        int ACA_Req_Address_Resp_sent       : 1;
-        int ACA_ACK_sent                    : 1;                                    /* Same flag used for ACK & NACK */
-        
-    }flags;
-}AL_NWStatus;
 
 static struct
 {
@@ -155,48 +101,48 @@ AL_M_STATUS AL_set_encryption_keys( AL_CONFIG_DATA *configparams )
 {
     uint32_t lsb_32bits;
     
-    if (configparams_rcvd == 1U)
+    if (alData.configparams_rcvd == 1U)
     {
-        memset(keys.Write_Key, 0, KEY_LENGTH);
+        memset(alData.keys.Write_Key, 0, KEY_LENGTH);
         memcpy(&lsb_32bits,configparams->Key_K1, 4);
-        memcpy(keys.Write_Key,&configparams->Key_K1[4], 12);
-        memcpy(&keys.Write_Key[12],&lsb_32bits, 4);
+        memcpy(alData.keys.Write_Key,&configparams->Key_K1[4], 12);
+        memcpy(&alData.keys.Write_Key[12],&lsb_32bits, 4);
         
         lsb_32bits=0;
-        memset(keys.Read_Key, 0, KEY_LENGTH);
+        memset(alData.keys.Read_Key, 0, KEY_LENGTH);
         memcpy(&lsb_32bits,configparams->Key_K2, 4);
-        memcpy(keys.Read_Key,&configparams->Key_K2[4], 12);
-        memcpy(&keys.Read_Key[12],&lsb_32bits, 4);
+        memcpy(alData.keys.Read_Key,&configparams->Key_K2[4], 12);
+        memcpy(&alData.keys.Read_Key[12],&lsb_32bits, 4);
         
-        keys.Keys_generation_status = 1;
+        alData.keys.Keys_generation_status = 1;
     } 
     return AL_SUCCESS;
 }
 
 AL_M_STATUS AL_data_config_process( AL_CONFIG_DATA *configParams )
 {
-    memset(&config_data, 0, sizeof(AL_CONFIG_DATA));
+    memset(&alData.config_data, 0, sizeof(AL_CONFIG_DATA));
 
-    memcpy(config_data.ACA, configParams->ACA, 6);
-    memcpy(config_data.SCA, configParams->SCA, 6);
-    memcpy(config_data.Key_K1, configParams->Key_K1, 16);
-    memcpy(config_data.Key_K2, configParams->Key_K2, 16);
-    memcpy(config_data.lmon.buff, configParams->lmon.buff, 8);
-    config_data.config_device = configParams->config_device;
+    memcpy(alData.config_data.ACA, configParams->ACA, 6);
+    memcpy(alData.config_data.SCA, configParams->SCA, 6);
+    memcpy(alData.config_data.Key_K1, configParams->Key_K1, 16);
+    memcpy(alData.config_data.Key_K2, configParams->Key_K2, 16);
+    memcpy(alData.config_data.lmon.buff, configParams->lmon.buff, 8);
+    alData.config_data.config_device = configParams->config_device;
 
-    configparams_rcvd = 1U;
-    AL_set_encryption_keys( &config_data );
+    alData.configparams_rcvd = 1U;
+    AL_set_encryption_keys( &alData.config_data );
     
     return AL_SUCCESS;
 }
 
 void counter_block_generation( uint64_t Msg_Order )
 {
-    memset(keys.Counter_block, 0, KEY_LENGTH);
+    memset(alData.keys.Counter_block, 0, KEY_LENGTH);
     
-    keys.Counter_block[0] = 1;
-    memcpy(&keys.Counter_block[2], &Msg_Order, 8);
-    memcpy(&keys.Counter_block[10],config_data.ACA, 6);
+    alData.keys.Counter_block[0] = 1;
+    memcpy(&alData.keys.Counter_block[2], &Msg_Order, 8);
+    memcpy(&alData.keys.Counter_block[10],alData.config_data.ACA, 6);
 }
 
 static bool address_filtering( void )
@@ -204,7 +150,7 @@ static bool address_filtering( void )
     uint8_t address_byte;
     
     /* Last byte of Meter ACA */
-    address_byte = config_data.ACA[5];
+    address_byte = alData.config_data.ACA[5];
     
     address_byte = address_byte + ACA_Request.AddToAddress;
     /* address_byte = address_byte>>ACA_Request.RightShiftAdd; */
@@ -219,12 +165,12 @@ static bool address_filtering( void )
 
 AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
 {
-    if( config_data.config_device == AL_CONCENTRATOR )
+    if( alData.config_data.config_device == AL_CONCENTRATOR )
     {
         /* Clear the Event Flag when new request received */
-        AL_Status.flags.DL_Event_sent = 0;
+        alData.AL_Status.flags.DL_Event_sent = 0;
         
-        if(( reqParams->Txdata != NULL ) && ( configparams_rcvd == 1U ) && ( SYS_TIME_Counter64Get() > nextwaitCount ))
+        if(( reqParams->Txdata != NULL ) && ( alData.configparams_rcvd == 1U ) && ( SYS_TIME_Counter64Get() > nextwaitCount ))
         {
             switch (reqParams->Txdata[0])
             {
@@ -245,7 +191,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                     drParams.maxResponseLen = reqParams->maxResponseLen;
 
                     DLL_DataRequest(&drParams);
-                    AL_Status.flags.DL_Request_sent = 1;                                                        /* Network message Handling */
+                    alData.AL_Status.flags.DL_Request_sent = 1;                                                        /* Network message Handling */
 
                     confirmWaitTimeoutUs = DLL_GetTxTimeout();                                                  /* ConfirmWait in uSec*/
                     confirmWaitCount = SYS_TIME_USToCount( confirmWaitTimeoutUs );
@@ -256,16 +202,16 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                 case CHALLENGE_REQ:
 
                     /* Storing Node info to use during DLL_IND */
-                    memset(&comm_node_configdata, 0, sizeof(NODE_INFO));
-                    memcpy(comm_node_configdata.ACA, reqParams->node_info.ACA, ACA_LENGTH);                          /* Use in Challenge_response Ind process */
-                    memcpy(comm_node_configdata.lmon.buff, reqParams->node_info.lmon.buff, LMON_LENGTH);             /* Not sure to use in Challenge_response Ind process */
+                    memset(&alData.comm_node_configdata, 0, sizeof(NODE_INFO));
+                    memcpy(alData.comm_node_configdata.ACA, reqParams->node_info.ACA, ACA_LENGTH);                          /* Use in Challenge_response Ind process */
+                    memcpy(alData.comm_node_configdata.lmon.buff, reqParams->node_info.lmon.buff, LMON_LENGTH);             /* Not sure to use in Challenge_response Ind process */
                     
-                    memset(Transmit_Buff, 0, MAX_DATA_LENGTH);
-                    memset(random_number, 0, 16);
+                    memset(alData.Transmit_Buff, 0, MAX_DATA_LENGTH);
+                    memset(&alData.random_number, 0, 16);
 
-                    Transmit_Buff[0] = reqParams->Txdata[0];
-                    SRV_RANDOM_Get128bits(random_number);
-                    memcpy(&Transmit_Buff[3], random_number, 16);
+                    alData.Transmit_Buff[0] = reqParams->Txdata[0];
+                    SRV_RANDOM_Get128bits(alData.random_number);
+                    memcpy(&alData.Transmit_Buff[3], alData.random_number, 16);
 
                     drParams.dsap = DLL_DSAP_APPLICATION_FRAME;                                     
                     drParams.ecc = DLL_ECC_DISABLED;
@@ -274,10 +220,10 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                     memcpy(&drParams.dstAddress, &reqParams->dstAddress, sizeof(ROUTING_ENTRY));    /* testing needed */      
                     drParams.maxResponseLen = reqParams->maxResponseLen;
                     drParams.lsduLen = 19;                                                          /* CM+T+Random.NO 19 bytes */
-                    drParams.lsdu = Transmit_Buff;
+                    drParams.lsdu = alData.Transmit_Buff;
 
                     DLL_DataRequest(&drParams);
-                    AL_Status.flags.DL_Request_sent = 1;                                            /* Network message Handling */
+                    alData.AL_Status.flags.DL_Request_sent = 1;                                            /* Network message Handling */
                     
                     confirmWaitTimeoutUs = DLL_GetTxTimeout();                                      /* ConfirmWait in uSec*/
                     confirmWaitCount = SYS_TIME_USToCount( confirmWaitTimeoutUs );
@@ -318,7 +264,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                     drParams.maxResponseLen = reqParams->maxResponseLen;
                     
                     DLL_DataRequest(&drParams);
-                    AL_Status.flags.DL_Request_sent = 1;
+                    alData.AL_Status.flags.DL_Request_sent = 1;
 
                     confirmWaitTimeoutUs = DLL_GetTxTimeout();                                          /* ConfirmWait in uSec*/
                     confirmWaitCount = SYS_TIME_USToCount( confirmWaitTimeoutUs );
@@ -334,36 +280,36 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                 case WRITETABIC_REQ_AUTH: 
 
                     /* Storing Node info to use during DLL_IND */
-                    memset(&comm_node_configdata, 0, sizeof(NODE_INFO));
-                    memcpy(comm_node_configdata.ACA, reqParams->node_info.ACA, ACA_LENGTH);
-                    memcpy(comm_node_configdata.lmon.buff, reqParams->node_info.lmon.buff, LMON_LENGTH);
+                    memset(&alData.comm_node_configdata, 0, sizeof(NODE_INFO));
+                    memcpy(alData.comm_node_configdata.ACA, reqParams->node_info.ACA, ACA_LENGTH);
+                    memcpy(alData.comm_node_configdata.lmon.buff, reqParams->node_info.lmon.buff, LMON_LENGTH);
                     request_time.value = reqParams->timestamp;
                     
                     /* Updating CMON with new LMON received from Request and increment by 1 */
-                    config_data.cmon.value = comm_node_configdata.lmon.value + 1;
+                    alData.config_data.cmon.value = alData.comm_node_configdata.lmon.value + 1;
                     
-                    memset(Transmit_Buff, 0, MAX_DATA_LENGTH);
-                    Transmit_Buff[0] = reqParams->Txdata[0];
+                    memset(alData.Transmit_Buff, 0, MAX_DATA_LENGTH);
+                    alData.Transmit_Buff[0] = reqParams->Txdata[0];
 
-                    memset(crc.buffer, 0, MAX_DATA_LENGTH);
-                    memcpy(crc.buffer, comm_node_configdata.ACA, ACA_LENGTH);                                /* Node ACA */
-                    crc.dataLen = ACA_LENGTH;
-                    memcpy(&crc.buffer[crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
-                    crc.dataLen += reqParams->Txdata_Len-1;
-                    crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);    /* CRC Calculation */  
+                    memset(alData.crc.buffer, 0, MAX_DATA_LENGTH);
+                    memcpy(alData.crc.buffer, alData.comm_node_configdata.ACA, ACA_LENGTH);                                /* Node ACA */
+                    alData.crc.dataLen = ACA_LENGTH;
+                    memcpy(&alData.crc.buffer[alData.crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
+                    alData.crc.dataLen += reqParams->Txdata_Len-1;
+                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                                         /* CRC Calculation */  
                     
-                    memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
-                    cmac.inputBuf[0] = reqParams->Txdata[0];                                                    /* CM */
-                    cmac.input_dataLen = 1;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], comm_node_configdata.ACA, 3);                 /* Node ACA 3bytes(LSB) */ 
-                    cmac.input_dataLen += 3;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], config_data.cmon.buff, CMON_LENGTH);             /* CMON (LMON+1) used for CMAC generation in CCU */
-                    cmac.input_dataLen += CMON_LENGTH;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], &crc.result, 4);                                 /* CRC(ACA,DATA) */
-                    cmac.input_dataLen += 4;
-                    memcpy(cmac.key, keys.Write_Key, 16);                                                       /* KEY */
+                    memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
+                    alData.cmac.inputBuf[0] = reqParams->Txdata[0];                                                    /* CM */
+                    alData.cmac.input_dataLen = 1;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], alData.comm_node_configdata.ACA, 3);                    /* Node ACA 3bytes(LSB) */ 
+                    alData.cmac.input_dataLen += 3;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], alData.config_data.cmon.buff, CMON_LENGTH);             /* CMON (LMON+1) used for CMAC generation in CCU */
+                    alData.cmac.input_dataLen += CMON_LENGTH;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], &alData.crc.result, 4);                                 /* CRC(ACA,DATA) */
+                    alData.cmac.input_dataLen += 4;
+                    memcpy(alData.cmac.key, alData.keys.Write_Key, 16);                                                /* KEY */
 
-                    Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, cmac.inputBuf, cmac.input_dataLen, cmac.Computed_cmac, AES_CMAC_LENGTH, cmac.key, KEY_LENGTH, SessionID);
+                    Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, alData.cmac.inputBuf, alData.cmac.input_dataLen, alData.cmac.Computed_cmac, AES_CMAC_LENGTH, alData.cmac.key, KEY_LENGTH, SessionID);
 
                     if (Cmac_status == CRYPTO_MAC_CIPHER_SUCCESS)
                     {    
@@ -373,24 +319,24 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                         process_bytes = reqParams->Txdata_Len-1;
                         memcpy(&dll_Tx_buffer[process_bytes], &reqParams->timestamp, 8);                        /* POSIX Time stamp */
                         process_bytes += 8;
-                        memcpy(&dll_Tx_buffer[process_bytes], cmac.Computed_cmac, 8);                           /* LSB 64bits of CMAC */
+                        memcpy(&dll_Tx_buffer[process_bytes], alData.cmac.Computed_cmac, 8);                           /* LSB 64bits of CMAC */
                         process_bytes += 8;
 
-                        counter_block_generation(config_data.cmon.value);                                       /* IV generation */
+                        counter_block_generation(alData.config_data.cmon.value);                                       /* IV generation */
                         
-                        if(EncryptData_dll(dll_Tx_buffer, process_bytes, &Transmit_Buff[1], CRYPTO_SYM_OPMODE_CTR, keys.Write_Key, keys.Counter_block) == true)
+                        if(EncryptData_dll(dll_Tx_buffer, process_bytes, &alData.Transmit_Buff[1], CRYPTO_SYM_OPMODE_CTR, alData.keys.Write_Key, alData.keys.Counter_block) == true)
                         {
                             drParams.dsap = DLL_DSAP_APPLICATION_FRAME;
                             drParams.ecc = DLL_ECC_DISABLED;
                             drParams.lsduLen = process_bytes+1;                                                 /* CM */
-                            drParams.lsdu = Transmit_Buff;
+                            drParams.lsdu = alData.Transmit_Buff;
                             drParams.serviceClass = reqParams->serviceClass;
                             drParams.timeSlotNum = reqParams->timeSlotNum;
                             memcpy(&drParams.dstAddress, &reqParams->dstAddress, sizeof(ROUTING_ENTRY));        /* testing needed */      
                             drParams.maxResponseLen = reqParams->maxResponseLen;
                             
                             DLL_DataRequest(&drParams);
-                            AL_Status.flags.DL_Request_sent = 1;
+                            alData.AL_Status.flags.DL_Request_sent = 1;
 
                             confirmWaitTimeoutUs = DLL_GetTxTimeout();                                          /* ConfirmWait in uSec*/
                             confirmWaitCount = SYS_TIME_USToCount( confirmWaitTimeoutUs );
@@ -413,36 +359,36 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                 case COMMAND_AUTH:            
 
                     /* Storing Node info to use during DLL_IND */
-                    memset(&comm_node_configdata, 0, sizeof(NODE_INFO));
-                    memcpy(comm_node_configdata.ACA, reqParams->node_info.ACA, ACA_LENGTH);
-                    memcpy(comm_node_configdata.lmon.buff, reqParams->node_info.lmon.buff, LMON_LENGTH);
+                    memset(&alData.comm_node_configdata, 0, sizeof(NODE_INFO));
+                    memcpy(alData.comm_node_configdata.ACA, reqParams->node_info.ACA, ACA_LENGTH);
+                    memcpy(alData.comm_node_configdata.lmon.buff, reqParams->node_info.lmon.buff, LMON_LENGTH);
                     request_time.value = reqParams->timestamp;
                     
                     /* Updating CMON with new LMON received from Request and increment by 1 */
-                    config_data.cmon.value = comm_node_configdata.lmon.value + 1;
+                    alData.config_data.cmon.value = alData.comm_node_configdata.lmon.value + 1;
                     
-                    memset(Transmit_Buff, 0, MAX_DATA_LENGTH);
-                    Transmit_Buff[0] = reqParams->Txdata[0];
+                    memset(alData.Transmit_Buff, 0, MAX_DATA_LENGTH);
+                    alData.Transmit_Buff[0] = reqParams->Txdata[0];
 
-                    memset(crc.buffer, 0, MAX_DATA_LENGTH);
-                    memcpy(crc.buffer, comm_node_configdata.ACA, ACA_LENGTH);                                /* Node ACA */
-                    crc.dataLen = ACA_LENGTH;
-                    memcpy(&crc.buffer[crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
-                    crc.dataLen += reqParams->Txdata_Len-1;
-                    crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);     /* CRC Calculation */  
+                    memset(alData.crc.buffer, 0, MAX_DATA_LENGTH);
+                    memcpy(alData.crc.buffer, alData.comm_node_configdata.ACA, ACA_LENGTH);                                /* Node ACA */
+                    alData.crc.dataLen = ACA_LENGTH;
+                    memcpy(&alData.crc.buffer[alData.crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
+                    alData.crc.dataLen += reqParams->Txdata_Len-1;
+                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                                         /* CRC Calculation */  
 
-                    memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
-                    cmac.inputBuf[0] = reqParams->Txdata[0];                                                    /* CM */
-                    cmac.input_dataLen = 1;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], comm_node_configdata.ACA, 3);                 /* Node ACA 3bytes(LSB) */ 
-                    cmac.input_dataLen += 3;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], config_data.cmon.buff, LMON_LENGTH);             /* CMON (LMON+1) used for CMAC generation in CCU */
-                    cmac.input_dataLen += LMON_LENGTH;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], &crc.result, 4);                                 /* CRC(ACA,DATA) */
-                    cmac.input_dataLen += 4;
-                    memcpy(cmac.key, keys.Read_Key, 16);                                                        /* KEY */
+                    memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
+                    alData.cmac.inputBuf[0] = reqParams->Txdata[0];                                                    /* CM */
+                    alData.cmac.input_dataLen = 1;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], alData.comm_node_configdata.ACA, 3);                 /* Node ACA 3bytes(LSB) */ 
+                    alData.cmac.input_dataLen += 3;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], alData.config_data.cmon.buff, LMON_LENGTH);             /* CMON (LMON+1) used for CMAC generation in CCU */
+                    alData.cmac.input_dataLen += LMON_LENGTH;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], &alData.crc.result, 4);                                 /* CRC(ACA,DATA) */
+                    alData.cmac.input_dataLen += 4;
+                    memcpy(alData.cmac.key, alData.keys.Read_Key, 16);                                                        /* KEY */
 
-                    Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, cmac.inputBuf, cmac.input_dataLen, cmac.Computed_cmac, AES_CMAC_LENGTH, cmac.key, KEY_LENGTH, SessionID);
+                    Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, alData.cmac.inputBuf, alData.cmac.input_dataLen, alData.cmac.Computed_cmac, AES_CMAC_LENGTH, alData.cmac.key, KEY_LENGTH, SessionID);
 
                     if (Cmac_status == CRYPTO_MAC_CIPHER_SUCCESS)
                     {    
@@ -452,24 +398,24 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                         process_bytes = reqParams->Txdata_Len-1;
                         memcpy(&dll_Tx_buffer[process_bytes], &reqParams->timestamp, 8);
                         process_bytes += 8;
-                        memcpy(&dll_Tx_buffer[process_bytes], cmac.Computed_cmac, 8);
+                        memcpy(&dll_Tx_buffer[process_bytes], alData.cmac.Computed_cmac, 8);
                         process_bytes += 8;
 
-                        counter_block_generation(config_data.cmon.value);                       /* IV generation */
+                        counter_block_generation(alData.config_data.cmon.value);                       /* IV generation */
                         
-                        if(EncryptData_dll(dll_Tx_buffer, process_bytes, &Transmit_Buff[1], CRYPTO_SYM_OPMODE_CTR, keys.Read_Key, keys.Counter_block) == true)
+                        if(EncryptData_dll(dll_Tx_buffer, process_bytes, &alData.Transmit_Buff[1], CRYPTO_SYM_OPMODE_CTR, alData.keys.Read_Key, alData.keys.Counter_block) == true)
                         {
                             drParams.dsap = DLL_DSAP_APPLICATION_FRAME;
                             drParams.ecc = DLL_ECC_DISABLED;
                             drParams.lsduLen = process_bytes+1;                                 /* CM */
-                            drParams.lsdu = Transmit_Buff;
+                            drParams.lsdu = alData.Transmit_Buff;
                             drParams.serviceClass = reqParams->serviceClass;
                             drParams.timeSlotNum = reqParams->timeSlotNum;
                             memcpy(&drParams.dstAddress, &reqParams->dstAddress, sizeof(ROUTING_ENTRY));                      /* testing needed */      
                             drParams.maxResponseLen = reqParams->maxResponseLen;
                     
                             DLL_DataRequest(&drParams);
-                            AL_Status.flags.DL_Request_sent = 1;
+                            alData.AL_Status.flags.DL_Request_sent = 1;
 
                             confirmWaitTimeoutUs = DLL_GetTxTimeout();                                          /* ConfirmWait in uSec*/
                             confirmWaitCount = SYS_TIME_USToCount( confirmWaitTimeoutUs );
@@ -485,9 +431,9 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
             return AL_PROCESSED;
         }
     }
-    else if( config_data.config_device == AL_METER )
+    else if( alData.config_data.config_device == AL_METER )
     {
-        if(( reqParams->Txdata != NULL ) && ( configparams_rcvd == 1U ) && ( SYS_TIME_Counter64Get() > nextwaitCount ))
+        if(( reqParams->Txdata != NULL ) && ( alData.configparams_rcvd == 1U ) && ( SYS_TIME_Counter64Get() > nextwaitCount ))
         {
             switch (reqParams->Txdata[0])
             {
@@ -502,7 +448,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                     drParams.ecc = DLL_ECC_DISABLED;
 
                     DLL_DataRequest(&drParams);
-                    AL_NWStatus.flags.ACA_ACK_sent = 1;                                                 /* Network message Handling */
+                    alData.AL_NWStatus.flags.ACA_ACK_sent = 1;                                                 /* Network message Handling */
 
                     confirmWaitTimeoutUs = DLL_GetTxTimeout();                                          /* ConfirmWait in uSec*/
                     confirmWaitCount = SYS_TIME_USToCount( confirmWaitTimeoutUs );
@@ -516,47 +462,47 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
 
                 case CHALLENGE_RESP:    
 
-                    if(lmon_recovery.challenge_req_received == 1)
+                    if(alData.lmon_recovery.challenge_req_received == 1)
                     {    
-                        Transmit_Buff[0] = reqParams->Txdata[0];
-                        memset(crc.buffer, 0, MAX_DATA_LENGTH);
-                        memcpy(crc.buffer, config_data.ACA, ACA_LENGTH);  
-                        crc.dataLen = ACA_LENGTH;
-                        memcpy(&crc.buffer[crc.dataLen], lmon_recovery.random_num, 16);
-                        crc.dataLen += 16;
-                        crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);      /* CRC Calculation */  
+                        alData.Transmit_Buff[0] = reqParams->Txdata[0];
+                        memset(alData.crc.buffer, 0, MAX_DATA_LENGTH);
+                        memcpy(alData.crc.buffer, alData.config_data.ACA, ACA_LENGTH);  
+                        alData.crc.dataLen = ACA_LENGTH;
+                        memcpy(&alData.crc.buffer[alData.crc.dataLen], alData.lmon_recovery.random_num, 16);
+                        alData.crc.dataLen += 16;
+                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                         /* CRC Calculation */  
 
-                        memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
-                        cmac.inputBuf[0] = reqParams->Txdata[0];                                    /* CM */
-                        cmac.input_dataLen = 1;
-                        memcpy(&cmac.inputBuf[cmac.input_dataLen], config_data.ACA, 3);             /* ACA 3bytes(LSB) */ 
-                        cmac.input_dataLen += 3;
-                        memcpy(&cmac.inputBuf[cmac.input_dataLen], config_data.lmon.buff, LMON_LENGTH);       /* LMON used for CMAC generation in Meter */
-                        cmac.input_dataLen += LMON_LENGTH;
-                        memcpy(&cmac.inputBuf[cmac.input_dataLen], &crc.result, 4);                 /* CRC(ACA,DATA) */
-                        cmac.input_dataLen += 4;
-                        memcpy(cmac.key, keys.Write_Key, 16);                                       /* KEY */
+                        memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
+                        alData.cmac.inputBuf[0] = reqParams->Txdata[0];                                    /* CM */
+                        alData.cmac.input_dataLen = 1;
+                        memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], alData.config_data.ACA, 3);             /* ACA 3bytes(LSB) */ 
+                        alData.cmac.input_dataLen += 3;
+                        memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], alData.config_data.lmon.buff, LMON_LENGTH);       /* LMON used for CMAC generation in Meter */
+                        alData.cmac.input_dataLen += LMON_LENGTH;
+                        memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], &alData.crc.result, 4);                 /* CRC(ACA,DATA) */
+                        alData.cmac.input_dataLen += 4;
+                        memcpy(alData.cmac.key, alData.keys.Write_Key, 16);                                       /* KEY */
 
-                        Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, cmac.inputBuf, cmac.input_dataLen, cmac.Computed_cmac, AES_CMAC_LENGTH, cmac.key, KEY_LENGTH, SessionID);
+                        Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, alData.cmac.inputBuf, alData.cmac.input_dataLen, alData.cmac.Computed_cmac, AES_CMAC_LENGTH, alData.cmac.key, KEY_LENGTH, SessionID);
 
                         if (Cmac_status == CRYPTO_MAC_CIPHER_SUCCESS)
                         {    
                             memset(dll_Tx_buffer, 0, MAX_DATA_LENGTH);
-                            memcpy(dll_Tx_buffer, config_data.lmon.buff, LMON_LENGTH);
+                            memcpy(dll_Tx_buffer, alData.config_data.lmon.buff, LMON_LENGTH);
                             process_bytes = LMON_LENGTH;
-                            memcpy(&dll_Tx_buffer[LMON_LENGTH], cmac.Computed_cmac, LMON_LENGTH);
+                            memcpy(&dll_Tx_buffer[LMON_LENGTH], alData.cmac.Computed_cmac, LMON_LENGTH);
                             process_bytes += LMON_LENGTH;
 
                             /* ECB mode doesn't require Counter Block */
-                            if(EncryptData_dll(dll_Tx_buffer, process_bytes, &Transmit_Buff[3], CRYPTO_SYM_OPMODE_ECB, keys.Write_Key, NULL ) == true)
+                            if(EncryptData_dll(dll_Tx_buffer, process_bytes, &alData.Transmit_Buff[3], CRYPTO_SYM_OPMODE_ECB, alData.keys.Write_Key, NULL ) == true)
                             {
                                 drParams.dsap = DLL_DSAP_APPLICATION_FRAME;
                                 drParams.ecc = DLL_ECC_DISABLED;
                                 drParams.lsduLen = process_bytes+3;                                 /* CM+T 3bytes */
-                                drParams.lsdu = Transmit_Buff;
+                                drParams.lsdu = alData.Transmit_Buff;
 
                                 DLL_DataRequest(&drParams);
-                                lmon_recovery.challenge_req_received = 0;
+                                alData.lmon_recovery.challenge_req_received = 0;
                                 
                                 confirmWaitTimeoutUs = DLL_GetTxTimeout();                          /* ConfirmWait in uSec*/
                                 confirmWaitCount = SYS_TIME_USToCount( confirmWaitTimeoutUs );
@@ -605,28 +551,28 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                 case SETIC_REQ_AUTH:      
                 case WRITETABIC_REQ_AUTH: 
 
-                    memset(Transmit_Buff, 0, MAX_DATA_LENGTH);
-                    Transmit_Buff[0] = reqParams->Txdata[0];
+                    memset(alData.Transmit_Buff, 0, MAX_DATA_LENGTH);
+                    alData.Transmit_Buff[0] = reqParams->Txdata[0];
 
-                    memset(crc.buffer, 0, MAX_DATA_LENGTH);
-                    memcpy(crc.buffer, config_data.ACA, ACA_LENGTH);  
-                    crc.dataLen = ACA_LENGTH;
-                    memcpy(&crc.buffer[crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
-                    crc.dataLen += reqParams->Txdata_Len-1;
-                    crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);    /* CRC Calculation */  
+                    memset(alData.crc.buffer, 0, MAX_DATA_LENGTH);
+                    memcpy(alData.crc.buffer, alData.config_data.ACA, ACA_LENGTH);  
+                    alData.crc.dataLen = ACA_LENGTH;
+                    memcpy(&alData.crc.buffer[alData.crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
+                    alData.crc.dataLen += reqParams->Txdata_Len-1;
+                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                                     /* CRC Calculation */  
 
-                    memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
-                    cmac.inputBuf[0] = reqParams->Txdata[0];                                                /* CM */
-                    cmac.input_dataLen = 1;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], config_data.ACA, 3);                         /* ACA 3bytes(LSB) */ 
-                    cmac.input_dataLen += 3;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], config_data.lmon.buff, LMON_LENGTH);         /* LMON used for CMAC generation in Meter */
-                    cmac.input_dataLen += LMON_LENGTH;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], &crc.result, 4);                             /* CRC(ACA,DATA) */
-                    cmac.input_dataLen += 4;
-                    memcpy(cmac.key, keys.Write_Key, 16);                                                   /* KEY */
+                    memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
+                    alData.cmac.inputBuf[0] = reqParams->Txdata[0];                                                /* CM */
+                    alData.cmac.input_dataLen = 1;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], alData.config_data.ACA, 3);                         /* ACA 3bytes(LSB) */ 
+                    alData.cmac.input_dataLen += 3;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], alData.config_data.lmon.buff, LMON_LENGTH);         /* LMON used for CMAC generation in Meter */
+                    alData.cmac.input_dataLen += LMON_LENGTH;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], &alData.crc.result, 4);                             /* CRC(ACA,DATA) */
+                    alData.cmac.input_dataLen += 4;
+                    memcpy(alData.cmac.key, alData.keys.Write_Key, 16);                                                   /* KEY */
 
-                    Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, cmac.inputBuf, cmac.input_dataLen, cmac.Computed_cmac, AES_CMAC_LENGTH, cmac.key, KEY_LENGTH, SessionID);
+                    Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, alData.cmac.inputBuf, alData.cmac.input_dataLen, alData.cmac.Computed_cmac, AES_CMAC_LENGTH, alData.cmac.key, KEY_LENGTH, SessionID);
 
                     if (Cmac_status == CRYPTO_MAC_CIPHER_SUCCESS)
                     {    
@@ -636,16 +582,16 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                         process_bytes = reqParams->Txdata_Len-1;
                         memcpy(&dll_Tx_buffer[process_bytes], &reqParams->timestamp, 8);
                         process_bytes += 8;
-                        memcpy(&dll_Tx_buffer[process_bytes], cmac.Computed_cmac, 8);
+                        memcpy(&dll_Tx_buffer[process_bytes], alData.cmac.Computed_cmac, 8);
                         process_bytes += 8;
 
-                        counter_block_generation(config_data.lmon.value);                                   /* IV generation */
-                        if(EncryptData_dll(dll_Tx_buffer, process_bytes, &Transmit_Buff[1], CRYPTO_SYM_OPMODE_CTR, keys.Write_Key, keys.Counter_block) == true)
+                        counter_block_generation(alData.config_data.lmon.value);                                   /* IV generation */
+                        if(EncryptData_dll(dll_Tx_buffer, process_bytes, &alData.Transmit_Buff[1], CRYPTO_SYM_OPMODE_CTR, alData.keys.Write_Key, alData.keys.Counter_block) == true)
                         {
                             drParams.dsap = DLL_DSAP_APPLICATION_FRAME;
                             drParams.ecc = DLL_ECC_DISABLED;
                             drParams.lsduLen = process_bytes+1;                                             /* CM */
-                            drParams.lsdu = Transmit_Buff;
+                            drParams.lsdu = alData.Transmit_Buff;
 
                             DLL_DataRequest(&drParams);
                             
@@ -669,28 +615,28 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                 case DATASPONT_AUTH:            
                 case COMMAND_AUTH:            
 
-                    memset(Transmit_Buff, 0, MAX_DATA_LENGTH);
-                    Transmit_Buff[0] = reqParams->Txdata[0];
+                    memset(alData.Transmit_Buff, 0, MAX_DATA_LENGTH);
+                    alData.Transmit_Buff[0] = reqParams->Txdata[0];
 
-                    memset(crc.buffer, 0, MAX_DATA_LENGTH);
-                    memcpy(crc.buffer, config_data.ACA, ACA_LENGTH);  
-                    crc.dataLen = ACA_LENGTH;
-                    memcpy(&crc.buffer[crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
-                    crc.dataLen += reqParams->Txdata_Len-1;
-                    crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);    /* CRC Calculation */  
+                    memset(alData.crc.buffer, 0, MAX_DATA_LENGTH);
+                    memcpy(alData.crc.buffer, alData.config_data.ACA, ACA_LENGTH);  
+                    alData.crc.dataLen = ACA_LENGTH;
+                    memcpy(&alData.crc.buffer[alData.crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
+                    alData.crc.dataLen += reqParams->Txdata_Len-1;
+                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                                     /* CRC Calculation */  
 
-                    memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
-                    cmac.inputBuf[0] = reqParams->Txdata[0];                                                /* CM */
-                    cmac.input_dataLen = 1;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], config_data.ACA, 3);                         /* ACA 3bytes(LSB) */ 
-                    cmac.input_dataLen += 3;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], config_data.lmon.buff, LMON_LENGTH);         /* LMON used for CMAC generation in Meter */
-                    cmac.input_dataLen += LMON_LENGTH;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], &crc.result, 4);                             /* CRC(ACA,DATA) */
-                    cmac.input_dataLen += 4;
-                    memcpy(cmac.key, keys.Read_Key, 16);                                                    /* KEY */
+                    memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
+                    alData.cmac.inputBuf[0] = reqParams->Txdata[0];                                                /* CM */
+                    alData.cmac.input_dataLen = 1;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], alData.config_data.ACA, 3);                         /* ACA 3bytes(LSB) */ 
+                    alData.cmac.input_dataLen += 3;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], alData.config_data.lmon.buff, LMON_LENGTH);         /* LMON used for CMAC generation in Meter */
+                    alData.cmac.input_dataLen += LMON_LENGTH;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], &alData.crc.result, 4);                             /* CRC(ACA,DATA) */
+                    alData.cmac.input_dataLen += 4;
+                    memcpy(alData.cmac.key, alData.keys.Read_Key, 16);                                                    /* KEY */
 
-                    Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, cmac.inputBuf, cmac.input_dataLen, cmac.Computed_cmac, AES_CMAC_LENGTH, cmac.key, KEY_LENGTH, SessionID);
+                    Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, alData.cmac.inputBuf, alData.cmac.input_dataLen, alData.cmac.Computed_cmac, AES_CMAC_LENGTH, alData.cmac.key, KEY_LENGTH, SessionID);
 
                     if (Cmac_status == CRYPTO_MAC_CIPHER_SUCCESS)
                     {    
@@ -700,16 +646,16 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                         process_bytes = reqParams->Txdata_Len-1;
                         memcpy(&dll_Tx_buffer[process_bytes], &reqParams->timestamp, 8);
                         process_bytes += 8;
-                        memcpy(&dll_Tx_buffer[process_bytes], cmac.Computed_cmac, 8);
+                        memcpy(&dll_Tx_buffer[process_bytes], alData.cmac.Computed_cmac, 8);
                         process_bytes += 8;
 
-                        counter_block_generation(config_data.lmon.value);                                   /* IV generation */
-                        if(EncryptData_dll(dll_Tx_buffer, process_bytes, &Transmit_Buff[1], CRYPTO_SYM_OPMODE_CTR, keys.Read_Key, keys.Counter_block) == true)
+                        counter_block_generation(alData.config_data.lmon.value);                                   /* IV generation */
+                        if(EncryptData_dll(dll_Tx_buffer, process_bytes, &alData.Transmit_Buff[1], CRYPTO_SYM_OPMODE_CTR, alData.keys.Read_Key, alData.keys.Counter_block) == true)
                         {
                             drParams.dsap = DLL_DSAP_APPLICATION_FRAME;
                             drParams.ecc = DLL_ECC_DISABLED;
                             drParams.lsduLen = process_bytes+1;                                             /* CM */
-                            drParams.lsdu = Transmit_Buff;
+                            drParams.lsdu = alData.Transmit_Buff;
 
                             DLL_DataRequest(&drParams);
                             
@@ -738,28 +684,28 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
 
                 case A_Node_ACK_AUTH:
                 
-                    memset(Transmit_Buff, 0, MAX_DATA_LENGTH);
-                    Transmit_Buff[0] = reqParams->Txdata[0];
+                    memset(alData.Transmit_Buff, 0, MAX_DATA_LENGTH);
+                    alData.Transmit_Buff[0] = reqParams->Txdata[0];
 
-                    memset(crc.buffer, 0, MAX_DATA_LENGTH);
-                    memcpy(crc.buffer, config_data.ACA, ACA_LENGTH);  
-                    crc.dataLen = ACA_LENGTH;
-                    memcpy(&crc.buffer[crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
-                    crc.dataLen += reqParams->Txdata_Len-1;
-                    crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);    /* CRC Calculation */  
+                    memset(alData.crc.buffer, 0, MAX_DATA_LENGTH);
+                    memcpy(alData.crc.buffer, alData.config_data.ACA, ACA_LENGTH);  
+                    alData.crc.dataLen = ACA_LENGTH;
+                    memcpy(&alData.crc.buffer[alData.crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
+                    alData.crc.dataLen += reqParams->Txdata_Len-1;
+                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                                     /* CRC Calculation */  
 
-                    memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
-                    cmac.inputBuf[0] = reqParams->Txdata[0];                                                /* CM */
-                    cmac.input_dataLen = 1;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], config_data.ACA, 3);                         /* ACA 3bytes(LSB) */ 
-                    cmac.input_dataLen += 3;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], config_data.cmon.buff, LMON_LENGTH);         /* CMON used for CMAC generation in Meter for ACK */
-                    cmac.input_dataLen += LMON_LENGTH;
-                    memcpy(&cmac.inputBuf[cmac.input_dataLen], &crc.result, 4);                             /* CRC(ACA,DATA) */
-                    cmac.input_dataLen += 4;
-                    memcpy(cmac.key, keys.Write_Key, 16);                                                    /* KEY */
+                    memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
+                    alData.cmac.inputBuf[0] = reqParams->Txdata[0];                                                /* CM */
+                    alData.cmac.input_dataLen = 1;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], alData.config_data.ACA, 3);                         /* ACA 3bytes(LSB) */ 
+                    alData.cmac.input_dataLen += 3;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], alData.config_data.cmon.buff, LMON_LENGTH);         /* CMON used for CMAC generation in Meter for ACK */
+                    alData.cmac.input_dataLen += LMON_LENGTH;
+                    memcpy(&alData.cmac.inputBuf[alData.cmac.input_dataLen], &alData.crc.result, 4);                             /* CRC(ACA,DATA) */
+                    alData.cmac.input_dataLen += 4;
+                    memcpy(alData.cmac.key, alData.keys.Write_Key, 16);                                                    /* KEY */
 
-                    Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, cmac.inputBuf, cmac.input_dataLen, cmac.Computed_cmac, AES_CMAC_LENGTH, cmac.key, KEY_LENGTH, SessionID);
+                    Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, alData.cmac.inputBuf, alData.cmac.input_dataLen, alData.cmac.Computed_cmac, AES_CMAC_LENGTH, alData.cmac.key, KEY_LENGTH, SessionID);
 
                     if (Cmac_status == CRYPTO_MAC_CIPHER_SUCCESS)
                     {    
@@ -769,16 +715,16 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                         process_bytes = reqParams->Txdata_Len-1;
                         memcpy(&dll_Tx_buffer[process_bytes], &reqParams->timestamp, 8);
                         process_bytes += 8;
-                        memcpy(&dll_Tx_buffer[process_bytes], cmac.Computed_cmac, 8);
+                        memcpy(&dll_Tx_buffer[process_bytes], alData.cmac.Computed_cmac, 8);
                         process_bytes += 8;
 
-                        counter_block_generation(config_data.cmon.value);                                   /* IV generation */
-                        if (EncryptData_dll(dll_Tx_buffer, process_bytes, &Transmit_Buff[1], CRYPTO_SYM_OPMODE_CTR, keys.Write_Key, keys.Counter_block) == true)
+                        counter_block_generation(alData.config_data.cmon.value);                                   /* IV generation */
+                        if (EncryptData_dll(dll_Tx_buffer, process_bytes, &alData.Transmit_Buff[1], CRYPTO_SYM_OPMODE_CTR, alData.keys.Write_Key, alData.keys.Counter_block) == true)
                         {
                             drParams.dsap = DLL_DSAP_APPLICATION_FRAME;
                             drParams.ecc = DLL_ECC_DISABLED;
                             drParams.lsduLen = process_bytes+1;                                             /* CM */
-                            drParams.lsdu = Transmit_Buff;
+                            drParams.lsdu = alData.Transmit_Buff;
 
                             DLL_DataRequest(&drParams);
 
@@ -812,9 +758,9 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
     memset(&indication, 0, sizeof(AL_DATA_IND_PARAMS));
     memset(&request, 0, sizeof(AL_DATA_REQ_PARAMS));
     
-    if( config_data.config_device == AL_CONCENTRATOR )
+    if( alData.config_data.config_device == AL_CONCENTRATOR )
     {
-        AL_Status.flags.DL_Indication_req = 1;
+        alData.AL_Status.flags.DL_Indication_req = 1;
         
         switch (indParams->lsdu[0])
         {
@@ -829,7 +775,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                 indication.app_dataLen = indParams->lsduLen-1;
                 indication.message_type = AL_ENCRYPTION_DISABLED;
                 memcpy(indication.app_data, &indParams->lsdu[1], indication.app_dataLen);
-                al_handlers.dataIndCallback( &indication );
+                alData.alHandlers.dataIndCallback( &indication );
                 
                 break;
                 
@@ -848,7 +794,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                 indication.app_dataLen = indParams->lsduLen-1;
                 indication.message_type = AL_ENCRYPTION_DISABLED;
                 memcpy(indication.app_data, &indParams->lsdu[1], indication.app_dataLen);
-                al_handlers.dataIndCallback( &indication );
+                alData.alHandlers.dataIndCallback( &indication );
                 
                 break;
                 
@@ -864,39 +810,39 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                 memset(process_buff, 0, MAX_DATA_LENGTH);
                 
                 /* ECB mode doesn't require Counter Block */
-                indication.decryption_status = DecryptData_Comm(&indParams->lsdu[1], decrypt_length, process_buff, CRYPTO_SYM_OPMODE_CTR, keys.Write_Key, NULL);
+                indication.decryption_status = DecryptData_Comm(&indParams->lsdu[1], decrypt_length, process_buff, CRYPTO_SYM_OPMODE_CTR, alData.keys.Write_Key, NULL);
                 
                 /* writing data after decryption to meter_AL */
                 memcpy(lmon_recover.buff, process_buff, LMON_LENGTH);                               /* LMON received */
-                memcpy(cmac.Received_cmac, &process_buff[LMON_LENGTH], 8);                          /* CMAC */
+                memcpy(alData.cmac.Received_cmac, &process_buff[LMON_LENGTH], 8);                          /* CMAC */
                 indication.app_dataLen = 0U;                                                        /* data length is 0 as LMON is only data. its value is updated in indication.node_info */
                 
                 if(CRYPTO_SYM_CIPHER_SUCCESS == indication.decryption_status)
                 {
                     /* Calculating 32-bit CRC for CMAC generation */
-                    memset(crc.buffer, 0, sizeof(crc.buffer));
-                    memcpy(crc.buffer, comm_node_configdata.ACA, ACA_LENGTH);                             
-                    crc.dataLen = ACA_LENGTH;
-                    memcpy(&crc.buffer[6], random_number, 16);                                      /* Random number used in challenge Request */
-                    crc.dataLen += 16;
-                    crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1); /* CRC Calculation */  
+                    memset(alData.crc.buffer, 0, sizeof(alData.crc.buffer));
+                    memcpy(alData.crc.buffer, alData.comm_node_configdata.ACA, ACA_LENGTH);                             
+                    alData.crc.dataLen = ACA_LENGTH;
+                    memcpy(&alData.crc.buffer[6], alData.random_number, 16);                                      /* Random number used in challenge Request */
+                    alData.crc.dataLen += 16;
+                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                             /* CRC Calculation */  
 
-                    memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
-                    cmac.inputBuf[0] = indParams->lsdu[0];                                          /* CM */
-                    cmac.input_dataLen = 1;
-                    memcpy(&cmac.inputBuf[1], comm_node_configdata.ACA, 3);                         /* Node ACA 3bytes(LSB) */ 
-                    cmac.input_dataLen += 3;
-                    memcpy(&cmac.inputBuf[4], lmon_recover.buff, LMON_LENGTH); 
-                    cmac.input_dataLen += LMON_LENGTH;
-                    memcpy(&cmac.inputBuf[12], &crc.result, 4);                                     /* CRC(ACA,DATA) */
-                    cmac.input_dataLen += 4;
-                    memcpy(cmac.key, keys.Write_Key, 16);                                           /* Write KEY */
+                    memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
+                    alData.cmac.inputBuf[0] = indParams->lsdu[0];                                          /* CM */
+                    alData.cmac.input_dataLen = 1;
+                    memcpy(&alData.cmac.inputBuf[1], alData.comm_node_configdata.ACA, 3);                         /* Node ACA 3bytes(LSB) */ 
+                    alData.cmac.input_dataLen += 3;
+                    memcpy(&alData.cmac.inputBuf[4], lmon_recover.buff, LMON_LENGTH); 
+                    alData.cmac.input_dataLen += LMON_LENGTH;
+                    memcpy(&alData.cmac.inputBuf[12], &alData.crc.result, 4);                                     /* CRC(ACA,DATA) */
+                    alData.cmac.input_dataLen += 4;
+                    memcpy(alData.cmac.key, alData.keys.Write_Key, 16);                                           /* Write KEY */
 
-                    Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, cmac.inputBuf, cmac.input_dataLen, cmac.Computed_cmac, AES_CMAC_LENGTH, cmac.key, KEY_LENGTH, 1);
+                    Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, alData.cmac.inputBuf, alData.cmac.input_dataLen, alData.cmac.Computed_cmac, AES_CMAC_LENGTH, alData.cmac.key, KEY_LENGTH, 1);
 
                     if (Cmac_status == CRYPTO_MAC_CIPHER_SUCCESS)
                     {
-                        if (memcmp(cmac.Computed_cmac, cmac.Received_cmac, AES_CMAC_LENGTH) == 0)
+                        if (memcmp(alData.cmac.Computed_cmac, alData.cmac.Received_cmac, AES_CMAC_LENGTH) == 0)
                         {
                             indication.authentication_status = 1;                                   /* CMAC verification successful */  
                             indication.node_info.lmon.value = lmon_recover.value;                   /* updating LMON to CMON */ 
@@ -913,7 +859,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                     }
                 }
                 
-                al_handlers.dataIndCallback( &indication );
+                alData.alHandlers.dataIndCallback( &indication );
                 break;
                  
             case WRITE_REQ:
@@ -939,7 +885,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                 indication.app_dataLen = indParams->lsduLen-1;
                 indication.message_type = AL_ENCRYPTION_DISABLED;
                 memcpy(indication.app_data, &indParams->lsdu[1], indication.app_dataLen);
-                al_handlers.dataIndCallback( &indication );
+                alData.alHandlers.dataIndCallback( &indication );
                 
                 break;
                 
@@ -955,47 +901,47 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                 decrypt_length = indParams->lsduLen-1;
                 memset(process_buff, 0, MAX_DATA_LENGTH);
                 
-                counter_block_generation(config_data.cmon.value);                                       /* CMON for Decryption and Authentication */                        
-                indication.decryption_status = DecryptData_Comm(&indParams->lsdu[1], decrypt_length, process_buff, CRYPTO_SYM_OPMODE_CTR, keys.Write_Key, keys.Counter_block);
+                counter_block_generation(alData.config_data.cmon.value);                                       /* CMON for Decryption and Authentication */                        
+                indication.decryption_status = DecryptData_Comm(&indParams->lsdu[1], decrypt_length, process_buff, CRYPTO_SYM_OPMODE_CTR, alData.keys.Write_Key, alData.keys.Counter_block);
                 
                 /* writing data after decryption to meter_AL */
                 memcpy(indication.app_data, process_buff, decrypt_length-16);                           /* Data, excluding Timestamp & CMAC */
                 indication.app_dataLen = indParams->lsduLen-ENCRYPTED_MESSAGE_HEADER_LENGTH;            /* received data length */
                 memcpy(received_time.data, &process_buff[decrypt_length-16], 8);                        /* POSIX timestamp */
-                memcpy(cmac.Received_cmac, &process_buff[decrypt_length-8], 8);                         /* CMAC */
+                memcpy(alData.cmac.Received_cmac, &process_buff[decrypt_length-8], 8);                         /* CMAC */
                 
                 if(received_time.value > request_time.value )                            
                 {    
                     if(CRYPTO_SYM_CIPHER_SUCCESS == indication.decryption_status)
                     {
                         /* Calculating 32-bit CRC(ACA, Data) for CMAC generation */
-                        memset(crc.buffer, 0, sizeof(crc.buffer));
-                        memcpy(crc.buffer, comm_node_configdata.ACA, ACA_LENGTH);                       /* ACA of Node */         
-                        crc.dataLen = ACA_LENGTH;
-                        memcpy(&crc.buffer[6], indication.app_data, (decrypt_length-16));           
-                        crc.dataLen += decrypt_length-16;
-                        crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1); /* CRC Calculation */  
+                        memset(alData.crc.buffer, 0, sizeof(alData.crc.buffer));
+                        memcpy(alData.crc.buffer, alData.comm_node_configdata.ACA, ACA_LENGTH);                       /* ACA of Node */         
+                        alData.crc.dataLen = ACA_LENGTH;
+                        memcpy(&alData.crc.buffer[6], indication.app_data, (decrypt_length-16));           
+                        alData.crc.dataLen += decrypt_length-16;
+                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                             /* CRC Calculation */  
 
-                        memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
-                        cmac.inputBuf[0] = indParams->lsdu[0];                                          /* CM */
-                        cmac.input_dataLen = 1;
-                        memcpy(&cmac.inputBuf[1], comm_node_configdata.ACA, 3);                         /* ACA 3bytes(LSB) */ 
-                        cmac.input_dataLen += 3;
-                        memcpy(&cmac.inputBuf[4], config_data.cmon.buff, 8);                            /* updated CMON value */ 
-                        cmac.input_dataLen += 8;
-                        memcpy(&cmac.inputBuf[12], &crc.result, 4);                                     /* CRC(ACA,DATA) */
-                        cmac.input_dataLen += 4;
-                        memcpy(cmac.key, keys.Write_Key, 16);                                           /* Write KEY */
+                        memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
+                        alData.cmac.inputBuf[0] = indParams->lsdu[0];                                          /* CM */
+                        alData.cmac.input_dataLen = 1;
+                        memcpy(&alData.cmac.inputBuf[1], alData.comm_node_configdata.ACA, 3);                         /* ACA 3bytes(LSB) */ 
+                        alData.cmac.input_dataLen += 3;
+                        memcpy(&alData.cmac.inputBuf[4], alData.config_data.cmon.buff, 8);                            /* updated CMON value */ 
+                        alData.cmac.input_dataLen += 8;
+                        memcpy(&alData.cmac.inputBuf[12], &alData.crc.result, 4);                                     /* CRC(ACA,DATA) */
+                        alData.cmac.input_dataLen += 4;
+                        memcpy(alData.cmac.key, alData.keys.Write_Key, 16);                                           /* Write KEY */
 
-                        Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, cmac.inputBuf, cmac.input_dataLen, cmac.Computed_cmac, AES_CMAC_LENGTH, cmac.key, KEY_LENGTH, 1);
+                        Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, alData.cmac.inputBuf, alData.cmac.input_dataLen, alData.cmac.Computed_cmac, AES_CMAC_LENGTH, alData.cmac.key, KEY_LENGTH, 1);
 
                         if (Cmac_status == CRYPTO_MAC_CIPHER_SUCCESS)
                         {
-                            if (memcmp(cmac.Computed_cmac, cmac.Received_cmac, AES_CMAC_LENGTH) == 0)
+                            if (memcmp(alData.cmac.Computed_cmac, alData.cmac.Received_cmac, AES_CMAC_LENGTH) == 0)
                             {
                                 indication.authentication_status = 1;                                   /* CMAC verification successful */  
-                                indication.node_info.lmon.value = config_data.cmon.value;               /* Updating Node LMON to CMON and indicate to CCU */ 
-                                memcpy(indication.node_info.ACA, comm_node_configdata.ACA, ACA_LENGTH);
+                                indication.node_info.lmon.value = alData.config_data.cmon.value;               /* Updating Node LMON to CMON and indicate to CCU */ 
+                                memcpy(indication.node_info.ACA, alData.comm_node_configdata.ACA, ACA_LENGTH);
                             }
                             else
                             {
@@ -1010,7 +956,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                     }
                 }
                 
-                al_handlers.dataIndCallback( &indication );
+                alData.alHandlers.dataIndCallback( &indication );
                 break;
                 
                 
@@ -1030,47 +976,47 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                 decrypt_length = indParams->lsduLen-1;
                 memset(process_buff, 0, MAX_DATA_LENGTH);
                 
-                counter_block_generation(config_data.cmon.value);                                           /* CMON for Decryption and Authentication */         
-                indication.decryption_status = DecryptData_Comm(&indParams->lsdu[1], decrypt_length, process_buff, CRYPTO_SYM_OPMODE_CTR, keys.Read_Key, keys.Counter_block);
+                counter_block_generation(alData.config_data.cmon.value);                                           /* CMON for Decryption and Authentication */         
+                indication.decryption_status = DecryptData_Comm(&indParams->lsdu[1], decrypt_length, process_buff, CRYPTO_SYM_OPMODE_CTR, alData.keys.Read_Key, alData.keys.Counter_block);
                 
                 /* writing data after decryption to meter_AL */
                 memcpy(indication.app_data, process_buff, decrypt_length-16);                               /* Data */
                 indication.app_dataLen = indParams->lsduLen-ENCRYPTED_MESSAGE_HEADER_LENGTH;                /* received data length */
                 memcpy(received_time.data, &process_buff[decrypt_length-16], 8);                            /* POSIX timestamp */
-                memcpy(cmac.Received_cmac, &process_buff[decrypt_length-8], 8);                             /* CMAC */
+                memcpy(alData.cmac.Received_cmac, &process_buff[decrypt_length-8], 8);                             /* CMAC */
                 
                 if(received_time.value > request_time.value )                            
                 {    
                     if(CRYPTO_SYM_CIPHER_SUCCESS == indication.decryption_status)
                     {
                         /* Calculating 32-bit CRC for CMAC generation */
-                        memset(crc.buffer, 0, sizeof(crc.buffer));
-                        memcpy(crc.buffer, comm_node_configdata.ACA, ACA_LENGTH);                           /* ACA of Node */          
-                        crc.dataLen = ACA_LENGTH;
-                        memcpy(&crc.buffer[6], indication.app_data, (decrypt_length-16));           
-                        crc.dataLen += decrypt_length-16;
-                        crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1); /* CRC Calculation */  
+                        memset(alData.crc.buffer, 0, sizeof(alData.crc.buffer));
+                        memcpy(alData.crc.buffer, alData.comm_node_configdata.ACA, ACA_LENGTH);                           /* ACA of Node */          
+                        alData.crc.dataLen = ACA_LENGTH;
+                        memcpy(&alData.crc.buffer[6], indication.app_data, (decrypt_length-16));           
+                        alData.crc.dataLen += decrypt_length-16;
+                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                                 /* CRC Calculation */  
                     
-                        memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
-                        cmac.inputBuf[0] = indParams->lsdu[0];                                              /* CM */
-                        cmac.input_dataLen = 1;
-                        memcpy(&cmac.inputBuf[1], comm_node_configdata.ACA, 3);                             /* ACA 3bytes(LSB) */ 
-                        cmac.input_dataLen += 3;
-                        memcpy(&cmac.inputBuf[4], config_data.cmon.buff, 8);                                /* updated CMON value */ 
-                        cmac.input_dataLen += 8;
-                        memcpy(&cmac.inputBuf[12], &crc.result, 4);                                         /* CRC(ACA,DATA) */
-                        cmac.input_dataLen += 4;
-                        memcpy(cmac.key, keys.Read_Key, 16);                                                /* KEY */
+                        memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
+                        alData.cmac.inputBuf[0] = indParams->lsdu[0];                                              /* CM */
+                        alData.cmac.input_dataLen = 1;
+                        memcpy(&alData.cmac.inputBuf[1], alData.comm_node_configdata.ACA, 3);                             /* ACA 3bytes(LSB) */ 
+                        alData.cmac.input_dataLen += 3;
+                        memcpy(&alData.cmac.inputBuf[4], alData.config_data.cmon.buff, 8);                                /* updated CMON value */ 
+                        alData.cmac.input_dataLen += 8;
+                        memcpy(&alData.cmac.inputBuf[12], &alData.crc.result, 4);                                         /* CRC(ACA,DATA) */
+                        alData.cmac.input_dataLen += 4;
+                        memcpy(alData.cmac.key, alData.keys.Read_Key, 16);                                                /* KEY */
                         
-                        Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, cmac.inputBuf, cmac.input_dataLen, cmac.Computed_cmac, AES_CMAC_LENGTH, cmac.key, KEY_LENGTH, 1);
+                        Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, alData.cmac.inputBuf, alData.cmac.input_dataLen, alData.cmac.Computed_cmac, AES_CMAC_LENGTH, alData.cmac.key, KEY_LENGTH, 1);
 
                         if (Cmac_status == CRYPTO_MAC_CIPHER_SUCCESS)
                         {
-                            if (memcmp(cmac.Computed_cmac, cmac.Received_cmac, AES_CMAC_LENGTH) == 0)
+                            if (memcmp(alData.cmac.Computed_cmac, alData.cmac.Received_cmac, AES_CMAC_LENGTH) == 0)
                             {
                                 indication.authentication_status = 1;                                   /* CMAC verification successful */  
-                                indication.node_info.lmon.value = config_data.cmon.value;               /* Updating Node LMON to CMON and indicate to CCU */ 
-                                memcpy(indication.node_info.ACA, comm_node_configdata.ACA, ACA_LENGTH);
+                                indication.node_info.lmon.value = alData.config_data.cmon.value;               /* Updating Node LMON to CMON and indicate to CCU */ 
+                                memcpy(indication.node_info.ACA, alData.comm_node_configdata.ACA, ACA_LENGTH);
                             }
                             else
                             {
@@ -1084,7 +1030,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                         }
                     }
                 }
-                al_handlers.dataIndCallback( &indication );
+                alData.alHandlers.dataIndCallback( &indication );
                 break;
                 
             case A_Node_ACK:
@@ -1094,7 +1040,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                 indication.app_dataLen = indParams->lsduLen-1;
                 indication.message_type = AL_ENCRYPTION_DISABLED;
                 memcpy(indication.app_data, &indParams->lsdu[1], indication.app_dataLen);
-                al_handlers.dataIndCallback( &indication );
+                alData.alHandlers.dataIndCallback( &indication );
                 
                 break;
                 
@@ -1105,47 +1051,47 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                 decrypt_length = indParams->lsduLen-1;
                 memset(process_buff, 0, MAX_DATA_LENGTH);
                 
-                counter_block_generation(config_data.cmon.value);                                           /* CMON for Decryption and Authentication */         
-                indication.decryption_status = DecryptData_Comm(&indParams->lsdu[1], decrypt_length, process_buff, CRYPTO_SYM_OPMODE_CTR, keys.Write_Key, keys.Counter_block);
+                counter_block_generation(alData.config_data.cmon.value);                                           /* CMON for Decryption and Authentication */         
+                indication.decryption_status = DecryptData_Comm(&indParams->lsdu[1], decrypt_length, process_buff, CRYPTO_SYM_OPMODE_CTR, alData.keys.Write_Key, alData.keys.Counter_block);
                 
                 /* writing data after decryption to meter_AL */
                 memcpy(indication.app_data, process_buff, decrypt_length-16);                               /* Data */
                 indication.app_dataLen = indParams->lsduLen-ENCRYPTED_MESSAGE_HEADER_LENGTH;                /* received data length */
                 memcpy(received_time.data, &process_buff[decrypt_length-16], 8);                            /* POSIX timestamp */
-                memcpy(cmac.Received_cmac, &process_buff[decrypt_length-8], 8);                             /* CMAC */
+                memcpy(alData.cmac.Received_cmac, &process_buff[decrypt_length-8], 8);                             /* CMAC */
                 
                 if(received_time.value > request_time.value )                            
                 {    
                     if(CRYPTO_SYM_CIPHER_SUCCESS == indication.decryption_status)
                     {
                         /* Calculating 32-bit CRC for CMAC generation */
-                        memset(crc.buffer, 0, sizeof(crc.buffer));
-                        memcpy(crc.buffer, comm_node_configdata.ACA, ACA_LENGTH);                           /* ACA of Node */          
-                        crc.dataLen = ACA_LENGTH;
-                        memcpy(&crc.buffer[6], indication.app_data, (decrypt_length-16));           
-                        crc.dataLen += decrypt_length-16;
-                        crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1); /* CRC Calculation */  
+                        memset(alData.crc.buffer, 0, sizeof(alData.crc.buffer));
+                        memcpy(alData.crc.buffer, alData.comm_node_configdata.ACA, ACA_LENGTH);                           /* ACA of Node */          
+                        alData.crc.dataLen = ACA_LENGTH;
+                        memcpy(&alData.crc.buffer[6], indication.app_data, (decrypt_length-16));           
+                        alData.crc.dataLen += decrypt_length-16;
+                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                                 /* CRC Calculation */  
                     
-                        memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
-                        cmac.inputBuf[0] = indParams->lsdu[0];                                              /* CM */
-                        cmac.input_dataLen = 1;
-                        memcpy(&cmac.inputBuf[1], comm_node_configdata.ACA, 3);                             /* ACA 3bytes(LSB) */ 
-                        cmac.input_dataLen += 3;
-                        memcpy(&cmac.inputBuf[4], config_data.cmon.buff, 8);                                /* updated CMON value */ 
-                        cmac.input_dataLen += 8;
-                        memcpy(&cmac.inputBuf[12], &crc.result, 4);                                         /* CRC(ACA,DATA) */
-                        cmac.input_dataLen += 4;
-                        memcpy(cmac.key, keys.Write_Key, 16);                                                /* KEY */
+                        memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
+                        alData.cmac.inputBuf[0] = indParams->lsdu[0];                                              /* CM */
+                        alData.cmac.input_dataLen = 1;
+                        memcpy(&alData.cmac.inputBuf[1], alData.comm_node_configdata.ACA, 3);                             /* ACA 3bytes(LSB) */ 
+                        alData.cmac.input_dataLen += 3;
+                        memcpy(&alData.cmac.inputBuf[4], alData.config_data.cmon.buff, 8);                                /* updated CMON value */ 
+                        alData.cmac.input_dataLen += 8;
+                        memcpy(&alData.cmac.inputBuf[12], &alData.crc.result, 4);                                         /* CRC(ACA,DATA) */
+                        alData.cmac.input_dataLen += 4;
+                        memcpy(alData.cmac.key, alData.keys.Write_Key, 16);                                                /* KEY */
                         
-                        Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, cmac.inputBuf, cmac.input_dataLen, cmac.Computed_cmac, AES_CMAC_LENGTH, cmac.key, KEY_LENGTH, 1);
+                        Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, alData.cmac.inputBuf, alData.cmac.input_dataLen, alData.cmac.Computed_cmac, AES_CMAC_LENGTH, alData.cmac.key, KEY_LENGTH, 1);
 
                         if (Cmac_status == CRYPTO_MAC_CIPHER_SUCCESS)
                         {
-                            if (memcmp(cmac.Computed_cmac, cmac.Received_cmac, AES_CMAC_LENGTH) == 0)
+                            if (memcmp(alData.cmac.Computed_cmac, alData.cmac.Received_cmac, AES_CMAC_LENGTH) == 0)
                             {
                                 indication.authentication_status = 1;                                   /* CMAC verification successful */  
-                                indication.node_info.lmon.value = config_data.cmon.value;               /* Updating Node LMON to CMON and indicate to CCU */ 
-                                memcpy(indication.node_info.ACA, comm_node_configdata.ACA, ACA_LENGTH);
+                                indication.node_info.lmon.value = alData.config_data.cmon.value;               /* Updating Node LMON to CMON and indicate to CCU */ 
+                                memcpy(indication.node_info.ACA, alData.comm_node_configdata.ACA, ACA_LENGTH);
                             }
                             else
                             {
@@ -1159,7 +1105,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                         }
                     }
                 }
-                al_handlers.dataIndCallback( &indication );
+                alData.alHandlers.dataIndCallback( &indication );
                 
                 break;
                 
@@ -1169,7 +1115,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                 break;
         }
     }
-    else if( config_data.config_device == AL_METER )
+    else if( alData.config_data.config_device == AL_METER )
     {
         switch (indParams->lsdu[0])
         {
@@ -1182,13 +1128,13 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                 
                 result = DLL_GetRequest(MAC_LAST_RX_IN_PHASE_IB, 0, &getValue);                               /* TO_DO Phase value? */
                 
-                if((TCT >= ACA_Request.TCR) || (ACA_Request.Phase == getValue.value[0]) || (address_filtering() == true))                /* TO_DO in phase value or AddToAddress value is true */
+                if((alData.TCT >= ACA_Request.TCR) || (ACA_Request.Phase == getValue.value[0]) || (address_filtering() == true))                /* TO_DO in phase value or AddToAddress value is true */
                 {
                     memset(process_buff, 0, MAX_DATA_LENGTH);
                     
                     process_buff[0] = ADDRESS_RESP;
                     
-                    memcpy(&process_buff[1], config_data.ACA, 6);
+                    memcpy(&process_buff[1], alData.config_data.ACA, 6);
                     
                     result = DLL_GetRequest(MAC_LAST_RX_SIGNAL_LEVEL_IB, 0, &getValue);                       /* Av_SIGNAL */
                     if(result == DLL_SUCCESS)
@@ -1221,7 +1167,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
 
             case ADDRESS_RESP:
                 
-                if((AL_NWStatus.flags.ACA_Req_Address_Req_rcvd == 1) && (AL_NWStatus.flags.ACA_Address_Req_Sent == 1))
+                if((alData.AL_NWStatus.flags.ACA_Req_Address_Req_rcvd == 1) && (alData.AL_NWStatus.flags.ACA_Address_Req_Sent == 1))
                 {
                     if(ACA_req_resp_count<4)
                     {
@@ -1246,7 +1192,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
 
                         AL_data_request_process( &request );
                         
-                        AL_NWStatus.flags.ACA_Req_Address_Resp_sent = 1;
+                        alData.AL_NWStatus.flags.ACA_Req_Address_Resp_sent = 1;
                     }    
                 }
                 break;
@@ -1260,7 +1206,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                     /* Incoming TCT (min 1 to max 255) */
                     if((indParams->lsdu[1] > 0) && (indParams->lsdu[1] < 256))
                     {    
-                        TCT = indParams->lsdu[1];
+                        alData.TCT = indParams->lsdu[1];
                         process_buff[0] = NACK_RESP;
                         process_buff[1] = 0;                                                    /* ACK */
                     }
@@ -1312,14 +1258,14 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                     
                 AL_data_request_process( &request );
                 
-                AL_NWStatus.flags.ACA_Req_Address_Req_rcvd = 1;
+                alData.AL_NWStatus.flags.ACA_Req_Address_Req_rcvd = 1;
                 
                 break;
                 
             case CHALLENGE_REQ:
                 
-                lmon_recovery.challenge_req_received = 1;
-                memcpy(lmon_recovery.random_num, &indParams->lsdu[3], KEY_LENGTH);
+                alData.lmon_recovery.challenge_req_received = 1;
+                memcpy(alData.lmon_recovery.random_num, &indParams->lsdu[3], KEY_LENGTH);
                 memset(process_buff, 0, MAX_DATA_LENGTH);
                 process_buff[0] = CHALLENGE_RESP;
                 request.Txdata = process_buff;
@@ -1351,7 +1297,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                 indication.app_dataLen = indParams->lsduLen-1;
                 indication.message_type = AL_ENCRYPTION_DISABLED;
                 memcpy(indication.app_data, &indParams->lsdu[1], indication.app_dataLen);
-                al_handlers.dataIndCallback( &indication );
+                alData.alHandlers.dataIndCallback( &indication );
                 
                 break;
                 
@@ -1367,47 +1313,47 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                 decrypt_length = indParams->lsduLen-1;
                 memset(process_buff, 0, MAX_DATA_LENGTH);
                 
-                config_data.cmon.value = config_data.lmon.value +1;                                     /* CMON for Decryption and Authentication */
-                counter_block_generation(config_data.cmon.value);                                       
-                indication.decryption_status = DecryptData_Comm(&indParams->lsdu[1], decrypt_length, process_buff, CRYPTO_SYM_OPMODE_CTR, keys.Write_Key, keys.Counter_block);
+                alData.config_data.cmon.value = alData.config_data.lmon.value +1;                                     /* CMON for Decryption and Authentication */
+                counter_block_generation(alData.config_data.cmon.value);                                       
+                indication.decryption_status = DecryptData_Comm(&indParams->lsdu[1], decrypt_length, process_buff, CRYPTO_SYM_OPMODE_CTR, alData.keys.Write_Key, alData.keys.Counter_block);
                 
                 /* writing data after decryption to meter_AL */
                 memcpy(indication.app_data, process_buff, decrypt_length-16);                           /* Data */
                 indication.app_dataLen = indParams->lsduLen-ENCRYPTED_MESSAGE_HEADER_LENGTH;            /* received data length */
                 memcpy(received_time.data, &process_buff[decrypt_length-16], 8);                        /* POSIX timestamp */
-                memcpy(cmac.Received_cmac, &process_buff[decrypt_length-8], 8);                         /* CMAC */
+                memcpy(alData.cmac.Received_cmac, &process_buff[decrypt_length-8], 8);                         /* CMAC */
                 
                 if(received_time.value > request_time.value )                            
                 {    
                     if(CRYPTO_SYM_CIPHER_SUCCESS == indication.decryption_status)
                     {
                         /* Calculating 32-bit CRC for CMAC generation */
-                        memset(crc.buffer, 0, sizeof(crc.buffer));
-                        memcpy(crc.buffer, config_data.ACA, 6);                             
-                        crc.dataLen += 6;
-                        memcpy(&crc.buffer[6], indication.app_data, (decrypt_length-16));           
-                        crc.dataLen += decrypt_length-16;
-                        crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1); /* CRC Calculation */  
+                        memset(alData.crc.buffer, 0, sizeof(alData.crc.buffer));
+                        memcpy(alData.crc.buffer, alData.config_data.ACA, 6);                             
+                        alData.crc.dataLen += 6;
+                        memcpy(&alData.crc.buffer[6], indication.app_data, (decrypt_length-16));           
+                        alData.crc.dataLen += decrypt_length-16;
+                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                             /* CRC Calculation */  
 
-                        memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
-                        cmac.inputBuf[0] = indParams->lsdu[0];                                          /* CM */
-                        cmac.input_dataLen = 1;
-                        memcpy(&cmac.inputBuf[1], config_data.ACA, 3);                                  /* ACA 3bytes(LSB) */ 
-                        cmac.input_dataLen += 3;
-                        memcpy(&cmac.inputBuf[4], config_data.cmon.buff, 8); 
-                        cmac.input_dataLen += 8;
-                        memcpy(&cmac.inputBuf[12], &crc.result, 4);                                     /* CRC(ACA,DATA) */
-                        cmac.input_dataLen += 4;
-                        memcpy(cmac.key, keys.Write_Key, 16);                                           /* Write KEY */
+                        memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
+                        alData.cmac.inputBuf[0] = indParams->lsdu[0];                                          /* CM */
+                        alData.cmac.input_dataLen = 1;
+                        memcpy(&alData.cmac.inputBuf[1], alData.config_data.ACA, 3);                                  /* ACA 3bytes(LSB) */ 
+                        alData.cmac.input_dataLen += 3;
+                        memcpy(&alData.cmac.inputBuf[4], alData.config_data.cmon.buff, 8); 
+                        alData.cmac.input_dataLen += 8;
+                        memcpy(&alData.cmac.inputBuf[12], &alData.crc.result, 4);                                     /* CRC(ACA,DATA) */
+                        alData.cmac.input_dataLen += 4;
+                        memcpy(alData.cmac.key, alData.keys.Write_Key, 16);                                           /* Write KEY */
 
-                        Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, cmac.inputBuf, cmac.input_dataLen, cmac.Computed_cmac, AES_CMAC_LENGTH, cmac.key, KEY_LENGTH, 1);
+                        Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, alData.cmac.inputBuf, alData.cmac.input_dataLen, alData.cmac.Computed_cmac, AES_CMAC_LENGTH, alData.cmac.key, KEY_LENGTH, 1);
 
                         if (Cmac_status == CRYPTO_MAC_CIPHER_SUCCESS)
                         {
-                            if (memcmp(cmac.Computed_cmac, cmac.Received_cmac, AES_CMAC_LENGTH) == 0)
+                            if (memcmp(alData.cmac.Computed_cmac, alData.cmac.Received_cmac, AES_CMAC_LENGTH) == 0)
                             {
                                 indication.authentication_status = 1;                                   /* CMAC verification successful */  
-                                config_data.lmon.value = config_data.lmon.value +1;                     /* TO_DO updating LMON to CMON */ 
+                                alData.config_data.lmon.value = alData.config_data.lmon.value +1;                     /* TO_DO updating LMON to CMON */ 
                             }
                             else
                             {
@@ -1421,7 +1367,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                     }
                 }
                 
-                al_handlers.dataIndCallback( &indication );
+                alData.alHandlers.dataIndCallback( &indication );
                 break;
                 
                 
@@ -1441,47 +1387,47 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                 decrypt_length = indParams->lsduLen-1;
                 memset(process_buff, 0, MAX_DATA_LENGTH);
                 
-                config_data.cmon.value = config_data.lmon.value+1;                                     /* CMON for Decryption and Authentication */
-                counter_block_generation(config_data.cmon.value);
-                indication.decryption_status = DecryptData_Comm(&indParams->lsdu[1], decrypt_length, process_buff, CRYPTO_SYM_OPMODE_CTR, keys.Read_Key, keys.Counter_block);
+                alData.config_data.cmon.value = alData.config_data.lmon.value+1;                                     /* CMON for Decryption and Authentication */
+                counter_block_generation(alData.config_data.cmon.value);
+                indication.decryption_status = DecryptData_Comm(&indParams->lsdu[1], decrypt_length, process_buff, CRYPTO_SYM_OPMODE_CTR, alData.keys.Read_Key, alData.keys.Counter_block);
                 
                 /* writing data after decryption to meter_AL */
                 memcpy(indication.app_data, process_buff, decrypt_length-16);                           /* Data */
                 indication.app_dataLen = indParams->lsduLen-ENCRYPTED_MESSAGE_HEADER_LENGTH;            /* received data length */
                 memcpy(received_time.data, &process_buff[decrypt_length-16], 8);                        /* POSIX timestamp */
-                memcpy(cmac.Received_cmac, &process_buff[decrypt_length-8], 8);                         /* CMAC */
+                memcpy(alData.cmac.Received_cmac, &process_buff[decrypt_length-8], 8);                         /* CMAC */
                 
                 if(received_time.value > request_time.value )                            
                 {    
                     if(CRYPTO_SYM_CIPHER_SUCCESS == indication.decryption_status)
                     {
                         /* Calculating 32-bit CRC for CMAC generation */
-                        memset(crc.buffer, 0, sizeof(crc.buffer));
-                        memcpy(crc.buffer, config_data.ACA, 6);                             
-                        crc.dataLen += 6;
-                        memcpy(&crc.buffer[6], indication.app_data, (decrypt_length-16));           
-                        crc.dataLen += decrypt_length-16;
-                        crc.result = SRV_PCRC_GetValue(crc.buffer, crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1); /* CRC Calculation */  
+                        memset(alData.crc.buffer, 0, sizeof(alData.crc.buffer));
+                        memcpy(alData.crc.buffer, alData.config_data.ACA, 6);                             
+                        alData.crc.dataLen += 6;
+                        memcpy(&alData.crc.buffer[6], indication.app_data, (decrypt_length-16));           
+                        alData.crc.dataLen += decrypt_length-16;
+                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                       /* CRC Calculation */  
                     
-                        memset(cmac.inputBuf, 0, sizeof(cmac.inputBuf));
-                        cmac.inputBuf[0] = indParams->lsdu[0];                                    /* CM */
-                        cmac.input_dataLen = 1;
-                        memcpy(&cmac.inputBuf[1], config_data.ACA, 3);                            /* ACA 3bytes(LSB) */ 
-                        cmac.input_dataLen += 3;
-                        memcpy(&cmac.inputBuf[4], config_data.cmon.buff, 8);                      /* CMON */
-                        cmac.input_dataLen += 8;
-                        memcpy(&cmac.inputBuf[12], &crc.result, 4);                               /* CRC(ACA,DATA) */
-                        cmac.input_dataLen += 4;
-                        memcpy(cmac.key, keys.Read_Key, 16);                                      /* TO_DO KEY */
+                        memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
+                        alData.cmac.inputBuf[0] = indParams->lsdu[0];                                    /* CM */
+                        alData.cmac.input_dataLen = 1;
+                        memcpy(&alData.cmac.inputBuf[1], alData.config_data.ACA, 3);                            /* ACA 3bytes(LSB) */ 
+                        alData.cmac.input_dataLen += 3;
+                        memcpy(&alData.cmac.inputBuf[4], alData.config_data.cmon.buff, 8);                      /* CMON */
+                        alData.cmac.input_dataLen += 8;
+                        memcpy(&alData.cmac.inputBuf[12], &alData.crc.result, 4);                               /* CRC(ACA,DATA) */
+                        alData.cmac.input_dataLen += 4;
+                        memcpy(alData.cmac.key, alData.keys.Read_Key, 16);                                      /* TO_DO KEY */
                         
-                        Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, cmac.inputBuf, cmac.input_dataLen, cmac.Computed_cmac, AES_CMAC_LENGTH, cmac.key, KEY_LENGTH, 1);
+                        Cmac_status = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, alData.cmac.inputBuf, alData.cmac.input_dataLen, alData.cmac.Computed_cmac, AES_CMAC_LENGTH, alData.cmac.key, KEY_LENGTH, 1);
 
                         if (Cmac_status == CRYPTO_MAC_CIPHER_SUCCESS)
                         {
-                            if (memcmp(cmac.Computed_cmac, cmac.Received_cmac, AES_CMAC_LENGTH) == 0)
+                            if (memcmp(alData.cmac.Computed_cmac, alData.cmac.Received_cmac, AES_CMAC_LENGTH) == 0)
                             {
                                 indication.authentication_status = 1;                             /* CMAC verification successful */  
-                                config_data.lmon.value = config_data.lmon.value +1;               /* TO_DO updating LMON to CMON */ 
+                                alData.config_data.lmon.value = alData.config_data.lmon.value +1;               /* TO_DO updating LMON to CMON */ 
                             }
                             else
                             {
@@ -1494,7 +1440,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                         }
                     }
                 }
-                al_handlers.dataIndCallback( &indication );
+                alData.alHandlers.dataIndCallback( &indication );
                 break;
         }
     }
@@ -1504,7 +1450,7 @@ void AL_data_confirm_process( DLL_DATA_CONFIRM_PARAMS *cfmParams )
 {
     AL_DATA_IND_PARAMS indication;
     
-    if( config_data.config_device == AL_METER )
+    if( alData.config_data.config_device == AL_METER )
     {
         switch(cfmParams->txStatus)
         {
@@ -1517,18 +1463,18 @@ void AL_data_confirm_process( DLL_DATA_CONFIRM_PARAMS *cfmParams )
                 else if (cfmParams->dsap == DLL_DSAP_NETWORK_MANAGEMENT)
                 {   
                     /* Set flag once Req_Address_Req received and Address_Req sent to B_Nodes */
-                    if ((AL_NWStatus.flags.ACA_Req_Address_Req_rcvd == 1U) && (AL_NWStatus.flags.ACA_Address_Req_Sent == 0U))
+                    if ((alData.AL_NWStatus.flags.ACA_Req_Address_Req_rcvd == 1U) && (alData.AL_NWStatus.flags.ACA_Address_Req_Sent == 0U))
                     {
-                        AL_NWStatus.flags.ACA_Address_Req_Sent = 1U;
+                        alData.AL_NWStatus.flags.ACA_Address_Req_Sent = 1U;
                     }    
                         
-                    if (AL_NWStatus.flags.ACA_ACK_sent == 1)
+                    if (alData.AL_NWStatus.flags.ACA_ACK_sent == 1)
                     {
-                        AL_NWStatus.flags.ACA_ACK_sent = 0;
+                        alData.AL_NWStatus.flags.ACA_ACK_sent = 0;
                     }
-                    if (AL_NWStatus.status_byte == 7)                                   /* Check all NW flags are set */ 
+                    if (alData.AL_NWStatus.status_byte == 7)                                   /* Check all NW flags are set */ 
                     {
-                        AL_NWStatus.status_byte = 0;
+                        alData.AL_NWStatus.status_byte = 0;
                     }    
                 }
                 break;
@@ -1555,13 +1501,13 @@ void AL_data_confirm_process( DLL_DATA_CONFIRM_PARAMS *cfmParams )
                         indication.command_message = drParams.lsdu[0];
                         indication.Last_Request_Tx_Failure = 1U;
                         
-                        al_handlers.dataIndCallback( &indication );
+                        alData.alHandlers.dataIndCallback( &indication );
                     }
                     else if (cfmParams->dsap == DLL_DSAP_NETWORK_MANAGEMENT)
                     {    
-                        if ( AL_NWStatus.status_byte )                                      /* Check all NW flags are set */ 
+                        if ( alData.AL_NWStatus.status_byte )                                      /* Check all NW flags are set */ 
                         {
-                            AL_NWStatus.status_byte = 0;
+                            alData.AL_NWStatus.status_byte = 0;
                         }    
                     }
                     retry_count = 0;
@@ -1569,15 +1515,15 @@ void AL_data_confirm_process( DLL_DATA_CONFIRM_PARAMS *cfmParams )
                 break;
         }
     }
-    else if( config_data.config_device == AL_CONCENTRATOR )
+    else if( alData.config_data.config_device == AL_CONCENTRATOR )
     {
         switch(cfmParams->txStatus)
         {
             case DLL_TX_STATUS_SUCCESS:
 
-                if (AL_Status.flags.DL_Confirm_rcvd == 0)
+                if (alData.AL_Status.flags.DL_Confirm_rcvd == 0)
                 {
-                    AL_Status.flags.DL_Confirm_rcvd = 1;
+                    alData.AL_Status.flags.DL_Confirm_rcvd = 1;
                 }
                 
                 break;
@@ -1601,7 +1547,7 @@ void AL_data_confirm_process( DLL_DATA_CONFIRM_PARAMS *cfmParams )
                     
                     indication.command_message = drParams.lsdu[0];
                     indication.Last_Request_Tx_Failure = 1U;
-                    al_handlers.dataIndCallback( &indication );
+                    alData.alHandlers.dataIndCallback( &indication );
                     
                     retry_count = 0;
                 }
@@ -1615,18 +1561,18 @@ void AL_data_event_process( DLL_EVENT_IND_PARAMS *eveParams )
     AL_DATA_EVENT_PARAMS event;
     
     memcpy(event.eventValue, eveParams->eventValue.value, 6);
-    al_handlers.dataEventCallback( &event );
+    alData.alHandlers.dataEventCallback( &event );
 }
 
 AL_RESULT AL_data_ind_CallbackRegister( AL_DATA_IND_CALLBACK callback )
 {
-    al_handlers.dataIndCallback = callback;
+    alData.alHandlers.dataIndCallback = callback;
     return AL_SUCCESS;
 }
 
 AL_RESULT AL_data_event_CallbackRegister( AL_DATA_EVENT_CALLBACK callback )
 {
-    al_handlers.dataEventCallback = callback;
+    alData.alHandlers.dataEventCallback = callback;
     return AL_SUCCESS;
 }
 
@@ -1637,10 +1583,10 @@ SYS_MODULE_OBJ AL_Initialize ( const SYS_MODULE_INDEX index, const SYS_MODULE_IN
         return SYS_MODULE_OBJ_INVALID;
     }
 
-    App_Data.status = SYS_STATUS_UNINITIALIZED;
-    App_Data.state = AL_STATE_IDLE;
+    alData.status = SYS_STATUS_UNINITIALIZED;
+    alData.state = AL_STATE_IDLE;
 
-    memset(&al_handlers, 0, sizeof(al_handlers));
+    memset(&alData.alHandlers, 0, sizeof(alData.alHandlers));
 
     DLL_DataIndicationCallbackRegister( AL_data_indication_process );
     DLL_DataConfirmCallbackRegister( AL_data_confirm_process );
@@ -1655,10 +1601,10 @@ void AL_HandlingTasks ( void )
     
     uint8_t Index;
     
-    if( config_data.config_device == AL_METER )
+    if( alData.config_data.config_device == AL_METER )
     {
         /* REQ_ADDRESS_REQ received, ADDRESS_REQ sent to B nodes. REQ_ADDRESS_RESP will be sent when it receives 4 responses or after timeout */
-        if (((AL_NWStatus.status_byte & 0x07) == 0x03) && (SYS_TIME_Counter64Get() > nextwaitCount ))
+        if (((alData.AL_NWStatus.status_byte & 0x07) == 0x03) && (SYS_TIME_Counter64Get() > nextwaitCount ))
         {
             if(ACA_req_resp_count != 0U)
             {
@@ -1677,26 +1623,26 @@ void AL_HandlingTasks ( void )
 
                 AL_data_request_process( &request );
 
-                AL_NWStatus.flags.ACA_Req_Address_Resp_sent = 1;
+                alData.AL_NWStatus.flags.ACA_Req_Address_Resp_sent = 1;
             } 
         }    
     }   
-    else if( config_data.config_device == AL_CONCENTRATOR )
+    else if( alData.config_data.config_device == AL_CONCENTRATOR )
     {   
         /* Request & Confirm are set and Indication received, clear flags */
-        if ((AL_Status.status_byte & 0x07) == 0x07)
+        if ((alData.AL_Status.status_byte & 0x07) == 0x07)
         {
-            AL_Status.status_byte = 0;
+            alData.AL_Status.status_byte = 0;
         } 
         
         /* Request & Confirm are set, Indication not received, Generating Event at CCU End after timeout */
-        if ((SYS_TIME_Counter64Get() > nextwaitCount ) && ((AL_Status.status_byte & 0x07) == 0x03))
+        if ((SYS_TIME_Counter64Get() > nextwaitCount ) && ((alData.AL_Status.status_byte & 0x07) == 0x03))
         {    
             memset(&event, 0, sizeof(AL_DATA_EVENT_PARAMS));
-            memcpy(event.eventValue, config_data.ACA, 6);
+            memcpy(event.eventValue, alData.config_data.ACA, 6);
             
-            al_handlers.dataEventCallback( &event );
-            AL_Status.flags.DL_Event_sent = 1;
+            alData.alHandlers.dataEventCallback( &event );
+            alData.AL_Status.flags.DL_Event_sent = 1;
         }    
     }    
 }
@@ -1710,28 +1656,28 @@ void AL_Tasks( SYS_MODULE_OBJ object )
         return;
     }
 
-    if ((SYS_TIME_Counter64Get() < nextTaskTimeCount))
+    if ((SYS_TIME_Counter64Get() < alData.nextTaskTimeCount))
     {
         return;
     }
-    nextTaskTimeCount = SYS_TIME_Counter64Get() + SYS_TIME_MSToCount(taskRateCount);
+    alData.nextTaskTimeCount = SYS_TIME_Counter64Get() + SYS_TIME_MSToCount(taskRateCount);
 
-    switch (App_Data.state)
+    switch (alData.state)
     {
         case AL_STATE_IDLE:
-            if (App_Data.status == SYS_STATUS_UNINITIALIZED)
+            if (alData.status == SYS_STATUS_UNINITIALIZED)
             {
-                if (configparams_rcvd == 1U)
+                if (alData.configparams_rcvd == 1U)
                 {
-                   App_Data.status = SYS_STATUS_READY;
-                   App_Data.state = AL_STATE_APP_PROCESS;
+                   alData.status = SYS_STATUS_READY;
+                   alData.state = AL_STATE_APP_PROCESS;
                 }
             }
             break;
 
         case AL_STATE_APP_PROCESS: 
             
-            if( App_Data.status == SYS_STATUS_READY )
+            if( alData.status == SYS_STATUS_READY )
             {
                 AL_HandlingTasks();
                 

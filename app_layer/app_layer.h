@@ -149,6 +149,13 @@ typedef union
     uint64_t value;
 } DATETIME;
 
+/* This structure is used in meter side AL to store random number from CCU to Meter */
+typedef struct
+{
+    uint8_t random_num[KEY_LENGTH];
+    uint8_t challenge_req_received;
+}LMON_RECOVERY;
+
 typedef struct
 {
     /* Write data authentication key */
@@ -166,18 +173,43 @@ typedef enum
     AL_STATE_IDLE,
     AL_STATE_APP_PROCESS,            
     AL_STATE_WAIT,
-} APP_STATE;
+} AL_STATE;
 
 typedef struct
 {
     /* Status of the AL module */
     SYS_STATUS status;
     /* State of the State Machine for AL*/
-    APP_STATE state;
+    AL_STATE state;
     /* Flag to indicate this object is in use */
     bool inUse;
 } AL_STATUS;
 
+/* This variable is used only in Concentrator AL */
+typedef union
+{
+    uint8_t status_byte;
+    
+    struct{
+        int DL_Request_sent                 : 1;
+        int DL_Confirm_rcvd                 : 1;
+        int DL_Indication_req               : 1;
+        int DL_Event_sent                   : 1;
+    }flags;
+}AL_MSG_STATUS;
+
+typedef union
+{
+    uint8_t status_byte;
+    
+    struct{
+        int ACA_Req_Address_Req_rcvd        : 1;
+        int ACA_Address_Req_Sent            : 1;
+        int ACA_Req_Address_Resp_sent       : 1;
+        int ACA_ACK_sent                    : 1;                                    /* Same flag used for ACK & NACK */
+        
+    }flags;
+}AL_NWSTATUS;
 
 typedef struct
 {
@@ -217,6 +249,49 @@ typedef struct
 } AL_HANDLERS;
 
   
+typedef struct
+{
+    /* Callbacks */
+    AL_HANDLERS alHandlers;
+    /* Status of the AL module (App_Data) */
+    SYS_STATUS status;
+    /* State of the AL module State Machine (App_Data) */
+    AL_STATE state;
+    /* Transmission buffer */ 
+    AL_CONFIG_DATA config_data;
+    /* Maintain the event status in CCU */
+    AL_MSG_STATUS AL_Status;
+    /* Maintain the Network event status */
+    AL_NWSTATUS AL_NWStatus;
+    /* Keys used in Encrypt message processing */
+    KEYS keys;
+    /* variable used in handling CRC calculations */
+    CRC_DATA crc;
+    /* variable used in handling Cipher operations */
+    CMAC_PARAMS cmac;
+    /* storing the LMON recovery info */
+    LMON_RECOVERY lmon_recovery;
+    /* Used in CCU AL to store node info(ACA, LMON) received from Concentrator Table, for AUTH & ENCRYPT handling*/
+    NODE_INFO comm_node_configdata;
+    /* Tx Data Request Buffer */
+    uint8_t Transmit_Buff[MAX_DATA_LENGTH];
+    /* Next task time in ms */
+    uint64_t nextTaskTimeCount;
+    /* Tx Buffer Length */
+    uint16_t txBufferLen;
+    /* Flag for Configuration Parameters Receive status*/
+    uint8_t configparams_rcvd;
+    /* Random Number Generated for LMON Recovery */
+    uint8_t random_number[16];
+    /* Incoming TCT (min 1 to max 255) */
+    uint8_t TCT;
+    /* Is master node (false in slave node) */
+    bool isMaster;
+    /* Flag to indicate this object is in use */
+    bool inUse;
+
+} AL_DATA;
+
 #ifdef __cplusplus
 }
 #endif

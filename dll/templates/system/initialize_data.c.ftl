@@ -1,19 +1,41 @@
-/* Meters And More Initialization Data */
+/* Meters And More DLL Initialization Data */
 static DLL_INIT dllInitData = {
 
 <#if (HarmonyCore.SELECT_RTOS)?? && (HarmonyCore.SELECT_RTOS != "BareMetal")>
-    /* RTOS enabled: ADP task executed always */
+    /* RTOS enabled: DLL task executed always */
     .taskRateMs = 0U ,
 <#else>
-    /* ADP task rate in milliseconds */
+    /* DLL task rate in milliseconds */
     .taskRateMs = MM_STACK_TASK_RATE_MS ,
 </#if>
 
     /* Is master node (false in slave node) */
 <#if (METERSANDMORE_ROLE == "DCU")>
-        .isMaster = true
+    .isMaster = true
 <#else>
-        .isMaster = false
+    .isMaster = false
 </#if>
 
 };
+<#if METERSANDMORE_INC_APP_LAYER == true>
+
+/* Meters And More App Layer Initialization Data */
+static AL_INIT alInitData = {
+
+<#if (HarmonyCore.SELECT_RTOS)?? && (HarmonyCore.SELECT_RTOS != "BareMetal")>
+    /* RTOS enabled: App Layer task executed always */
+    .taskRateMs = 0U ,
+<#else>
+    /* App Layer task rate in milliseconds */
+    .taskRateMs = MM_STACK_TASK_RATE_MS ,
+</#if>
+
+    /* Is master node (false in slave node) */
+<#if (METERSANDMORE_ROLE == "DCU")>
+    .isMaster = true
+<#else>
+    .isMaster = false
+</#if>
+
+};
+</#if>

@@ -1,7 +1,12 @@
 
 <#if !(HarmonyCore.SELECT_RTOS)?? || (HarmonyCore.SELECT_RTOS == "BareMetal")>
-    /* Maintain Meters And More LLC */
-    DLL_Tasks(sysObj.metersandmore);
+    /* Maintain Meters And More DLL */
+    DLL_Tasks(sysObj.metersandmoreDll);
+    <#if METERSANDMORE_INC_APP_LAYER == true>
+
+    /* Maintain Meters And More App Layer */
+    AL_Tasks(sysObj.metersandmoreApp);
+    </#if>
 
 <#elseif HarmonyCore.SELECT_RTOS == "FreeRTOS">
     (void) xTaskCreate( lMM_STACK_TASKS,

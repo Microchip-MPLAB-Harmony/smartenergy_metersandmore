@@ -45,8 +45,6 @@ extern "C" {
 // *****************************************************************************
 // *****************************************************************************
 
-#define taskRateCount     50U  
-
 typedef enum
 {
     CHALLENGE_REQ       = 112U,
@@ -277,6 +275,8 @@ typedef struct
     uint8_t Transmit_Buff[MAX_DATA_LENGTH];
     /* Next task time in ms */
     uint64_t nextTaskTimeCount;
+    /* Task rate in SYS_TIME counter ticks */
+    uint32_t taskRateCount;
     /* Tx Buffer Length */
     uint16_t txBufferLen;
     /* Flag for Configuration Parameters Receive status*/

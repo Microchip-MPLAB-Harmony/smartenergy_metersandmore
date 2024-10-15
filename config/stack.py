@@ -23,6 +23,10 @@ Microchip or any third party.
 """
 mm_stack_helpkeyword = "mm_stack_configurations"
 
+def enableAppFile(symbol, event):
+    # Enable/disable app_layer file
+    symbol.setEnabled(event["value"])
+
 def instantiateComponent(mmStackComponent):
 
     Log.writeInfoMessage("Loading M&M Stack module")
@@ -40,6 +44,13 @@ def instantiateComponent(mmStackComponent):
     mmRole.setDescription("Select Meters And More Mode")
     mmRole.setHelp(mm_stack_helpkeyword)
 
+    # Include Application Layer
+    mmIncAppLayer = mmStackComponent.createBooleanSymbol("METERSANDMORE_INC_APP_LAYER", None)
+    mmIncAppLayer.setLabel("Include Application Layer?")
+    mmIncAppLayer.setDescription("Select whether to include Application Layer")
+    mmIncAppLayer.setDefaultValue(True)
+    mmIncAppLayer.setHelp(mm_stack_helpkeyword)
+
     # Meters And More Task rate control
     mmTaskRate = mmStackComponent.createIntegerSymbol("METERSANDMORE_TASK_RATE_MS", None)
     mmTaskRate.setLabel("Meters And More stack task rate (ms)")
@@ -51,7 +62,7 @@ def instantiateComponent(mmStackComponent):
     mmTaskRate.setDependencies(showTaskRate, ["HarmonyCore.SELECT_RTOS"])
     mmTaskRate.setHelp(mm_stack_helpkeyword)
 
-# RTOS CONFIG
+    # RTOS CONFIG
     mmRTOSMenu = mmStackComponent.createMenuSymbol("METERSANDMORE_RTOS_MENU", None)
     mmRTOSMenu.setLabel("RTOS settings")
     mmRTOSMenu.setDescription("RTOS settings")
@@ -166,6 +177,7 @@ def instantiateComponent(mmStackComponent):
     mmAppSrcFile.setDestPath("stack/metersandmore/app_layer")
     mmAppSrcFile.setProjectPath("config/" + configName + "/stack/metersandmore/app_layer/")
     mmAppSrcFile.setType("SOURCE")
+    mmAppSrcFile.setDependencies(enableAppFile, ["METERSANDMORE_INC_APP_LAYER"])
 
     mmAppHdrFile = mmStackComponent.createFileSymbol("METERSANDMORE_APP_LAYER_HEADER", None)
     mmAppHdrFile.setSourcePath("app_layer/app_layer.h")
@@ -173,6 +185,7 @@ def instantiateComponent(mmStackComponent):
     mmAppHdrFile.setDestPath("stack/metersandmore/app_layer")
     mmAppHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/app_layer/")
     mmAppHdrFile.setType("HEADER")
+    mmAppHdrFile.setDependencies(enableAppFile, ["METERSANDMORE_INC_APP_LAYER"])
 
     mmAlHdrFile = mmStackComponent.createFileSymbol("METERSANDMORE_AL_HEADER", None)
     mmAlHdrFile.setSourcePath("app_layer/al.h")
@@ -180,6 +193,7 @@ def instantiateComponent(mmStackComponent):
     mmAlHdrFile.setDestPath("stack/metersandmore/app_layer")
     mmAlHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/app_layer/")
     mmAlHdrFile.setType("HEADER")
+    mmAlHdrFile.setDependencies(enableAppFile, ["METERSANDMORE_INC_APP_LAYER"])
 
     #####################################################################################################################################
     # Meters And More DLL TEMPLATES
@@ -226,7 +240,6 @@ def instantiateComponent(mmStackComponent):
     mmDllSystemRtosTasksFile.setMarkup(True)
     mmDllSystemRtosTasksFile.setEnabled(getActiveRtos() != "BareMetal")
     mmDllSystemRtosTasksFile.setDependencies(genRtosTask, ["HarmonyCore.SELECT_RTOS"])
-
 
 
 def showTaskRate(symbol, event):

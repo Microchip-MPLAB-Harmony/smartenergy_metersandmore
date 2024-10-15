@@ -296,7 +296,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                     alData.crc.dataLen = ACA_LENGTH;
                     memcpy(&alData.crc.buffer[alData.crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
                     alData.crc.dataLen += reqParams->Txdata_Len-1;
-                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                                         /* CRC Calculation */  
+                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_GENERIC, PCRC_CRC32, 1);                                         /* CRC Calculation */  
                     
                     memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
                     alData.cmac.inputBuf[0] = reqParams->Txdata[0];                                                    /* CM */
@@ -375,7 +375,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                     alData.crc.dataLen = ACA_LENGTH;
                     memcpy(&alData.crc.buffer[alData.crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
                     alData.crc.dataLen += reqParams->Txdata_Len-1;
-                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                                         /* CRC Calculation */  
+                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_GENERIC, PCRC_CRC32, 1);                                         /* CRC Calculation */  
 
                     memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
                     alData.cmac.inputBuf[0] = reqParams->Txdata[0];                                                    /* CM */
@@ -470,7 +470,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                         alData.crc.dataLen = ACA_LENGTH;
                         memcpy(&alData.crc.buffer[alData.crc.dataLen], alData.lmon_recovery.random_num, 16);
                         alData.crc.dataLen += 16;
-                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                         /* CRC Calculation */  
+                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_GENERIC, PCRC_CRC32, 1);                         /* CRC Calculation */  
 
                         memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
                         alData.cmac.inputBuf[0] = reqParams->Txdata[0];                                    /* CM */
@@ -559,7 +559,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                     alData.crc.dataLen = ACA_LENGTH;
                     memcpy(&alData.crc.buffer[alData.crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
                     alData.crc.dataLen += reqParams->Txdata_Len-1;
-                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                                     /* CRC Calculation */  
+                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_GENERIC, PCRC_CRC32, 1);                                     /* CRC Calculation */  
 
                     memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
                     alData.cmac.inputBuf[0] = reqParams->Txdata[0];                                                /* CM */
@@ -623,7 +623,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                     alData.crc.dataLen = ACA_LENGTH;
                     memcpy(&alData.crc.buffer[alData.crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
                     alData.crc.dataLen += reqParams->Txdata_Len-1;
-                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                                     /* CRC Calculation */  
+                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_GENERIC, PCRC_CRC32, 1);                                     /* CRC Calculation */  
 
                     memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
                     alData.cmac.inputBuf[0] = reqParams->Txdata[0];                                                /* CM */
@@ -692,7 +692,7 @@ AL_M_STATUS AL_data_request_process( AL_DATA_REQ_PARAMS *reqParams )
                     alData.crc.dataLen = ACA_LENGTH;
                     memcpy(&alData.crc.buffer[alData.crc.dataLen], &reqParams->Txdata[1], reqParams->Txdata_Len-1);
                     alData.crc.dataLen += reqParams->Txdata_Len-1;
-                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                                     /* CRC Calculation */  
+                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_GENERIC, PCRC_CRC32, 1);                                     /* CRC Calculation */  
 
                     memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
                     alData.cmac.inputBuf[0] = reqParams->Txdata[0];                                                /* CM */
@@ -825,7 +825,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                     alData.crc.dataLen = ACA_LENGTH;
                     memcpy(&alData.crc.buffer[6], alData.random_number, 16);                                      /* Random number used in challenge Request */
                     alData.crc.dataLen += 16;
-                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                             /* CRC Calculation */  
+                    alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_GENERIC, PCRC_CRC32, 1);                             /* CRC Calculation */  
 
                     memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
                     alData.cmac.inputBuf[0] = indParams->lsdu[0];                                          /* CM */
@@ -920,7 +920,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                         alData.crc.dataLen = ACA_LENGTH;
                         memcpy(&alData.crc.buffer[6], indication.app_data, (decrypt_length-16));           
                         alData.crc.dataLen += decrypt_length-16;
-                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                             /* CRC Calculation */  
+                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_GENERIC, PCRC_CRC32, 1);                             /* CRC Calculation */  
 
                         memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
                         alData.cmac.inputBuf[0] = indParams->lsdu[0];                                          /* CM */
@@ -995,7 +995,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                         alData.crc.dataLen = ACA_LENGTH;
                         memcpy(&alData.crc.buffer[6], indication.app_data, (decrypt_length-16));           
                         alData.crc.dataLen += decrypt_length-16;
-                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                                 /* CRC Calculation */  
+                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_GENERIC, PCRC_CRC32, 1);                                 /* CRC Calculation */  
                     
                         memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
                         alData.cmac.inputBuf[0] = indParams->lsdu[0];                                              /* CM */
@@ -1070,7 +1070,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                         alData.crc.dataLen = ACA_LENGTH;
                         memcpy(&alData.crc.buffer[6], indication.app_data, (decrypt_length-16));           
                         alData.crc.dataLen += decrypt_length-16;
-                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                                 /* CRC Calculation */  
+                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_GENERIC, PCRC_CRC32, 1);                                 /* CRC Calculation */  
                     
                         memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
                         alData.cmac.inputBuf[0] = indParams->lsdu[0];                                              /* CM */
@@ -1333,7 +1333,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                         alData.crc.dataLen += 6;
                         memcpy(&alData.crc.buffer[6], indication.app_data, (decrypt_length-16));           
                         alData.crc.dataLen += decrypt_length-16;
-                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                             /* CRC Calculation */  
+                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_GENERIC, PCRC_CRC32, 1);                             /* CRC Calculation */  
 
                         memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
                         alData.cmac.inputBuf[0] = indParams->lsdu[0];                                          /* CM */
@@ -1407,7 +1407,7 @@ void AL_data_indication_process( DLL_DATA_IND_PARAMS *indParams )
                         alData.crc.dataLen += 6;
                         memcpy(&alData.crc.buffer[6], indication.app_data, (decrypt_length-16));           
                         alData.crc.dataLen += decrypt_length-16;
-                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_USI, PCRC_CRC32, 1);                       /* CRC Calculation */  
+                        alData.crc.result = SRV_PCRC_GetValue(alData.crc.buffer, alData.crc.dataLen, PCRC_HT_GENERIC, PCRC_CRC32, 1);                       /* CRC Calculation */  
                     
                         memset(alData.cmac.inputBuf, 0, sizeof(alData.cmac.inputBuf));
                         alData.cmac.inputBuf[0] = indParams->lsdu[0];                                    /* CM */
@@ -1578,6 +1578,8 @@ AL_RESULT AL_data_event_CallbackRegister( AL_DATA_EVENT_CALLBACK callback )
 
 SYS_MODULE_OBJ AL_Initialize ( const SYS_MODULE_INDEX index, const SYS_MODULE_INIT * const init )
 {
+    const AL_INIT * const alInit = (const AL_INIT * const)init;
+
     if ((index >= AL_INSTANCES_NUMBER) || (init == NULL))
     {
         return SYS_MODULE_OBJ_INVALID;
@@ -1585,6 +1587,10 @@ SYS_MODULE_OBJ AL_Initialize ( const SYS_MODULE_INDEX index, const SYS_MODULE_IN
 
     alData.status = SYS_STATUS_UNINITIALIZED;
     alData.state = AL_STATE_IDLE;
+
+    alData.taskRateCount = SYS_TIME_MSToCount(alInit->taskRateMs);
+    alData.nextTaskTimeCount = SYS_TIME_Counter64Get();
+    alData.isMaster = alInit->isMaster;
 
     memset(&alData.alHandlers, 0, sizeof(alData.alHandlers));
 
@@ -1649,18 +1655,18 @@ void AL_HandlingTasks ( void )
 
 void AL_Tasks( SYS_MODULE_OBJ object )
 {
-
     if (object != (SYS_MODULE_OBJ)0)
     {
         // Invalid object
         return;
     }
 
-    if ((SYS_TIME_Counter64Get() < alData.nextTaskTimeCount))
+    // Execute tasks according to defined rate
+    if ((alData.taskRateCount != 0) && (SYS_TIME_Counter64Get() < alData.nextTaskTimeCount))
     {
         return;
     }
-    alData.nextTaskTimeCount = SYS_TIME_Counter64Get() + SYS_TIME_MSToCount(taskRateCount);
+    alData.nextTaskTimeCount += alData.taskRateCount;
 
     switch (alData.state)
     {

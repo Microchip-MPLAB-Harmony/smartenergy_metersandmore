@@ -274,6 +274,31 @@ typedef enum
 } AL_M_STATUS;
 
 // *****************************************************************************
+/* Meters And More Application Layer module Initialization Data
+
+  Summary:
+    Defines the data required to initialize the Meters And More Application
+    Layer module
+
+  Description:
+    Contains fields which define the information required by Application Layer
+    module upon initialization:
+    - The rate at which associated task is executed
+    - The role of the Device, Master or Slave
+
+  Remarks:
+    None.
+*/
+typedef struct
+{
+  /* Application Layer task rate in milliseconds */
+  uint8_t taskRateMs;
+
+  /* Is master node (false in slave node) */
+  bool isMaster;
+} AL_INIT;
+
+// *****************************************************************************
 /* Meters And More AL module Data Indication Function Pointer
 
   Summary:

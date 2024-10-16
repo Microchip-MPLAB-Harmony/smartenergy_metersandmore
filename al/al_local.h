@@ -5,7 +5,7 @@
     Microchip Technology Inc.
 
   File Name:
-    app_layer.h
+    al_local.h
 
   Summary:
     Interface definition of Meters&More Application Layer module.
@@ -15,8 +15,8 @@
     module.
 *******************************************************************************/
 
-#ifndef APP_LAYER_H    
-#define APP_LAYER_H
+#ifndef AL_LOCAL_H
+#define AL_LOCAL_H
 
 
 /* ************************************************************************** */
@@ -28,11 +28,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "al.h"
-#include "service/pcrc/srv_pcrc.h"
-#include "system/time/sys_time.h"
-#include "crypto/common_crypto/MCHP_Crypto_Sym_Cipher.h"
-#include "crypto/common_crypto/MCHP_Crypto_Mac_Cipher.h"
-
 
 /* Provide C++ Compatibility */
 #ifdef __cplusplus
@@ -296,7 +291,7 @@ typedef struct
 }
 #endif
 
-#endif /* #ifndef app_layer_H */
+#endif // #ifndef AL_LOCAL_H
 
 /* *****************************************************************************
  End of File

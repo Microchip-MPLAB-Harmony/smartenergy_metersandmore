@@ -17,7 +17,7 @@ static DLL_INIT dllInitData = {
 </#if>
 
 };
-<#if METERSANDMORE_INC_APP_LAYER == true>
+<#if METERSANDMORE_INC_AL == true>
 
 /* Meters And More App Layer Initialization Data */
 static AL_INIT alInitData = {

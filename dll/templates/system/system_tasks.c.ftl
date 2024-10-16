@@ -2,10 +2,10 @@
 <#if !(HarmonyCore.SELECT_RTOS)?? || (HarmonyCore.SELECT_RTOS == "BareMetal")>
     /* Maintain Meters And More DLL */
     DLL_Tasks(sysObj.metersandmoreDll);
-    <#if METERSANDMORE_INC_APP_LAYER == true>
+    <#if METERSANDMORE_INC_AL == true>
 
     /* Maintain Meters And More App Layer */
-    AL_Tasks(sysObj.metersandmoreApp);
+    AL_Tasks(sysObj.metersandmoreAl);
     </#if>
 
 <#elseif HarmonyCore.SELECT_RTOS == "FreeRTOS">

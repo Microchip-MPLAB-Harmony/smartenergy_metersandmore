@@ -23,8 +23,8 @@ Microchip or any third party.
 """
 mm_stack_helpkeyword = "mm_stack_configurations"
 
-def enableAppFile(symbol, event):
-    # Enable/disable app_layer file
+def enableAlFile(symbol, event):
+    # Enable/disable AL file
     symbol.setEnabled(event["value"])
 
 def instantiateComponent(mmStackComponent):
@@ -45,7 +45,7 @@ def instantiateComponent(mmStackComponent):
     mmRole.setHelp(mm_stack_helpkeyword)
 
     # Include Application Layer
-    mmIncAppLayer = mmStackComponent.createBooleanSymbol("METERSANDMORE_INC_APP_LAYER", None)
+    mmIncAppLayer = mmStackComponent.createBooleanSymbol("METERSANDMORE_INC_AL", None)
     mmIncAppLayer.setLabel("Include Meters And More AL (App Layer)?")
     mmIncAppLayer.setDescription("Select whether to include App Layer")
     mmIncAppLayer.setDefaultValue(True)
@@ -55,9 +55,11 @@ def instantiateComponent(mmStackComponent):
     mmAppLayerComment1 = mmStackComponent.createCommentSymbol("METERSANDMORE_AL_COMMENT1", None)
     mmAppLayerComment1.setLabel("   *** AL Provides Encryption and Authentication capabilities ***")
     mmAppLayerComment1.setVisible(True)
+    mmAppLayerComment1.setHelp(mm_stack_helpkeyword)
     mmAppLayerComment2 = mmStackComponent.createCommentSymbol("METERSANDMORE_AL_COMMENT2", None)
     mmAppLayerComment2.setLabel("   *** It also provides Network Management handling at Meter side ***")
     mmAppLayerComment2.setVisible(True)
+    mmAppLayerComment2.setHelp(mm_stack_helpkeyword)
 
     # Meters And More Task rate control
     mmTaskRate = mmStackComponent.createIntegerSymbol("METERSANDMORE_TASK_RATE_MS", None)
@@ -179,29 +181,29 @@ def instantiateComponent(mmStackComponent):
     #####################################################################################################################################
     # Meters And More Application Layer FILES
 
-    mmAppSrcFile = mmStackComponent.createFileSymbol("METERSANDMORE_APP_LAYER_SOURCE", None)
-    mmAppSrcFile.setSourcePath("app_layer/app_layer.c")
-    mmAppSrcFile.setOutputName("app_layer.c")
-    mmAppSrcFile.setDestPath("stack/metersandmore/app_layer")
-    mmAppSrcFile.setProjectPath("config/" + configName + "/stack/metersandmore/app_layer/")
-    mmAppSrcFile.setType("SOURCE")
-    mmAppSrcFile.setDependencies(enableAppFile, ["METERSANDMORE_INC_APP_LAYER"])
-
-    mmAppHdrFile = mmStackComponent.createFileSymbol("METERSANDMORE_APP_LAYER_HEADER", None)
-    mmAppHdrFile.setSourcePath("app_layer/app_layer.h")
-    mmAppHdrFile.setOutputName("app_layer.h")
-    mmAppHdrFile.setDestPath("stack/metersandmore/app_layer")
-    mmAppHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/app_layer/")
-    mmAppHdrFile.setType("HEADER")
-    mmAppHdrFile.setDependencies(enableAppFile, ["METERSANDMORE_INC_APP_LAYER"])
+    mmAlSrcFile = mmStackComponent.createFileSymbol("METERSANDMORE_AL_SOURCE", None)
+    mmAlSrcFile.setSourcePath("al/al.c")
+    mmAlSrcFile.setOutputName("al.c")
+    mmAlSrcFile.setDestPath("stack/metersandmore/al")
+    mmAlSrcFile.setProjectPath("config/" + configName + "/stack/metersandmore/al/")
+    mmAlSrcFile.setType("SOURCE")
+    mmAlSrcFile.setDependencies(enableAlFile, ["METERSANDMORE_INC_AL"])
 
     mmAlHdrFile = mmStackComponent.createFileSymbol("METERSANDMORE_AL_HEADER", None)
-    mmAlHdrFile.setSourcePath("app_layer/al.h")
+    mmAlHdrFile.setSourcePath("al/al.h")
     mmAlHdrFile.setOutputName("al.h")
-    mmAlHdrFile.setDestPath("stack/metersandmore/app_layer")
-    mmAlHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/app_layer/")
+    mmAlHdrFile.setDestPath("stack/metersandmore/al")
+    mmAlHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/al/")
     mmAlHdrFile.setType("HEADER")
-    mmAlHdrFile.setDependencies(enableAppFile, ["METERSANDMORE_INC_APP_LAYER"])
+    mmAlHdrFile.setDependencies(enableAlFile, ["METERSANDMORE_INC_AL"])
+
+    mmAlLocalHdrFile = mmStackComponent.createFileSymbol("METERSANDMORE_AL_LOCAL_HEADER", None)
+    mmAlLocalHdrFile.setSourcePath("al/al_local.h")
+    mmAlLocalHdrFile.setOutputName("al_local.h")
+    mmAlLocalHdrFile.setDestPath("stack/metersandmore/al")
+    mmAlLocalHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/al/")
+    mmAlLocalHdrFile.setType("HEADER")
+    mmAlLocalHdrFile.setDependencies(enableAlFile, ["METERSANDMORE_INC_AL"])
 
     #####################################################################################################################################
     # Meters And More DLL TEMPLATES

@@ -1,9 +1,13 @@
 /* ************************************************************************** */
 
-#include "stack/metersandmore/dll/dll.h"
 #include <string.h>
-#include "app_layer.h"
+#include "stack/metersandmore/dll/dll.h"
+#include "al_local.h"
 #include "service/random/srv_random.h"
+#include "service/pcrc/srv_pcrc.h"
+#include "system/time/sys_time.h"
+#include "crypto/common_crypto/MCHP_Crypto_Sym_Cipher.h"
+#include "crypto/common_crypto/MCHP_Crypto_Mac_Cipher.h"
 
 #define MAX_DATA_LENGTH                     128U
 #define ENCRYPTED_MESSAGE_HEADER_LENGTH     17U

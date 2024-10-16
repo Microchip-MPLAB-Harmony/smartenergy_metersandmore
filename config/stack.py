@@ -46,10 +46,18 @@ def instantiateComponent(mmStackComponent):
 
     # Include Application Layer
     mmIncAppLayer = mmStackComponent.createBooleanSymbol("METERSANDMORE_INC_APP_LAYER", None)
-    mmIncAppLayer.setLabel("Include Application Layer?")
-    mmIncAppLayer.setDescription("Select whether to include Application Layer")
+    mmIncAppLayer.setLabel("Include Meters And More AL (App Layer)?")
+    mmIncAppLayer.setDescription("Select whether to include App Layer")
     mmIncAppLayer.setDefaultValue(True)
     mmIncAppLayer.setHelp(mm_stack_helpkeyword)
+
+    # AL Description Comments
+    mmAppLayerComment1 = mmStackComponent.createCommentSymbol("METERSANDMORE_AL_COMMENT1", None)
+    mmAppLayerComment1.setLabel("   *** AL Provides Encryption and Authentication capabilities ***")
+    mmAppLayerComment1.setVisible(True)
+    mmAppLayerComment2 = mmStackComponent.createCommentSymbol("METERSANDMORE_AL_COMMENT2", None)
+    mmAppLayerComment2.setLabel("   *** It also provides Network Management handling at Meter side ***")
+    mmAppLayerComment2.setVisible(True)
 
     # Meters And More Task rate control
     mmTaskRate = mmStackComponent.createIntegerSymbol("METERSANDMORE_TASK_RATE_MS", None)

@@ -280,6 +280,9 @@ typedef struct
     
     /* Flag to indicate that SW reset must be performed */
     bool swReset;
+
+    /* Callback function to handle MAC DATA commands */
+    MMHI_MAC_DATA_IND_CALLBACK macDataCallback;
     
 } MMHI_DATA;
 

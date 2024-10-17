@@ -58,6 +58,9 @@
 #include "stack/metersandmore/mmhi/mmhi_local.h"
 #include "stack/metersandmore/mmhi/mmhi_mib.h"
 #include "system/time/sys_time.h"
+<#if MMHI_MANUF_COMMANDS == true>
+#include "stack/metersandmore/pal/pal.h"
+</#if>
 #include "configuration.h"
 #include "osal/osal.h"
 #include <stdio.h>
@@ -85,6 +88,8 @@ static MMHI_DATA mmhiData = {0};
 
 static uint8_t mmhiTxBuffer[MMHI_FRAME_MAX_LENGTH];
 static uint8_t mmhiRxBuffer[MMHI_FRAME_MAX_LENGTH];
+
+static uint8_t mmhiDsapByProtocol[] = {0, 0, 0, 0, 3, 0, 1};
 
 static void lMMHI_ClearReceptionState(void);
 
@@ -389,14 +394,38 @@ static bool lMMHI_ProcessRcvCommand(void)
     }
     else if (pRcvFrameData->commandCode == MMHI_CMD_SLAVE_DATA_REQ)
     {
+        uint8_t *pData = pRcvFrameData->pPayload;
+        uint8_t protocol;
+        uint8_t reqId;
+
+        protocol = *pData++;
+        reqId = *pData++;
+
+        if (mmhiData.macDataCallback != NULL)
+        {
+            mmhiData.macDataCallback(mmhiDsapByProtocol[protocol], reqId, pData, 
+                    pRcvFrameData->length - 1);
+        }
         
         SYS_CONSOLE_Message(SYS_CONSOLE_INDEX_0, "<- SLAVE_DATA_REQ\r\n");
         
     }
     else if (pRcvFrameData->commandCode == MMHI_CMD_MASTER_DATA_REQ)
     {
-        
-        SYS_CONSOLE_Message(SYS_CONSOLE_INDEX_0, "<- MASTER_DATA_RE\r\n");
+        uint8_t *pData = pRcvFrameData->pPayload;
+        uint8_t protocol;
+        uint8_t reqId;
+
+        protocol = *pData++;
+        reqId = *pData++;
+
+        if (mmhiData.macDataCallback != NULL)
+        {
+            mmhiData.macDataCallback(mmhiDsapByProtocol[protocol], reqId, pData, 
+                    pRcvFrameData->length - 1);
+        }
+
+        SYS_CONSOLE_Message(SYS_CONSOLE_INDEX_0, "<- MASTER_DATA_REQ\r\n");
         
     }
     else if (pRcvFrameData->commandCode == MMHI_CMD_HI_PING_REQ)
@@ -412,6 +441,15 @@ static bool lMMHI_ProcessRcvCommand(void)
         
         SYS_CONSOLE_Message(SYS_CONSOLE_INDEX_0, "<- HI_PING_REQ\r\n");
     }
+<#if MMHI_MANUF_COMMANDS == true>
+    else if (pRcvFrameData->commandCode == MMHI_CMD_PLC_PHY_DATA_REQ)
+    {
+        PAL_MMHI_TxRequest(pRcvFrameData->pPayload, pRcvFrameData->length);
+
+        SYS_CONSOLE_Message(SYS_CONSOLE_INDEX_0, "<- PLC_PHY_DATA_REQ\r\n");
+        
+    }
+</#if>
     else
     {
         result = false;
@@ -553,10 +591,12 @@ static MMHI_RESULT lMMHI_CheckRcvFrame(void)
         {
             // TBD
         }
-        else if (pRcvFrameData->commandCode == MMHI_CMD_HI_PING_REQ)
+<#if MMHI_MANUF_COMMANDS == true>
+        else if (pRcvFrameData->commandCode == MMHI_CMD_PLC_PHY_DATA_REQ)
         {
             // TBD  
         }
+</#if>
         else
         {
 <#if MMHI_CUSTOM_COMMANDS != 0>            
@@ -669,6 +709,7 @@ SYS_MODULE_OBJ MMHI_Initialize(
     mmhiData.tackTimer = SYS_TIME_HANDLE_INVALID;
     mmhiData.tsrTimer = SYS_TIME_HANDLE_INVALID;
     mmhiData.txDelayTimer = SYS_TIME_HANDLE_INVALID;
+    mmhiData.swReset = false;
 
 <#if MMHI_CUSTOM_COMMANDS != 0>
     /* Init custom commands entries */
@@ -924,6 +965,11 @@ void MMHI_Tasks ( SYS_MODULE_OBJ object )
             }
         }
     }
+}
+
+void MMHI_MacDataCallbackRegister(MMHI_MAC_DATA_IND_CALLBACK callback)
+{
+    mmhiData.macDataCallback = callback;
 }
 
 <#if MMHI_CUSTOM_COMMANDS != 0>

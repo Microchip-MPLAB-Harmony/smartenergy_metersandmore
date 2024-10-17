@@ -93,6 +93,11 @@ def instantiateComponent(mmHiComponent):
     mmHiCustomCommands.setMin(0)
     mmHiCustomCommands.setMax(10)
     mmHiCustomCommands.setHelp(mm_hi_helpkeyword)
+
+    mmHiManufCommands = mmHiComponent.createBooleanSymbol("MMHI_MANUF_COMMANDS", None)
+    mmHiManufCommands.setLabel("Enable Manufacturer commands")
+    mmHiManufCommands.setDefaultValue(True)
+    mmHiManufCommands.setHelp(mm_hi_helpkeyword)
     
     #####################################################################################################################################
     # Meters And More Host Interafce Files

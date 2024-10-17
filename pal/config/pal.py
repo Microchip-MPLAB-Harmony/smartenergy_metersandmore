@@ -66,18 +66,20 @@ def instantiateComponent(mmPalComponent):
     mmPalSrcFile.setMarkup(True)
 
     mmPalHdrFile = mmPalComponent.createFileSymbol("MM_PAL_HEADER", None)
-    mmPalHdrFile.setSourcePath("pal/pal.h")
+    mmPalHdrFile.setSourcePath("pal/pal.h.ftl")
     mmPalHdrFile.setOutputName("pal.h")
     mmPalHdrFile.setDestPath("stack/metersandmore/pal")
     mmPalHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/pal/")
     mmPalHdrFile.setType("HEADER")
+    mmPalHdrFile.setMarkup(True)
 
     mmPalLocalHdrFile = mmPalComponent.createFileSymbol("MM_PAL_LOCAL_HEADER", None)
-    mmPalLocalHdrFile.setSourcePath("pal/pal_local.h")
+    mmPalLocalHdrFile.setSourcePath("pal/pal_local.h.ftl")
     mmPalLocalHdrFile.setOutputName("pal_local.h")
     mmPalLocalHdrFile.setDestPath("stack/metersandmore/pal")
     mmPalLocalHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/pal/")
     mmPalLocalHdrFile.setType("HEADER")
+    mmPalLocalHdrFile.setMarkup(True)
 
     #####################################################################################################################################
     # Meters And More PAL TEMPLATES

@@ -117,6 +117,10 @@ typedef struct
 
     bool pvddMonTxEnable;
 
+<#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
+    bool mmhiTxRequest;
+
+</#if>
 } PAL_DATA;
 
 #endif // #ifndef PAL_LOCAL_H

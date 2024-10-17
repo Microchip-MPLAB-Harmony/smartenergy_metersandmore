@@ -56,6 +56,10 @@ Microchip or any third party.
 </#if>
 #include "pal_local.h"
 #include "pal.h"
+<#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
+#include "stack/metersandmore/mmhi/mmhi.h"
+#include "stack/metersandmore/mmhi/mmhi_definitions.h"
+</#if>
 
 // *****************************************************************************
 // *****************************************************************************
@@ -128,6 +132,10 @@ static void lPAL_ExceptionCb(DRV_PLC_PHY_EXCEPTION exceptionObj, uintptr_t conte
 static void lPAL_DataCfmCb(DRV_PLC_PHY_TRANSMISSION_CFM_OBJ *cfmObj, uintptr_t context)
 {
     PAL_RESULT result = PAL_RESULT_ERROR;
+<#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
+    MMHI_RESULT mmhiResult = MMHI_SUCCESS;
+    MMHI_COMMAND mmhiCommand = MMHI_CMD_PLC_PHY_DATA_CFM;
+</#if>
 
     /* Avoid warning */
     (void)context;
@@ -142,31 +150,69 @@ static void lPAL_DataCfmCb(DRV_PLC_PHY_TRANSMISSION_CFM_OBJ *cfmObj, uintptr_t c
             break;
         case DRV_PLC_PHY_TX_RESULT_INV_LENGTH:
             result = PAL_RESULT_INVALID_PARAMETER;
+<#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
+            mmhiResult = MMHI_ERROR_WPL;
+            mmhiCommand = MMHI_CMD_PLC_PHY_DATA_NCFM;
+</#if>
             break;
         case DRV_PLC_PHY_TX_RESULT_BUSY_CH:
         case DRV_PLC_PHY_TX_RESULT_BUSY_RX:
             result = PAL_RESULT_BUSY_CH;
+<#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
+            mmhiResult = MMHI_ERROR_BUSY;
+            mmhiCommand = MMHI_CMD_PLC_PHY_DATA_NCFM;
+</#if>
             break;
         case DRV_PLC_PHY_TX_RESULT_BUSY_TX:
         case DRV_PLC_PHY_TX_RESULT_PROCESS:
         case DRV_PLC_PHY_TX_RESULT_HIGH_TEMP_120:
         case DRV_PLC_PHY_TX_RESULT_HIGH_TEMP_110:
             result = PAL_RESULT_DENIED;
+<#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
+            mmhiResult = MMHI_ERROR_BUSY;
+            mmhiCommand = MMHI_CMD_PLC_PHY_DATA_NCFM;
+</#if>
             break;
         case DRV_PLC_PHY_TX_RESULT_TIMEOUT:
             result = PAL_RESULT_TIMEOUT;
+<#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
+            mmhiResult = MMHI_ERROR_TIMEOUT;
+            mmhiCommand = MMHI_CMD_PLC_PHY_DATA_NCFM;
+</#if>
             break;
         case DRV_PLC_PHY_TX_CANCELLED:
         case DRV_PLC_PHY_TX_RESULT_NO_TX:
             result = PAL_RESULT_ERROR;
+<#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
+            mmhiResult = MMHI_ERROR;
+            mmhiCommand = MMHI_CMD_PLC_PHY_DATA_NCFM;
+</#if>
             break;
     }
 
+<#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
+    if (palData.mmhiTxRequest == true) 
+    {
+        palData.mmhiTxRequest = false;
+        MMHI_SendCommandFrame(mmhiCommand, &mmhiResult, 1);
+    }
+    else
+    {
+        /* Send Confirm to upper layer */
+        if (palData.initHandlers.palTxConfirm != NULL)
+        {
+            palData.initHandlers.palTxConfirm(result);
+        }
+    }
+
+<#else>
     /* Send Confirm to upper layer */
     if (palData.initHandlers.palTxConfirm != NULL)
     {
         palData.initHandlers.palTxConfirm(result);
     }
+
+</#if>
 }
 
 static void lPAL_DataIndCb(DRV_PLC_PHY_RECEPTION_OBJ *indObj, uintptr_t context)
@@ -199,6 +245,10 @@ static void lPAL_DataIndCb(DRV_PLC_PHY_RECEPTION_OBJ *indObj, uintptr_t context)
         {
             palData.initHandlers.palDataIndication(indObj->pReceivedData, indObj->dataLength);
         }
+
+<#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
+        MMHI_SendCommandFrame(MMHI_CMD_PLC_PHY_DATA_IND, indObj->pReceivedData, indObj->dataLength);
+</#if>
     }
     else if (indObj->crcOk == 0xFE)
     {
@@ -316,6 +366,17 @@ void PAL_TxRequest(uint8_t *pData, uint16_t length, uint8_t nbFrame, uint32_t de
         {
             palData.initHandlers.palTxConfirm(result);
         }
+
+<#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
+        if (palData.mmhiTxRequest == true) 
+        {
+            uint8_t error = MMHI_ERROR_BUSY;
+
+            palData.mmhiTxRequest = false;
+            MMHI_SendCommandFrame(MMHI_CMD_PLC_PHY_DATA_NCFM, &error, 1);
+        }
+
+</#if>
     }
 }
 
@@ -447,3 +508,12 @@ void PAL_Tasks(void)
         }
     }
 }
+
+<#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
+void PAL_MMHI_TxRequest(uint8_t *pData, uint16_t length)
+{
+    palData.mmhiTxRequest = true;
+    PAL_TxRequest(pData, length, 0 ,0);
+}
+
+</#if>

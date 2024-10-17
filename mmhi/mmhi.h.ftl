@@ -199,6 +199,50 @@ typedef struct
 } MMHI_INIT;
 
 // *****************************************************************************
+/* Meters And More HI Mac Data Indication Function Pointer
+
+  Summary:
+    Pointer to a Meters And More HI module Mac Data Indication Function Pointer.
+
+  Description:
+    This data type defines the required function signature for the Meters And More HI
+    Mac Data Indication function. A client must register a pointer using the callback register 
+    function whose function signature (parameter and return value types) match the types 
+    specified by this function pointer in order to receive related event callbacks
+    from the module.
+
+    The parameters and return values are described here and a partial example
+    implementation is provided.
+
+  Parameters:
+    dsap - Destination LSAP
+    reqId - Unique Request ID for each request 
+    lsdu - Pointer to the LLC data
+    lsduLen - Length of the LLC data
+
+  Returns:
+    None.
+
+  Example:
+    <code>
+    void APP_MyCommandFrameHandler( uint8_t dsap, uint8_t reqId, 
+        uint8_t* lsdu, uint8_t lsduLen )
+    {
+        if (lsduLen > 0) 
+        {
+
+        }
+    }
+    </code>
+
+  Remarks:
+    None.
+*/
+typedef void ( *MMHI_MAC_DATA_IND_CALLBACK )( uint8_t dsap, uint8_t reqId, 
+    uint8_t* lsdu, uint8_t lsduLen );
+
+<#if MMHI_CUSTOM_COMMANDS != 0>
+// *****************************************************************************
 /* Meters And More HI Command Frame Indication Function Pointer
 
   Summary:
@@ -226,7 +270,8 @@ typedef struct
     <code>
     void APP_MyCommandFrameHandler( uint8_t* data, uint8_t length )
     {
-        if (length > 0) {
+        if (length > 0) 
+        {
 
         }
     }
@@ -238,7 +283,7 @@ typedef struct
 */
 typedef void ( *MMHI_CMD_FRAME_IND_CALLBACK )( uint8_t* data, uint8_t length );
 
-
+</#if>
 // *****************************************************************************
 
 // *****************************************************************************
@@ -441,6 +486,45 @@ MMHI_STATUS MMHI_GetStatus ( SYS_MODULE_OBJ object );
 */
 void MMHI_Tasks ( SYS_MODULE_OBJ object );
 
+// *****************************************************************************
+/* Function:
+    void MMHI_MacDataCallbackRegister (
+        MMHI_MAC_DATA_IND_CALLBACK callback
+    );
+
+  Summary:
+    Allows a client to register a callback function to be called when a mac data 
+    command is received.
+
+  Description:
+    This function allows a client to register a handling function for the MMHI to 
+    call back when the MAC_DATA_REQ command code has been detected.
+
+  Parameters:
+    callback - Pointer to the callback function
+
+  Returns:
+    None.
+
+  Example:
+    <code>
+    void APP_MyMacDataCallback(uint8_t dsap, uint8_t reqId, 
+        uint8_t* lsdu, uint8_t lsduLen)
+    {
+        if (length > 0)
+        {
+
+        }
+    }
+
+    MMHI_MacDataCallbackRegister(APP_MyMacDataCallback);
+    </code>
+
+  Remarks:
+    Callback can be set to a NULL pointer to stop receiving MAC DATA notifications.
+*/
+void MMHI_MacDataCallbackRegister(MMHI_MAC_DATA_IND_CALLBACK callback);
+
 <#if MMHI_CUSTOM_COMMANDS != 0>
 // *****************************************************************************
 /* Function:
@@ -469,7 +553,8 @@ void MMHI_Tasks ( SYS_MODULE_OBJ object );
 
     void APP_CmdSetStbyCallback(uint8_t* data, uint8_t length)
     {
-        if (length > 0){
+        if (length > 0)
+        {
 
         }
     }

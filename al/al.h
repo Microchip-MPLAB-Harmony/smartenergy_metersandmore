@@ -66,6 +66,9 @@ extern "C" {
 #define KEY_LENGTH              16U
 #define LMON_LENGTH             8U
 
+/* Maximum length of an IB object */
+#define AL_IB_MAX_VALUE_LENGTH  (KEY_LENGTH)
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Data Types
@@ -118,36 +121,6 @@ typedef struct
 } NODE_INFO;
 
 // *****************************************************************************
-/* Meters And More AL Configuration Data struct
-
-  Summary:
-    AL Configuration Data Parameters Structure.
-
-   Description:
-    Contains fields which define the information to be shared in the
-    AL Configuration Data request. 
-
-  Remarks:
-    None.
-*/
-typedef struct
-{
-    /* Absolute Communication Address */
-    uint8_t ACA[MAC_ADDRESS_SIZE];
-    /* Section Communication Address */
-    uint8_t SCA[MAC_ADDRESS_SIZE];
-    /* Write data authentication key */
-    uint8_t Key_K1[KEY_LENGTH];
-    /* Read data authentication key */
-    uint8_t Key_K2[KEY_LENGTH];
-    /* Read LMON data */
-    LMON lmon;
-    /* CMON data (updated in both DCU & METER AL)*/
-    LMON cmon;
-    
-} AL_CONFIG_DATA;
-
-// *****************************************************************************
 /* AL Event IDs
 
    Summary:
@@ -182,6 +155,59 @@ typedef struct
     uint8_t length;
     uint8_t value[MAC_EVENT_VALUE_MAX_LENGTH];
 } AL_EVENT_VALUE;
+
+// *****************************************************************************
+/* AL and DLL Parameter Information Base definition
+
+   Summary:
+    Lists the available objects in the AL and DLL Information Base (IB).
+
+   Description:
+    AL and DLL IB is a collection of objects that can be read/written in order
+    to retrieve information and/or configure the AL and DLL layers.
+
+   Remarks:
+    None.
+*/
+typedef enum
+{
+    AL_WRITE_KEY_K1_IB = 0x001,
+    AL_READ_KEY_K2_IB = 0x002,
+    AL_LMON_IB = 0x003,
+    AL_CMON_IB = 0x004,
+
+    AL_MAC_ACA_ADDRESS_IB = 0x201,
+    AL_MAC_SCA_ADDRESS_IB = 0x202,
+    AL_MAC_BAUDRATE_IB = 0x203,
+    AL_MAC_TIME_SLOT_US_IB = 0x204,
+    AL_MAC_TIME_ELABORATION_US_IB = 0x205,
+    AL_MAC_ADDITIONAL_DELAY_US_IB = 0x206,
+    AL_MAC_LAST_RX_IN_PHASE_IB = 0x207,
+    AL_MAC_LAST_RX_NB_FRAME_IB = 0x208,
+    AL_MAC_LAST_RX_SIGNAL_LEVEL_IB = 0x209,
+    AL_MAC_LAST_RX_SNR_IB = 0x20A,
+    AL_MAC_ESTIMATED_IMPDEDANCE_IB = 0x20B,
+} AL_IB_ATTRIBUTE;
+
+// *****************************************************************************
+/* AL and DLL IB Value definition
+
+   Summary:
+    Defines the fields of an IB Value object.
+
+   Description:
+    This structure contains the fields which define an IB Value object,
+    which contains information of its length and the value itself coded into an
+    8-bit array format.
+
+   Remarks:
+    None.
+*/
+typedef struct
+{
+    uint8_t length;
+    uint8_t value[AL_IB_MAX_VALUE_LENGTH];
+} AL_IB_VALUE;
 
 // *****************************************************************************
 /* Meters And More AL Data Indication struct
@@ -469,49 +495,6 @@ AL_RESULT AL_EventIndicationCallbackRegister( AL_EVENT_IND_CALLBACK callback );
 
 // *****************************************************************************
 /* Function:
-    AL_RESULT AL_Data_Config_Request (
-        AL_CONFIG_DATA *configParams
-    );
-
-  Summary:
-    AL Data Config request
-
-  Description:
-    Function that implements the AL Config Data request primitive
-
-  Precondition:
-    The low-level board initialization must have been completed and
-    the module's initialization function must have been called before
-    the system can call the tasks routine for any module. 
-
-  Parameters:
-    configParams - Pointer to structure containing parameters related to AL Data Config Request
-
-  Returns:
-    AL_RESULT indicating the status of request placed.
-
-  Example:
-    <code>
-    AL_CONFIG_DATA configParams;
-    
-    configParams.ACA = meterACADataBuffer;
-    configParams.SCA = meterSCADataBuffer;
-    configParams.Key_K1 = Key_k1_DataBuffer;
-    configParams.Key_K2 = Key_k2_DataBuffer;
-    configParams.lmon.buff = lmon_preconfigured_data;
-    configParams.cmon.buff = NULL;
-    
-    AL_Data_Config_Request(&configParams);
-    </code>
-
-  Remarks:
-    This function must be called once after AL_Initialize. All the data Indication, 
-	Request or Confirm events require config data to process.
-*/
-AL_RESULT AL_Data_Config_Request( AL_CONFIG_DATA *configParams );
-
-// *****************************************************************************
-/* Function:
     void AL_DataRequest (
         AL_DATA_REQ_PARAMS *reqParams
     );
@@ -556,43 +539,6 @@ AL_RESULT AL_Data_Config_Request( AL_CONFIG_DATA *configParams );
 	only for Concentrator.
 */	
 void AL_DataRequest( AL_DATA_REQ_PARAMS *reqParams );
-
-// *****************************************************************************
-/* Function:
-    AL_RESULT AL_Set_Encryption_Keys (
-        AL_CONFIG_DATA *configParams
-    );
-
-  Summary:
-    AL Data Config request
-
-  Description:
-    Function that updates the encryption keys in AL run time.
-
-  Precondition:
-    AL_Data_Config_Request configures the Write & Read keys initially. CCU or Meter can request the AL 
-	for updating the Keys using this function.
-
-  Parameters:
-    configParams - Pointer to structure containing parameters related to AL Data Config Request
-
-  Returns:
-    AL_RESULT indicating the status of request placed.
-
-  Example:
-    <code>
-    AL_CONFIG_DATA configParams;
-    
-    configParams.Key_K1 = Key_k1_DataBuffer;
-    configParams.Key_K2 = Key_k2_DataBuffer;
-        
-    AL_Set_Encryption_Keys(&configParams);
-    </code>
-
-  Remarks:
-    None.
-*/
-AL_RESULT AL_Set_Encryption_Keys( AL_CONFIG_DATA *configparams );
 
 // *****************************************************************************
 /* Function:
@@ -714,6 +660,105 @@ void AL_Tasks( SYS_MODULE_OBJ object );
     None.
 */
 SYS_STATUS AL_GetStatus(void);
+
+// *****************************************************************************
+/* Function:
+    AL_RESULT AL_GetRequest (
+        AL_IB_ATTRIBUTE attribute,
+        uint16_t index,
+        AL_IB_VALUE *ibValue
+    );
+
+  Summary:
+    The AL_GetRequest primitive gets the value of an attribute in the
+    AL or DLL layer Parameter Information Base (IB).
+
+  Description:
+    GetRequest primitive is used to get the value of an IB.
+    Result is provided upon function call return, in the ibValue parameter.
+
+  Precondition:
+    None.
+
+  Parameters:
+    attribute - Identifier of the Attribute to retrieve value
+
+    index - Index of element in case Attribute is a table
+            Otherwise index must be set to '0'
+
+    ibValue - Pointer to AL_IB_VALUE object where value will be returned
+
+  Returns:
+    Result of get operation as a AL_RESULT Enum.
+
+  Example:
+    <code>
+    AL_RESULT result;
+    AL_IB_VALUE value;
+    result = AL_GetRequest(AL_LMON_IB, 0, &value);
+    if (result == AL_RESULT_SUCCESS)
+    {
+
+    }
+    </code>
+
+  Remarks:
+    None.
+*/
+AL_RESULT AL_GetRequest(AL_IB_ATTRIBUTE attribute, uint16_t index,
+                        AL_IB_VALUE *ibValue);
+
+// *****************************************************************************
+/* Function:
+    AL_RESULT AL_SetRequest (
+        AL_IB_ATTRIBUTE attribute,
+        uint16_t index,
+        const AL_IB_VALUE *ibValue
+    );
+
+  Summary:
+    The AL_SetRequest primitive sets the value of an attribute in the
+    AL or DLL layer Parameter Information Base (IB).
+
+  Description:
+    SetRequest primitive is used to set the value of an IB.
+    Result of set operation is provided upon function call return,
+    in the return result code.
+
+  Precondition:
+    None.
+
+  Parameters:
+    attribute - Identifier of the Attribute to provide value
+
+    index - Index of element in case Attribute is a table
+            Otherwise index must be set to '0'
+
+    ibValue - Pointer to AL_IB_VALUE object where value is contained
+
+  Returns:
+    Result of set operation as a AL_RESULT Enum.
+
+  Example:
+    <code>
+    AL_RESULT result;
+    const AL_IB_VALUE value;
+
+    value.length = LMON_LENGTH;
+    memset(value.value, 0, LMON_LENGTH);
+
+    result = AL_SetRequest(AL_LMON_IB, 0, &value);
+    if (result == AL_RESULT_SUCCESS)
+    {
+
+    }
+    </code>
+
+  Remarks:
+    None.
+*/
+AL_RESULT AL_SetRequest(AL_IB_ATTRIBUTE attribute, uint16_t index,
+                        const AL_IB_VALUE *ibValue);
 
 #ifdef __cplusplus
 }

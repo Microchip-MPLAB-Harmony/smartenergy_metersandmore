@@ -19,7 +19,7 @@ static DLL_INIT dllInitData = {
 };
 <#if METERSANDMORE_INC_AL == true>
 
-/* Meters And More App Layer Initialization Data */
+/* Meters And More AL Initialization Data */
 static AL_INIT alInitData = {
 
 <#if (HarmonyCore.SELECT_RTOS)?? && (HarmonyCore.SELECT_RTOS != "BareMetal")>

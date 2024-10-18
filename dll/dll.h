@@ -101,26 +101,6 @@ typedef enum
     DLL_ERROR
 } DLL_RESULT;
 
-
-// *****************************************************************************
-/* DLL module Status
-
-  Summary:
-    Defines the status of the DLL module.
-
-  Description:
-    This enumeration defines the status of the DLL module:
-        - DLL_STATUS_UNINITIALIZED: DLL module has not been initialized.
-        - DLL_STATUS_READY: DLL module is ready to be used.
-  Remarks:
-    None.
-*/
-typedef enum
-{
-    DLL_STATUS_UNINITIALIZED = SYS_STATUS_UNINITIALIZED,
-    DLL_STATUS_READY = SYS_STATUS_READY,
-} DLL_STATUS;
-
 // *****************************************************************************
 /* DSAP definition
 
@@ -869,13 +849,13 @@ uint32_t DLL_GetTxTimeout(void);
 
 // *****************************************************************************
 /* Function:
-    DLL_STATUS DLL_GetStatus(void);
+    SYS_STATUS DLL_GetStatus(void);
 
   Summary:
     Gets the status of the DLL module.
 
   Description:
-    This function allows to retieve DLL module status.
+    This function allows to retrieve DLL module status.
     It must be used to ensure the module is Ready before start using it.
 
   Precondition:
@@ -886,14 +866,15 @@ uint32_t DLL_GetTxTimeout(void);
 
   Returns:
     Returns the status of the Meters And Mores DLL module.
-    - DLL_STATUS_UNINITIALIZED: DLL module has not been initialized.
-    - DLL_STATUS_READY: DLL module is ready to be used.
+    - SYS_STATUS_UNINITIALIZED: DLL module has not been initialized.
+    - SYS_STATUS_BUSY: DLL module is busy in the process of initialization.
+    - SYS_STATUS_READY: DLL module is ready to be used.
 
   Example:
     <code>
     case APP_DLL_STATE_START:
     {
-        if (DLL_GetStatus() == DLL_STATUS_READY)
+        if (DLL_GetStatus() == SYS_STATUS_READY)
         {
             app_DLLData.state = APP_DLL_STATE_RUNNING;
         }
@@ -905,7 +886,7 @@ uint32_t DLL_GetTxTimeout(void);
   Remarks:
     None.
 */
-DLL_STATUS DLL_GetStatus(void);
+SYS_STATUS DLL_GetStatus(void);
 
 // *****************************************************************************
 /* Function:

@@ -7,7 +7,7 @@
     <#lt>        /* Maintain Meters And More DLL */
     <#lt>        DLL_Tasks(sysObj.metersandmoreDll);
     <#if METERSANDMORE_INC_AL == true>
-    <#lt>        /* Maintain Meters And More App Layer */
+    <#lt>        /* Maintain Meters And More AL */
     <#lt>        AL_Tasks(sysObj.metersandmoreAl);
     </#if>
     <#lt>        vTaskDelay(MM_STACK_RTOS_TASK_DELAY_MS / portTICK_PERIOD_MS);
@@ -24,7 +24,7 @@
     <#lt>        /* Maintain Meters And More DLL */
     <#lt>        DLL_Tasks(sysObj.metersandmoreDll);
     <#if METERSANDMORE_INC_AL == true>
-    <#lt>        /* Maintain Meters And More App Layer */
+    <#lt>        /* Maintain Meters And More AL */
     <#lt>        AL_Tasks(sysObj.metersandmoreAl);
     </#if>
     <#lt>        tx_thread_sleep((ULONG)(MM_STACK_RTOS_TASK_DELAY_MS / (TX_TICK_PERIOD_MS)));
@@ -42,7 +42,7 @@
     <#lt>        /* Maintain Meters And More DLL */
     <#lt>        DLL_Tasks(sysObj.metersandmoreDll);
     <#if METERSANDMORE_INC_AL == true>
-    <#lt>        /* Maintain Meters And More App Layer */
+    <#lt>        /* Maintain Meters And More AL */
     <#lt>        AL_Tasks(sysObj.metersandmoreAl);
     </#if>
     <#lt>        OSTimeDly(MM_STACK_RTOS_TASK_DELAY_MS, OS_OPT_TIME_DLY, &os_err);
@@ -56,7 +56,7 @@
     <#lt>        /* Maintain Meters And More DLL */
     <#lt>        DLL_Tasks(sysObj.metersandmoreDll);
     <#if METERSANDMORE_INC_AL == true>
-    <#lt>        /* Maintain Meters And More App Layer */
+    <#lt>        /* Maintain Meters And More AL */
     <#lt>        AL_Tasks(sysObj.metersandmoreAl);
     </#if>
     <#lt>        thread_sleep_for((uint32_t)(MM_STACK_RTOS_TASK_DELAY_MS / MBED_OS_TICK_PERIOD_MS));

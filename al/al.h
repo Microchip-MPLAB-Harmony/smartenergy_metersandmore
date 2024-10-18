@@ -1,29 +1,53 @@
-/* ************************************************************************** */
-/** Descriptive File Name
+/*******************************************************************************
+  Interface definition of Meters And More AL (Application Layer) module.
 
-  @Company
-    Company Name
+  Company:
+    Microchip Technology Inc.
 
-  @File Name
+  File Name:
     al.h
 
-  @Summary
-    Brief description of the file.
+  Summary:
+    Interface definition of Meters And More AL (Application Layer) module.
 
-  @Description
-    Describe the purpose of this file.
- */
-/* ************************************************************************** */
+  Description:
+    This file defines the interface for the Meters And More AL (Application
+    Layer) module.
+*******************************************************************************/
 
-#ifndef AL_H    /* Guard against multiple inclusion */
+//DOM-IGNORE-BEGIN
+/*
+Copyright (C) 2024, Microchip Technology Inc., and its subsidiaries. All rights reserved.
+
+The software and documentation is provided by microchip and its contributors
+"as is" and any express, implied or statutory warranties, including, but not
+limited to, the implied warranties of merchantability, fitness for a particular
+purpose and non-infringement of third party intellectual property rights are
+disclaimed to the fullest extent permitted by law. In no event shall microchip
+or its contributors be liable for any direct, indirect, incidental, special,
+exemplary, or consequential damages (including, but not limited to, procurement
+of substitute goods or services; loss of use, data, or profits; or business
+interruption) however caused and on any theory of liability, whether in contract,
+strict liability, or tort (including negligence or otherwise) arising in any way
+out of the use of the software and documentation, even if advised of the
+possibility of such damage.
+
+Except as expressly permitted hereunder and subject to the applicable license terms
+for any third-party software incorporated in the software and any applicable open
+source software license terms, no license or other rights, whether express or
+implied, are granted under any patent or other intellectual property rights of
+Microchip or any third party.
+*/
+//DOM-IGNORE-END
+
+#ifndef AL_H
 #define AL_H
 
-
-/* ************************************************************************** */
-/* ************************************************************************** */
-/* Section: Included Files                                                    */
-/* ************************************************************************** */
-/* ************************************************************************** */
+// *****************************************************************************
+// *****************************************************************************
+// Section: File includes
+// *****************************************************************************
+// *****************************************************************************
 
 #include "stack/metersandmore/dll/dll.h"
 #include "crypto/common_crypto/MCHP_Crypto_Sym_Cipher.h"
@@ -33,20 +57,15 @@
 extern "C" {
 #endif
 
-#define KEY_LENGTH              16U
-#define ACA_LENGTH              6U
-#define SCA_LENGTH              6U   
-#define LMON_LENGTH             8U   
-#define CMON_LENGTH             8U    
-    
-#define SessionID               1U    
-#define CMAC_LENGTH             16U 
-#define CMAC_DATA_LENGTH        20U     
+// *****************************************************************************
+// *****************************************************************************
+// Section: Macro Definitions
+// *****************************************************************************
+// *****************************************************************************
 
-#define AL_INSTANCES_NUMBER     1U
-    
-#define MAX_DATA_LENGTH         128U 
-    
+#define KEY_LENGTH              16U
+#define LMON_LENGTH             8U
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Data Types
@@ -72,33 +91,12 @@ typedef enum
     AL_ENCRYPTION_ENABLED = 0x01
 } AL_AUTH;
 
-
 /* Last Message Order Number (LMON) */
 typedef union
 {
     uint8_t buff[LMON_LENGTH];
     uint64_t value;
 } LMON;
-
-
-// *****************************************************************************
-/* AL Device configuration status 
-
-   Summary:
-    Indicates the AL device configuration status for processing with message data.
-
-   Description:
-    This AL_DEVICE identifies the Concentrator or Meter configuration. AL uses this 
-    information for processing module operations.
-
-   Remarks:
-    None.
-*/
-typedef enum
-{
-    AL_CONCENTRATOR,
-    AL_METER
-} AL_DEVICE;
 
 // *****************************************************************************
 /* AL Node information Device configuration status 
@@ -116,7 +114,7 @@ typedef enum
 typedef struct
 {
     LMON lmon;
-    uint8_t ACA[ACA_LENGTH];
+    uint8_t ACA[MAC_ADDRESS_SIZE];
 } NODE_INFO;
 
 // *****************************************************************************
@@ -135,22 +133,55 @@ typedef struct
 typedef struct
 {
     /* Absolute Communication Address */
-    uint8_t ACA[ACA_LENGTH];
+    uint8_t ACA[MAC_ADDRESS_SIZE];
     /* Section Communication Address */
-    uint8_t SCA[SCA_LENGTH];
+    uint8_t SCA[MAC_ADDRESS_SIZE];
     /* Write data authentication key */
     uint8_t Key_K1[KEY_LENGTH];
     /* Read data authentication key */
     uint8_t Key_K2[KEY_LENGTH];
     /* Read LMON data */
     LMON lmon;
-    /* CMON data (updated in both CCU & METER AL)*/
+    /* CMON data (updated in both DCU & METER AL)*/
     LMON cmon;
-    /* Concentrator/Meter Configuration */
-    AL_DEVICE config_device;
     
 } AL_CONFIG_DATA;
 
+// *****************************************************************************
+/* AL Event IDs
+
+   Summary:
+    Identifies the possible AL Event identifiers.
+
+   Description:
+    This enumeration identifies the possible AL Event identifiers.
+
+   Remarks:
+    None.
+*/
+typedef enum
+{
+    AL_EVENT_ID_MAC_ACA = 0,
+    AL_EVENT_ID_MASTER_TX_TIMEOUT = 0x20,
+} AL_EVENT_ID;
+
+// *****************************************************************************
+/* AL Event Struct
+
+   Summary:
+    Contains fields defining an AL Event
+
+   Description:
+    Contains fields of a AL Event, its length and value itself.
+
+   Remarks:
+    None.
+*/
+typedef struct
+{
+    uint8_t length;
+    uint8_t value[MAC_EVENT_VALUE_MAX_LENGTH];
+} AL_EVENT_VALUE;
 
 // *****************************************************************************
 /* Meters And More AL Data Indication struct
@@ -180,35 +211,12 @@ typedef struct
   /* ACA & new verified LMON from Meter for table entry in MASTER*/
   NODE_INFO node_info;
   /* Pointer to received data*/
-  uint8_t app_data[MAX_DATA_LENGTH];
+  uint8_t app_data[MAX_LENGTH_432_DATA];
   /* Length of the data */
   uint16_t app_dataLen;
   /* Data Request Tx Status, Set to 1 if Data confirm DLL_TX_STATUS_ERROR */
   uint16_t Last_Request_Tx_Failure;
 } AL_DATA_IND_PARAMS;
-
-
-// *****************************************************************************
-/* Meters And More AL Event Indication struct
-
-  Summary:
-    AL Event Indication Parameters Structure.
-
-   Description:
-    Contains fields which define the information returned by the
-    AL Event Indication Callback.
-
-  Remarks:
-    This Struct is only used in Master Node.
-*/
-typedef struct
-{
-  /* Message Code */
-  uint8_t eventId; 
-  /* ACA Address of Event Node */
-  uint8_t eventValue[ACA_LENGTH];
-  
-} AL_DATA_EVENT_PARAMS;
 
 // *****************************************************************************
 /* Meters And More AL Data request struct
@@ -244,6 +252,27 @@ typedef struct
 } AL_DATA_REQ_PARAMS;
 
 // *****************************************************************************
+/* Meters And More AL Event Indication struct
+
+  Summary:
+    AL Event Indication Parameters Structure.
+
+   Description:
+    Contains fields which define the information returned by the
+    AL Event Indication Callback.
+
+  Remarks:
+    This Struct is only used in Master Node.
+*/
+typedef struct
+{
+    /* Event Identifier */
+    AL_EVENT_ID eventId;
+    /* First additional information */
+    AL_EVENT_VALUE eventValue;
+} AL_EVENT_IND_PARAMS;
+
+// *****************************************************************************
 /* Meters And More AL module Result
 
   Summary:
@@ -257,21 +286,6 @@ typedef enum
     AL_SUCCESS,
     AL_ERROR
 } AL_RESULT;
-
-// *****************************************************************************
-/* Meters And More AL module Status
-
-  Summary:
-    Status of a Meters And More AL module interface operation.
-
-  Description:
-    Lists the status of Meters And More AL module operations.
-*/
-typedef enum
-{
-    AL_PROCESSED,
-    AL_BUSY
-} AL_M_STATUS;
 
 // *****************************************************************************
 /* Meters And More Application Layer module Initialization Data
@@ -359,14 +373,13 @@ typedef void ( *AL_DATA_IND_CALLBACK )( AL_DATA_IND_PARAMS *indParams );
 
   Example:
     <code>
-    void APP_MyDatEventIndHandler( AL_DATA_EVENT_PARAMS *eventParams )
+    void APP_MyDatEventIndHandler( AL_EVENT_IND_PARAMS *eventParams )
     {
          eventParams->eventValue;
     }
     </code>
 */
-typedef void ( *AL_DATA_EVENT_CALLBACK )( AL_DATA_EVENT_PARAMS *eventParams );
-
+typedef void ( *AL_EVENT_IND_CALLBACK )( AL_EVENT_IND_PARAMS *eventParams );
 
 // *****************************************************************************
 // *****************************************************************************
@@ -376,7 +389,7 @@ typedef void ( *AL_DATA_EVENT_CALLBACK )( AL_DATA_EVENT_PARAMS *eventParams );
 
 // *****************************************************************************
 /* Function:
-    AL_RESULT AL_Data_Ind_CallbackRegister (
+    AL_RESULT AL_DataIndicationCallbackRegister (
         AL_DATA_IND_CALLBACK callback
     );
 
@@ -405,18 +418,18 @@ typedef void ( *AL_DATA_EVENT_CALLBACK )( AL_DATA_EVENT_PARAMS *eventParams );
         }
     }
 
-    AL_Data_Ind_CallbackRegister(APP_Rx_Ind_callback);
+    AL_DataIndicationCallbackRegister(APP_Rx_Ind_callback);
     </code>
 
   Remarks:
     Callback can be set to a NULL pointer to stop receiving notifications.
 */
-AL_RESULT AL_Data_Ind_CallbackRegister( AL_DATA_IND_CALLBACK callback );
+AL_RESULT AL_DataIndicationCallbackRegister( AL_DATA_IND_CALLBACK callback );
 
 // *****************************************************************************
 /* Function:
-    AL_RESULT AL_Data_Event_CallbackRegister (
-        AL_DATA_EVENT_CALLBACK callback
+    AL_RESULT AL_EventIndicationCallbackRegister (
+        AL_EVENT_IND_CALLBACK callback
     );
 
   Summary:
@@ -437,14 +450,14 @@ AL_RESULT AL_Data_Ind_CallbackRegister( AL_DATA_IND_CALLBACK callback );
 
   Example:
     <code>
-    void APP_Event_Ind_callback(AL_DATA_EVENT_CALLBACK *indParams)
+    void APP_Event_Ind_callback(AL_EVENT_IND_CALLBACK *indParams)
     {
         if (indParams->eventId == MAC_EVENT_ID_ACA){
 
         }
     }
 
-    AL_Data_Event_CallbackRegister(APP_Event_Ind_callback);
+    AL_EventIndicationCallbackRegister(APP_Event_Ind_callback);
     </code>
 
   Remarks:
@@ -452,11 +465,11 @@ AL_RESULT AL_Data_Ind_CallbackRegister( AL_DATA_IND_CALLBACK callback );
     This Callback is only generated in Master Node. There is no need to set
     a handling function on Slave Nodes.
 */
-AL_RESULT AL_Data_Event_CallbackRegister( AL_DATA_EVENT_CALLBACK callback );
+AL_RESULT AL_EventIndicationCallbackRegister( AL_EVENT_IND_CALLBACK callback );
 
 // *****************************************************************************
 /* Function:
-    AL_M_STATUS AL_Data_Config_Request (
+    AL_RESULT AL_Data_Config_Request (
         AL_CONFIG_DATA *configParams
     );
 
@@ -475,7 +488,7 @@ AL_RESULT AL_Data_Event_CallbackRegister( AL_DATA_EVENT_CALLBACK callback );
     configParams - Pointer to structure containing parameters related to AL Data Config Request
 
   Returns:
-    AL_M_STATUS indicating the status of request placed.
+    AL_RESULT indicating the status of request placed.
 
   Example:
     <code>
@@ -487,7 +500,6 @@ AL_RESULT AL_Data_Event_CallbackRegister( AL_DATA_EVENT_CALLBACK callback );
     configParams.Key_K2 = Key_k2_DataBuffer;
     configParams.lmon.buff = lmon_preconfigured_data;
     configParams.cmon.buff = NULL;
-    configParams.config_device = AL_CONCENTRATOR; 
     
     AL_Data_Config_Request(&configParams);
     </code>
@@ -496,11 +508,11 @@ AL_RESULT AL_Data_Event_CallbackRegister( AL_DATA_EVENT_CALLBACK callback );
     This function must be called once after AL_Initialize. All the data Indication, 
 	Request or Confirm events require config data to process.
 */
-AL_M_STATUS AL_Data_Config_Request( AL_CONFIG_DATA *configParams );
+AL_RESULT AL_Data_Config_Request( AL_CONFIG_DATA *configParams );
 
 // *****************************************************************************
 /* Function:
-    AL_M_STATUS AL_DataRequest_Process (
+    void AL_DataRequest (
         AL_DATA_REQ_PARAMS *reqParams
     );
 
@@ -519,7 +531,7 @@ AL_M_STATUS AL_Data_Config_Request( AL_CONFIG_DATA *configParams );
     drParams - Pointer to structure containing parameters related to AL Data request
 
   Returns:
-    AL_M_STATUS indicating the status of request placed.
+    None.
 
   Example:
     <code>
@@ -535,7 +547,7 @@ AL_M_STATUS AL_Data_Config_Request( AL_CONFIG_DATA *configParams );
     drParams.Txdata_Len = 10;
 	drParams.timestamp = 0x66FB3B80;
 	
-    AL_DataRequest_Process(&drParams);
+    AL_DataRequest(&drParams);
     </code>
 
   Remarks:
@@ -543,11 +555,11 @@ AL_M_STATUS AL_Data_Config_Request( AL_CONFIG_DATA *configParams );
 	This information to be sent by concentrator for each data request placed. This is applicable 
 	only for Concentrator.
 */	
-AL_M_STATUS AL_DataRequest_Process( AL_DATA_REQ_PARAMS *reqParams );
+void AL_DataRequest( AL_DATA_REQ_PARAMS *reqParams );
 
 // *****************************************************************************
 /* Function:
-    AL_M_STATUS AL_Set_Encryption_Keys (
+    AL_RESULT AL_Set_Encryption_Keys (
         AL_CONFIG_DATA *configParams
     );
 
@@ -565,7 +577,7 @@ AL_M_STATUS AL_DataRequest_Process( AL_DATA_REQ_PARAMS *reqParams );
     configParams - Pointer to structure containing parameters related to AL Data Config Request
 
   Returns:
-    AL_M_STATUS indicating the status of request placed.
+    AL_RESULT indicating the status of request placed.
 
   Example:
     <code>
@@ -580,7 +592,7 @@ AL_M_STATUS AL_DataRequest_Process( AL_DATA_REQ_PARAMS *reqParams );
   Remarks:
     None.
 */
-AL_M_STATUS AL_Set_Encryption_Keys( AL_CONFIG_DATA *configparams );
+AL_RESULT AL_Set_Encryption_Keys( AL_CONFIG_DATA *configparams );
 
 // *****************************************************************************
 /* Function:
@@ -662,8 +674,47 @@ SYS_MODULE_OBJ AL_Initialize (const SYS_MODULE_INDEX index, const SYS_MODULE_INI
 */
 void AL_Tasks( SYS_MODULE_OBJ object );
 
+// *****************************************************************************
+/* Function:
+    SYS_STATUS AL_GetStatus(void);
 
-    /* Provide C++ Compatibility */
+  Summary:
+    Gets the status of the AL module.
+
+  Description:
+    This function allows to retrieve AL module status.
+    It must be used to ensure the module is Ready before start using it.
+
+  Precondition:
+    None.
+
+  Parameters:
+    None.
+
+  Returns:
+    Returns the status of the Meters And Mores AL module.
+    - SYS_STATUS_UNINITIALIZED: AL module has not been initialized.
+    - SYS_STATUS_BUSY: AL module is busy in the process of initialization.
+    - SYS_STATUS_READY: AL module is ready to be used.
+
+  Example:
+    <code>
+    case APP_AL_STATE_START:
+    {
+        if (AL_GetStatus() == AL_STATUS_READY)
+        {
+            app_ALData.state = APP_AL_STATE_RUNNING;
+        }
+
+        break;
+    }
+    </code>
+
+  Remarks:
+    None.
+*/
+SYS_STATUS AL_GetStatus(void);
+
 #ifdef __cplusplus
 }
 #endif

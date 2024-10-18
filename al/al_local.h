@@ -1,6 +1,4 @@
 /*******************************************************************************
-  Interface definition of Meters&More AL (Application Layer) module.
-
   Company:
     Microchip Technology Inc.
 
@@ -8,16 +6,40 @@
     al_local.h
 
   Summary:
-    Interface definition of Meters&More Application Layer module.
+    Meters And More AL (Application Layer) Local header file.
 
   Description:
-    This file defines the interface for the Meters&More Application Layer
-    module.
+    Meters And More AL (Application Layer) Local header file. This file
+    provides definitions and types internally used by AL.
 *******************************************************************************/
 
-#ifndef AL_LOCAL_H
-#define AL_LOCAL_H
+//DOM-IGNORE-BEGIN
+/*
+Copyright (C) 2024, Microchip Technology Inc., and its subsidiaries. All rights reserved.
 
+The software and documentation is provided by microchip and its contributors
+"as is" and any express, implied or statutory warranties, including, but not
+limited to, the implied warranties of merchantability, fitness for a particular
+purpose and non-infringement of third party intellectual property rights are
+disclaimed to the fullest extent permitted by law. In no event shall microchip
+or its contributors be liable for any direct, indirect, incidental, special,
+exemplary, or consequential damages (including, but not limited to, procurement
+of substitute goods or services; loss of use, data, or profits; or business
+interruption) however caused and on any theory of liability, whether in contract,
+strict liability, or tort (including negligence or otherwise) arising in any way
+out of the use of the software and documentation, even if advised of the
+possibility of such damage.
+
+Except as expressly permitted hereunder and subject to the applicable license terms
+for any third-party software incorporated in the software and any applicable open
+source software license terms, no license or other rights, whether express or
+implied, are granted under any patent or other intellectual property rights of
+Microchip or any third party.
+*/
+//DOM-IGNORE-END
+
+#ifndef AL_LOCAL_H    
+#define AL_LOCAL_H
 
 /* ************************************************************************** */
 /* ************************************************************************** */
@@ -33,6 +55,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define AL_INSTANCES_NUMBER     1U
+
+#define CMAC_LENGTH             16U
+#define CMAC_DATA_LENGTH        20U
+#define CMON_LENGTH             8U
 
 // *****************************************************************************
 // *****************************************************************************
@@ -125,7 +153,7 @@ typedef struct
 typedef struct
 {
     /* Absolute Communication Address */
-    uint8_t ACA[ACA_LENGTH];
+    uint8_t ACA[MAC_ADDRESS_SIZE];
     /* Instantaneous signal level */
     uint8_t Av_SIG;
     /* Instantaneous SNR */
@@ -163,20 +191,9 @@ typedef struct
 
 typedef enum
 {
-    AL_STATE_IDLE,
-    AL_STATE_APP_PROCESS,            
-    AL_STATE_WAIT,
+    AL_STATE_WAIT_DLL_READY,
+    AL_STATE_APP_PROCESS,
 } AL_STATE;
-
-typedef struct
-{
-    /* Status of the AL module */
-    SYS_STATUS status;
-    /* State of the State Machine for AL*/
-    AL_STATE state;
-    /* Flag to indicate this object is in use */
-    bool inUse;
-} AL_STATUS;
 
 /* This variable is used only in Concentrator AL */
 typedef union
@@ -221,7 +238,7 @@ typedef struct
 typedef struct
 {
   /* Data buffer */
-  uint8_t buffer[MAX_DATA_LENGTH];
+  uint8_t buffer[MAX_LENGTH_432_DATA];
   /* Length of the data */
   uint16_t dataLen;
   /* Generated MAC output 128bit*/
@@ -237,7 +254,7 @@ typedef struct
     AL_DATA_IND_CALLBACK dataIndCallback;
 
     /* Application Event Callback */
-    AL_DATA_EVENT_CALLBACK dataEventCallback;
+    AL_EVENT_IND_CALLBACK dataEventCallback;
     
 } AL_HANDLERS;
 
@@ -246,9 +263,9 @@ typedef struct
 {
     /* Callbacks */
     AL_HANDLERS alHandlers;
-    /* Status of the AL module (App_Data) */
+    /* Status of the AL module */
     SYS_STATUS status;
-    /* State of the AL module State Machine (App_Data) */
+    /* State of the AL module State Machine */
     AL_STATE state;
     /* Transmission buffer */ 
     AL_CONFIG_DATA config_data;
@@ -267,7 +284,7 @@ typedef struct
     /* Used in CCU AL to store node info(ACA, LMON) received from Concentrator Table, for AUTH & ENCRYPT handling*/
     NODE_INFO comm_node_configdata;
     /* Tx Data Request Buffer */
-    uint8_t Transmit_Buff[MAX_DATA_LENGTH];
+    uint8_t Transmit_Buff[MAX_LENGTH_432_DATA];
     /* Next task time in ms */
     uint64_t nextTaskTimeCount;
     /* Task rate in SYS_TIME counter ticks */

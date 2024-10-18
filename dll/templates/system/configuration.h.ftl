@@ -1,10 +1,10 @@
 
 <#if !(HarmonyCore.SELECT_RTOS)?? || (HarmonyCore.SELECT_RTOS == "BareMetal")>
-    <#lt>/* G3 stack task rate in milliseconds */
+    <#lt>/* Meters And More stack task rate in milliseconds */
     <#lt>#define MM_STACK_TASK_RATE_MS            ${METERSANDMORE_TASK_RATE_MS}U
 
 <#else>
-    <#lt>/* G3 stack RTOS configuration */
+    <#lt>/* Meters And More stack RTOS configuration */
     <#if HarmonyCore.SELECT_RTOS == "FreeRTOS">
         <#lt>#define MM_STACK_RTOS_STACK_SIZE         ${METERSANDMORE_RTOS_STACK_SIZE / 4}U
     <#else>

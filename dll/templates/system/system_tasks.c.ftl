@@ -4,7 +4,7 @@
     DLL_Tasks(sysObj.metersandmoreDll);
     <#if METERSANDMORE_INC_AL == true>
 
-    /* Maintain Meters And More App Layer */
+    /* Maintain Meters And More AL */
     AL_Tasks(sysObj.metersandmoreAl);
     </#if>
 

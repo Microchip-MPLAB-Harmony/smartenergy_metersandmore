@@ -110,7 +110,7 @@ typedef enum
    Description:
     This enumeration identifies the possible DSAP values
     0 - Application Frame
-    1 - Network Management
+    2 - Network Management
 
    Remarks:
     None.
@@ -128,9 +128,14 @@ typedef enum
     ECC (Encryption Coding Control) values for Meters And More DLL layer.
 
    Description:
-    This enumeration identifies the possible ECC values
-    The only value defined is:
-    - Disabled
+    This enumeration identifies the possible ECC values (SSAP in older spec
+    versions).
+    The following values are defined:
+    0 - Disabled
+    1 - AES-CTR Encryption with READ key
+    2 - AES-ECB Encryption with READ key
+    5 - AES-CTR Encryption with WRITE key
+    6 - AES-ECB Encryption with WRITE key
     (Other values are reserved).
 
    Remarks:
@@ -138,7 +143,11 @@ typedef enum
 */
 typedef enum
 {
-    DLL_ECC_DISABLED = 0x00,
+  DLL_ECC_DISABLED = 0x00,
+  DLL_ECC_AES_CTR_READ_KEY = 0x01,
+  DLL_ECC_AES_ECB_READ_KEY = 0x02,
+  DLL_ECC_AES_CTR_WRITE_KEY = 0x05,
+  DLL_ECC_AES_ECB_WRITE_KEY = 0x06,
 } DLL_ECC;
 
 // *****************************************************************************
@@ -486,7 +495,7 @@ typedef void ( *DLL_DATA_IND_CALLBACK )( DLL_DATA_IND_PARAMS *indParams );
 /* Meters And More DLL module Data Confirm Function Pointer
 
   Summary:
-    Pointer to a Meters And More DLL module Data Confirmn Function Pointer.
+    Pointer to a Meters And More DLL module Data Confirm Function Pointer.
 
   Description:
     This data type defines the required function signature for the Meters And More DLL

@@ -82,7 +82,7 @@ extern "C" {
     Indicates the incoming message_type protected status.
 
    Description:
-    This AL_AUTH identifies the incoming message_type. User must check 
+    This AL_AUTH identifies the incoming message_type. User must check
     for its status before processing with message data.
 
    Remarks:
@@ -102,13 +102,13 @@ typedef union
 } LMON;
 
 // *****************************************************************************
-/* AL Node information Device configuration status 
+/* AL Node information Device configuration status
 
    Summary:
     Indicates the AL device configuration status for processing with message data.
 
    Description:
-    This AL_DEVICE identifies the Concentrator or Meter configuration. AL uses this 
+    This AL_DEVICE identifies the Concentrator or Meter configuration. AL uses this
     information for processing module operations.
 
    Remarks:
@@ -225,7 +225,7 @@ typedef struct
 typedef struct
 {
   /* Message Code */
-  uint8_t command_message; 
+  uint8_t command_message;
   /* Message Type */
   AL_AUTH message_type;
   /* Decrypted status*/
@@ -266,7 +266,7 @@ typedef struct
   /* Max length of the response - MASTER ONLY */
   uint16_t maxResponseLen;
   /* Number of time slots alocated in data request with Service_Class RC - MASTER ONLY */
-  uint16_t timeSlotNum ;  
+  uint16_t timeSlotNum ;
   /* ACA & new verified LMON from Meter for table entry in MASTER*/
   NODE_INFO node_info;
   /* Pointer to Data buffer (CM, Data) */
@@ -276,6 +276,31 @@ typedef struct
   /* POSIX timestamp */
   uint64_t timestamp;
 } AL_DATA_REQ_PARAMS;
+
+// *****************************************************************************
+/* Meters And More AL Data request struct for Host Interface
+
+  Summary:
+    AL Data Request Parameters Structure used by Host Interface.
+
+   Description:
+    Contains fields which define the AL Data Request input parameter
+    for Host Interface.
+
+  Remarks:
+    Only available when Host Interface is used.
+*/
+typedef struct
+{
+  /* DSAP */
+  uint8_t dsap;
+  /* Request ID */
+  uint8_t reqID;
+  /* Pointer to Data buffer */
+  uint8_t *payload;
+  /* Length of the data */
+  uint16_t payloadLen;
+} AL_DATA_REQ_PARAMS_HI;
 
 // *****************************************************************************
 /* Meters And More AL Event Indication struct
@@ -346,9 +371,9 @@ typedef struct
 
   Description:
     This data type defines the required function signature for the Meters And More AL
-    module Data indication callback function. A client must register a pointer 
+    module Data indication callback function. A client must register a pointer
 	using the callback register function whose function signature (parameter and
-	return value types) match the types specified by this function pointer in 
+	return value types) match the types specified by this function pointer in
 	order to receive related event callbacks from the module.
 
     The parameters and return values are described here and a partial example
@@ -382,9 +407,9 @@ typedef void ( *AL_DATA_IND_CALLBACK )( AL_DATA_IND_PARAMS *indParams );
 
   Description:
     This data type defines the required function signature for the Meters And More AL
-    module Event Indication callback function. A client must register a pointer 
+    module Event Indication callback function. A client must register a pointer
     using the callback register function whose function signature (parameter and
-    return value types) match the types specified by this function pointer in 
+    return value types) match the types specified by this function pointer in
     order to receive related event callbacks from the module.
 
     The parameters and return values are described here and a partial example
@@ -519,7 +544,7 @@ AL_RESULT AL_EventIndicationCallbackRegister( AL_EVENT_IND_CALLBACK callback );
   Example:
     <code>
     AL_DATA_REQ_PARAMS drParams;
-    
+
     drParams.serviceClass = SERVICE_CLASS_RA;
     drParams.dstAddress.macAddress.address = dest_addressBuff;
     drParams.maxResponseLen = 128;
@@ -529,15 +554,15 @@ AL_RESULT AL_EventIndicationCallbackRegister( AL_EVENT_IND_CALLBACK callback );
     drParams.Txdata = data;
     drParams.Txdata_Len = 10;
 	drParams.timestamp = 0x66FB3B80;
-	
+
     AL_DataRequest(&drParams);
     </code>
 
   Remarks:
     Node_Info parameter needed for processing protected messages in AL are specific to each node.
-	This information to be sent by concentrator for each data request placed. This is applicable 
+	This information to be sent by concentrator for each data request placed. This is applicable
 	only for Concentrator.
-*/	
+*/
 void AL_DataRequest( AL_DATA_REQ_PARAMS *reqParams );
 
 // *****************************************************************************
@@ -581,7 +606,7 @@ void AL_DataRequest( AL_DATA_REQ_PARAMS *reqParams );
     This routine must be called before any other AL routine is called.
 */
 SYS_MODULE_OBJ AL_Initialize (const SYS_MODULE_INDEX index, const SYS_MODULE_INIT * const init);
-        
+
 // *****************************************************************************
 /* Function:
     SYS_MODULE_OBJ AL_Tasks (
@@ -759,6 +784,44 @@ AL_RESULT AL_GetRequest(AL_IB_ATTRIBUTE attribute, uint16_t index,
 */
 AL_RESULT AL_SetRequest(AL_IB_ATTRIBUTE attribute, uint16_t index,
                         const AL_IB_VALUE *ibValue);
+
+// *****************************************************************************
+/* Function:
+    AL_M_STATUS AL_DataRequestHI (
+        AL_DATA_REQ_PARAMS_HI *reqParams
+    );
+
+  Summary:
+    AL Data request with Host Interface format.
+
+  Description:
+    Function that implements the AL Data request using Host Interface format.
+
+  Precondition:
+    None.
+
+  Parameters:
+    reqParams - Pointer to structure containing parameters related to Data request.
+
+  Returns:
+    None.
+
+  Example:
+    <code>
+    AL_DATA_REQ_PARAMS_HI drParams;
+
+    drParams.dsap = 0x00;
+    drParams.reqID = 0xAA;
+    drParams.payload = dataBuf;
+    drParams.payloadLen = dataBufLen;
+
+    AL_DataRequestHI(&drParams);
+    </code>
+
+  Remarks:
+    Only available when Host Interface is used.
+*/
+void AL_DataRequestHI(AL_DATA_REQ_PARAMS_HI *reqParams);
 
 #ifdef __cplusplus
 }

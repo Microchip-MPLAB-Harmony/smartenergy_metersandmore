@@ -38,7 +38,7 @@ Microchip or any third party.
 */
 //DOM-IGNORE-END
 
-#ifndef AL_LOCAL_H    
+#ifndef AL_LOCAL_H
 #define AL_LOCAL_H
 
 /* ************************************************************************** */
@@ -67,6 +67,76 @@ extern "C" {
 // Section: Data Types
 // *****************************************************************************
 // *****************************************************************************
+
+typedef enum
+{
+    CHALLENGE_REQ       = 112U,
+    CHALLENGE_RESP      = 113U
+} LMON_SYNC;
+
+typedef enum
+{
+    ADDRESS_REQ         = 90U,
+    ADDRESS_RESP        = 91U,
+    TCT_SET_REQ         = 92U,
+    REQ_ADDRESS_REQ     = 94U,
+    REQ_ADDRESS_RESP    = 95U,
+    NACK_RESP           = 247U
+} NW_MGMT_COMMANDS;
+
+typedef enum
+{
+    A_Node_ACK          = 253U,
+    A_Node_NACK         = 255U,
+    B_Node_ACK          = 251U,
+    B_Node_NACK         = 249U,
+    A_Node_ACK_AUTH     = 243U,
+    A_Node_NACK_AUTH    = 245U,
+    B_Node_ACK_AUTH     = 241U,
+    B_Node_NACK_AUTH    = 239U            
+}ACK_COMMANDS;
+
+typedef enum
+{
+    WRITE_REQ           = 4U,
+    WRITETAB_REQ        = 10U,
+    SETTAB_REQ          = 14U,
+    RESETTAB_REQ        = 16U,
+    SETIC_REQ           = 40U,
+    WRITETABIC_REQ      = 42U,
+    READ_REQ            = 2U,
+    READ_RESP           = 3U,
+    READTAB_REQ_SEL     = 6U,
+    READTAB_RESP_SEL    = 7U,
+    READTAB_REQ         = 8U,
+    READTAB_RESP        = 9U,
+    GETTAB_REQ          = 30U,
+    GETTAB_RESP         = 31U,
+    DATASPONT           = 20U,
+    REPROG_LOCAL        = 100U,
+    REPROG_BROADCAST    = 101U,
+    COMMAND             = 18U
+} APP_MESSAGE_COMMANDS;
+
+typedef enum
+{
+    WRITE_REQ_AUTH        = 104U,
+    WRITETAB_REQ_AUTH     = 110U,
+    SETTAB_REQ_AUTH       = 114U,
+    RESETTAB_REQ_AUTH     = 116U,
+    SETIC_REQ_AUTH        = 140U,
+    WRITETABIC_REQ_AUTH   = 142U,
+    READ_REQ_AUTH         = 102U,
+    READ_RESP_AUTH        = 103U,
+    READTAB_REQ_SEL_AUTH  = 106U,
+    READTAB_RESP_SEL_AUTH = 107U,
+    READTAB_REQ_AUTH      = 108U,
+    READTAB_RESP_AUTH     = 109U,
+    GETTAB_REQ_AUTH       = 130U,
+    GETTAB_RESP_AUTH      = 131U,
+    DATASPONT_AUTH        = 120U,
+    COMMAND_AUTH          = 118U
+} APP_MSG_PROTECTED_COMMANDS;
 
 typedef struct
 {
@@ -127,7 +197,7 @@ typedef enum
 typedef union
 {
     uint8_t status_byte;
-    
+
     struct{
         int DL_Request_sent                 : 1;
         int DL_Confirm_rcvd                 : 1;
@@ -139,13 +209,13 @@ typedef union
 typedef union
 {
     uint8_t status_byte;
-    
+
     struct{
         int ACA_Req_Address_Req_rcvd        : 1;
         int ACA_Address_Req_Sent            : 1;
         int ACA_Req_Address_Resp_sent       : 1;
         int ACA_ACK_sent                    : 1;                                    /* Same flag used for ACK & NACK */
-        
+
     }flags;
 }AL_NWSTATUS;
 
@@ -209,6 +279,8 @@ typedef struct
     LMON lmon;
     /* CMON data (updated in both DCU & METER AL)*/
     LMON cmon;
+    /* Source Address of received data */
+    MAC_ADDRESS srcAddress;
     /* Next task time in ms */
     uint64_t nextTaskTimeCount;
     /* Task rate in SYS_TIME counter ticks */

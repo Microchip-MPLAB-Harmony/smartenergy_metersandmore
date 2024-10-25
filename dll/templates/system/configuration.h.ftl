@@ -2,7 +2,6 @@
 <#if !(HarmonyCore.SELECT_RTOS)?? || (HarmonyCore.SELECT_RTOS == "BareMetal")>
     <#lt>/* Meters And More stack task rate in milliseconds */
     <#lt>#define MM_STACK_TASK_RATE_MS            ${METERSANDMORE_TASK_RATE_MS}U
-
 <#else>
     <#lt>/* Meters And More stack RTOS configuration */
     <#if HarmonyCore.SELECT_RTOS == "FreeRTOS">
@@ -16,4 +15,8 @@
         <#lt>#define MM_STACK_RTOS_TASK_MSG_QTY       ${METERSANDMORE_RTOS_TASK_MSG_QTY}U
         <#lt>#define MM_STACK_RTOS_TASK_TIME_QUANTA   ${METERSANDMORE_RTOS_TASK_TIME_QUANTA}U
     </#if>
+</#if>
+<#if METERSANDMORE_INC_AL == true>
+    <#lt>/* Meters And More AL retry limit */
+    <#lt>#define MM_AL_RETRIES_LIMIT            ${METERSANDMORE_AL_RETRY_LIMIT}U
 </#if>

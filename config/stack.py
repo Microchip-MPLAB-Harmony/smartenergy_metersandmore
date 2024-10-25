@@ -27,6 +27,10 @@ def enableAlFile(symbol, event):
     # Enable/disable AL file
     symbol.setEnabled(event["value"])
 
+def showSymbol(symbol, event):
+    # Enable/disable AL file
+    symbol.setVisible(event["value"])
+
 def instantiateComponent(mmStackComponent):
 
     Log.writeInfoMessage("Loading M&M Stack module")
@@ -47,9 +51,19 @@ def instantiateComponent(mmStackComponent):
     # Include Application Layer
     mmIncAppLayer = mmStackComponent.createBooleanSymbol("METERSANDMORE_INC_AL", None)
     mmIncAppLayer.setLabel("Include Meters And More AL (App Layer)?")
-    mmIncAppLayer.setDescription("Select whether to include App Layer")
+    mmIncAppLayer.setDescription("Select whether to include AL (App Layer)")
     mmIncAppLayer.setDefaultValue(True)
     mmIncAppLayer.setHelp(mm_stack_helpkeyword)
+
+    # Application Layer Tx Retries
+    mmAppLayerRetryLimit = mmStackComponent.createIntegerSymbol("METERSANDMORE_AL_RETRY_LIMIT", mmIncAppLayer)
+    mmAppLayerRetryLimit.setLabel("AL Tx Retry Limit")
+    mmAppLayerRetryLimit.setDescription("Maximum numbers of retries performed by AL (App Layer)")
+    mmAppLayerRetryLimit.setDefaultValue(2)
+    mmAppLayerRetryLimit.setMin(0)
+    mmAppLayerRetryLimit.setMax(10)
+    mmAppLayerRetryLimit.setHelp(mm_stack_helpkeyword)
+    mmAppLayerRetryLimit.setDependencies(showSymbol, ["METERSANDMORE_INC_AL"])
 
     # AL Description Comments
     mmAppLayerComment1 = mmStackComponent.createCommentSymbol("METERSANDMORE_AL_COMMENT1", None)

@@ -50,17 +50,49 @@ Microchip or any third party.
 #include <stdint.h>
 #include <stdlib.h>
 #include "al.h"
+#include "system/time/sys_time.h"
 
 /* Provide C++ Compatibility */
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+// *****************************************************************************
+// *****************************************************************************
+// Section: Macro Definitions
+// *****************************************************************************
+// *****************************************************************************
+
 #define AL_INSTANCES_NUMBER     1U
 
-#define CMAC_LENGTH             16U
-#define CMAC_DATA_LENGTH        20U
-#define CMON_LENGTH             8U
+/* Macros for AL_DataRequestHI function */
+#define AL_HI_NOR_MASK               0x01U
+#define AL_HI_RP_MASK                0x0EU
+#define AL_HI_SCA_SIZE               2U
+#define AL_HI_CSL_INDEX              5U
+#define AL_HI_CSL_VALUE              0x03
+
+/* AES-CMAC lengths */
+#define AL_CMAC_INPUT_LEN            (AL_LMON_LENGTH + 8U) /* 16 bytes */
+#define AL_CMAC_OUTPUT_LEN           16U
+
+/* AES-CTR lengths */
+#define AL_AES_CTR_IV_LEN            16U
+
+/* Lengths of Network Management messages */
+#define AL_NM_ADDRESS_REQ_LEN        4U
+#define AL_NM_ADDRESS_RESP_LEN       12U
+#define AL_NM_TCT_SET_REQ_LEN        1U
+#define AL_NM_REQADDR_RESP_MAX_NODES 4U
+#define AL_NM_REQADDR_RESP_MAX_LEN   (1U + (AL_NM_REQADDR_RESP_MAX_NODES * AL_NM_ADDRESS_RESP_LEN))
+#define AL_NM_NACK_REQ_LEN           4U
+
+/* Lengths of LMON synchronization messages */
+#define AL_CHL_REQ_RANDOM_N_LEN      16U
+#define AL_CHL_REQ_LEN               (2U + AL_CHL_REQ_RANDOM_N_LEN)
+
+/* Lengths of Authenticated NACK message */
+#define AL_NACK_AUTH_ETM_LEN         8U
 
 // *****************************************************************************
 // *****************************************************************************
@@ -70,231 +102,76 @@ extern "C" {
 
 typedef enum
 {
-    CHALLENGE_REQ       = 112U,
-    CHALLENGE_RESP      = 113U
-} LMON_SYNC;
-
-typedef enum
-{
-    ADDRESS_REQ         = 90U,
-    ADDRESS_RESP        = 91U,
-    TCT_SET_REQ         = 92U,
-    REQ_ADDRESS_REQ     = 94U,
-    REQ_ADDRESS_RESP    = 95U,
-    NACK_RESP           = 247U
-} NW_MGMT_COMMANDS;
-
-typedef enum
-{
-    A_Node_ACK          = 253U,
-    A_Node_NACK         = 255U,
-    B_Node_ACK          = 251U,
-    B_Node_NACK         = 249U,
-    A_Node_ACK_AUTH     = 243U,
-    A_Node_NACK_AUTH    = 245U,
-    B_Node_ACK_AUTH     = 241U,
-    B_Node_NACK_AUTH    = 239U            
-}ACK_COMMANDS;
-
-typedef enum
-{
-    WRITE_REQ           = 4U,
-    WRITETAB_REQ        = 10U,
-    SETTAB_REQ          = 14U,
-    RESETTAB_REQ        = 16U,
-    SETIC_REQ           = 40U,
-    WRITETABIC_REQ      = 42U,
-    READ_REQ            = 2U,
-    READ_RESP           = 3U,
-    READTAB_REQ_SEL     = 6U,
-    READTAB_RESP_SEL    = 7U,
-    READTAB_REQ         = 8U,
-    READTAB_RESP        = 9U,
-    GETTAB_REQ          = 30U,
-    GETTAB_RESP         = 31U,
-    DATASPONT           = 20U,
-    REPROG_LOCAL        = 100U,
-    REPROG_BROADCAST    = 101U,
-    COMMAND             = 18U
-} APP_MESSAGE_COMMANDS;
-
-typedef enum
-{
-    WRITE_REQ_AUTH        = 104U,
-    WRITETAB_REQ_AUTH     = 110U,
-    SETTAB_REQ_AUTH       = 114U,
-    RESETTAB_REQ_AUTH     = 116U,
-    SETIC_REQ_AUTH        = 140U,
-    WRITETABIC_REQ_AUTH   = 142U,
-    READ_REQ_AUTH         = 102U,
-    READ_RESP_AUTH        = 103U,
-    READTAB_REQ_SEL_AUTH  = 106U,
-    READTAB_RESP_SEL_AUTH = 107U,
-    READTAB_REQ_AUTH      = 108U,
-    READTAB_RESP_AUTH     = 109U,
-    GETTAB_REQ_AUTH       = 130U,
-    GETTAB_RESP_AUTH      = 131U,
-    DATASPONT_AUTH        = 120U,
-    COMMAND_AUTH          = 118U
-} APP_MSG_PROTECTED_COMMANDS;
-
-typedef struct
-{
-    /* Phase/any */
-    uint8_t Phase;
-    /* threshold of request */
-    uint8_t TCR;
-    /* filter the node address */
-    uint8_t AddToAddress;
-    /* filter the node address */
-    uint8_t RightShiftAdd;
-} ACA_NW_REQ;
-
-typedef struct
-{
-    /* Absolute Communication Address */
-    uint8_t ACA[MAC_ADDRESS_SIZE];
-    /* Instantaneous signal level */
-    uint8_t Av_SIG;
-    /* Instantaneous SNR */
-    uint8_t SNR;
-    /* Impedance value */
-    uint8_t Av_TX;
-    /* Reserved */
-    uint8_t Reserve[3];
-} ACA_NW_RESP;
-
-typedef union
-{
-    uint8_t data[8];
-    uint64_t value;
-} DATETIME;
-
-/* This structure is used in meter side AL to store random number from CCU to Meter */
-typedef struct
-{
-    uint8_t random_num[KEY_LENGTH];
-    uint8_t challenge_req_received;
-}LMON_RECOVERY;
-
-typedef struct
-{
-    /* Write data authentication key */
-    uint8_t Write_Key[KEY_LENGTH];
-    /* Read data authentication key */
-    uint8_t Read_Key[KEY_LENGTH];
-    /* Read data authentication key */
-    uint8_t Counter_block[KEY_LENGTH];
-} KEYS;
-
-typedef enum
-{
     AL_STATE_WAIT_DLL_READY,
-    AL_STATE_APP_PROCESS,
+    AL_STATE_IDLE,
+    AL_STATE_WAITING_TX_CFM,
+    AL_STATE_WAITING_RX,
 } AL_STATE;
 
-/* This variable is used only in Concentrator AL */
-typedef union
-{
-    uint8_t status_byte;
-
-    struct{
-        int DL_Request_sent                 : 1;
-        int DL_Confirm_rcvd                 : 1;
-        int DL_Indication_req               : 1;
-        int DL_Event_sent                   : 1;
-    }flags;
-}AL_MSG_STATUS;
-
-typedef union
-{
-    uint8_t status_byte;
-
-    struct{
-        int ACA_Req_Address_Req_rcvd        : 1;
-        int ACA_Address_Req_Sent            : 1;
-        int ACA_Req_Address_Resp_sent       : 1;
-        int ACA_ACK_sent                    : 1;                                    /* Same flag used for ACK & NACK */
-
-    }flags;
-}AL_NWSTATUS;
-
 typedef struct
 {
-  /* input data */
-  uint8_t inputBuf[CMAC_DATA_LENGTH];
-  /* Received CMAC from concentrator */
-  uint8_t Received_cmac[CMAC_LENGTH];
-  /* Generated MAC output 128bit*/
-  uint8_t Computed_cmac[CMAC_LENGTH];
-  /* Length of the data */
-  uint32_t input_dataLen;
-  /* Key for the AES-CMAC cipher Operation*/
-  uint8_t key[KEY_LENGTH];
-} CMAC_PARAMS;
-
-typedef struct
-{
-  /* Data buffer */
-  uint8_t buffer[MAX_LENGTH_432_DATA];
-  /* Length of the data */
-  uint16_t dataLen;
-  /* Generated MAC output 128bit*/
-  uint8_t Mac_Output[CMAC_LENGTH];
-  /* Key for the AES-CMAC cipher Operation*/
-  uint32_t result;
-} CRC_DATA;
-
-typedef struct
-{
-    /* Application indication Callback */
+    /* LMON counter */
+    uint64_t lmon;
+    /* Next task time in ticks */
+    uint64_t nextTaskTimeCount;
+    /* Task rate in SYS_TIME counter ticks */
+    uint32_t taskRateCount;
+    /* AL Data Indication Callback */
     AL_DATA_IND_CALLBACK dataIndCallback;
-    /* Application Event Callback */
+    /* AL Data Confirm Callback */
+    AL_DATA_CONFIRM_CALLBACK dataCfmCallback;
+    /* AL Event Indication Callback */
     AL_EVENT_IND_CALLBACK eventIndCallback;
+    /* Handle for Tx Timeout */
+    SYS_TIME_HANDLE txTimeoutHandle;
+    /* DLL Data Request parameters */
+    DLL_DATA_REQUEST_PARAMS dllDataReqParams;
+    /* AL Data Confirm (from Tasks) */
+    AL_DATA_CONFIRM_PARAMS dataCfmParamsTasks;
+    /* Write Key (K1) */
+    uint8_t keyWrite[AL_KEY_LENGTH];
+    /* Read Key (K2) */
+    uint8_t keyRead[AL_KEY_LENGTH];
+    /* 128-bit random number N included in CHL.REQ message */
+    uint8_t chlReqRandomN[AL_CHL_REQ_RANDOM_N_LEN];
+    /* Etm* field for CRC calculation (part of AES-CMAC input) in Authenticated NACK message */
+    uint8_t nackCrcEtmField[AL_NACK_AUTH_ETM_LEN];
+    /* ACA of slave destination node, used by DCU for Authentication */
+    MAC_ADDRESS acaDestination;
+    /* Address parameter in last DL_DATA.indication */
+    MAC_ADDRESS lastRxAddress;
     /* Status of the AL module */
     SYS_STATUS status;
     /* State of the AL module State Machine */
     AL_STATE state;
-    /* Maintain the event status in CCU */
-    AL_MSG_STATUS AL_Status;
-    /* Maintain the Network event status */
-    AL_NWSTATUS AL_NWStatus;
-    /* Keys used in Encrypt message processing */
-    KEYS keys;
-    /* variable used in handling CRC calculations */
-    CRC_DATA crc;
-    /* variable used in handling Cipher operations */
-    CMAC_PARAMS cmac;
-    /* storing the LMON recovery info */
-    LMON_RECOVERY lmon_recovery;
-    /* Used in CCU AL to store node info(ACA, LMON) received from Concentrator Table, for AUTH & ENCRYPT handling*/
-    NODE_INFO comm_node_configdata;
-    /* Tx Data Request Buffer */
-    uint8_t Transmit_Buff[MAX_LENGTH_432_DATA];
-    /* Write data authentication key */
-    uint8_t Key_K1[KEY_LENGTH];
-    /* Read data authentication key */
-    uint8_t Key_K2[KEY_LENGTH];
-    /* Read LMON data */
-    LMON lmon;
-    /* CMON data (updated in both DCU & METER AL)*/
-    LMON cmon;
-    /* Source Address of received data */
-    MAC_ADDRESS srcAddress;
-    /* Next task time in ms */
-    uint64_t nextTaskTimeCount;
-    /* Task rate in SYS_TIME counter ticks */
-    uint32_t taskRateCount;
-    /* Tx Buffer Length */
-    uint16_t txBufferLen;
-    /* Random Number Generated for LMON Recovery */
-    uint8_t random_number[16];
-    /* Incoming TCT (min 1 to max 255) */
-    uint8_t TCT;
+    /* ECC (SSAP) field received in last message */
+    DLL_ECC eccReceived;
+    /* Counter of Tx retries */
+    uint16_t txRetryCount;
+    /* Limit of Tx retries */
+    uint8_t txRetryLimit;
+    /* TCT used in Network Management (min 1 to max 255) */
+    uint8_t tct;
+    /* Length of last received LSDU */
+    uint8_t lastlRxLsduLen;
+    /* Flag to indicate whether Tx Timeout has expired */
+    bool txTimeoutExpired;
+    /* Flag to indicate whether response to last protected request is valid. Only for Meter */
+    bool responseProtectedValid;
+    /* Flag to indicate that a Data Confirm is pending to be notified from Tasks */
+    bool dataCfmPending;
+    /* Flag to indicate whether Data Confirm needs to be notified to upper layer */
+    bool sendDataCfm;
+    /* Flag to indicate whether AL_DataRequest is called internally */
+    bool alDataReqInternal;
+    /* Flag to indicate whether multi-response is expected */
+    bool multiresponse;
+    /* Flag to indicate whether Read Key is valid */
+    bool keyReadValid;
+    /* Flag to indicate whether Write Key is valid */
+    bool keyWriteValid;
     /* Is master node (false in slave node) */
     bool isMaster;
-    /* Flag to indicate this object is in use */
-    bool inUse;
 
 } AL_DATA;
 

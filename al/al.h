@@ -50,7 +50,6 @@ Microchip or any third party.
 // *****************************************************************************
 
 #include "stack/metersandmore/dll/dll.h"
-#include "crypto/common_crypto/MCHP_Crypto_Sym_Cipher.h"
 
 /* Provide C++ Compatibility */
 #ifdef __cplusplus
@@ -63,62 +62,26 @@ extern "C" {
 // *****************************************************************************
 // *****************************************************************************
 
-#define KEY_LENGTH              16U
-#define LMON_LENGTH             8U
+/* Security (Key, LMON, DATE-TIME TMAC lengths) */
+#define AL_KEY_LENGTH           16U
+#define AL_LMON_LENGTH          8U
+#define AL_DATETIME_LENGTH      8U
+#define AL_TMAC_LENGTH          8U
+
+/* Maximum length of AL data (APDU, DLL payload without message attribute byte) */
+#define AL_MAX_DATA_LENGTH            (MAX_LENGTH_432_DATA - 1U)
+
+/* Maximum length of AL data if message is authenticated */
+#define AL_MAX_DATA_AUTH_LENGTH       (AL_MAX_DATA_LENGTH - AL_DATETIME_LENGTH - AL_TMAC_LENGTH)
 
 /* Maximum length of an IB object */
-#define AL_IB_MAX_VALUE_LENGTH  (KEY_LENGTH)
+#define AL_IB_MAX_VALUE_LENGTH        (AL_KEY_LENGTH)
 
 // *****************************************************************************
 // *****************************************************************************
 // Section: Data Types
 // *****************************************************************************
 // *****************************************************************************
-
-// *****************************************************************************
-/* AL Encryption status for incoming message_types
-
-   Summary:
-    Indicates the incoming message_type protected status.
-
-   Description:
-    This AL_AUTH identifies the incoming message_type. User must check
-    for its status before processing with message data.
-
-   Remarks:
-    None.
-*/
-typedef enum
-{
-    AL_ENCRYPTION_DISABLED = 0x00,
-    AL_ENCRYPTION_ENABLED = 0x01
-} AL_AUTH;
-
-/* Last Message Order Number (LMON) */
-typedef union
-{
-    uint8_t buff[LMON_LENGTH];
-    uint64_t value;
-} LMON;
-
-// *****************************************************************************
-/* AL Node information Device configuration status
-
-   Summary:
-    Indicates the AL device configuration status for processing with message data.
-
-   Description:
-    This AL_DEVICE identifies the Concentrator or Meter configuration. AL uses this
-    information for processing module operations.
-
-   Remarks:
-    None.
-*/
-typedef struct
-{
-    LMON lmon;
-    uint8_t ACA[MAC_ADDRESS_SIZE];
-} NODE_INFO;
 
 // *****************************************************************************
 /* AL Event IDs
@@ -171,10 +134,18 @@ typedef struct
 */
 typedef enum
 {
-    AL_WRITE_KEY_K1_IB = 0x001,
-    AL_READ_KEY_K2_IB = 0x002,
-    AL_LMON_IB = 0x003,
-    AL_CMON_IB = 0x004,
+    /* LMON used for Authentication (only for Meter) */
+    AL_AUTH_LMON_IB = 0x001,
+    /* Authentication Write Key (K1) */
+    AL_AUTH_WRITE_KEY_K1_IB = 0x002,
+    /* Authentication Read Key (K2) */
+    AL_AUTH_READ_KEY_K2_IB = 0x003,
+    /* ACA (Absolute Communication Address) of destination node, used for Authentication (only for DCU) */
+    AL_AUTH_DESTINATION_NODE_ACA_IB = 0x004,
+    /* TCT used for Network Management, from 1 to 255 (only for Meter) */
+    AL_NM_TCT_IB = 0x005,
+    /* Maximum number of retries for DLL_DataRequest */
+    AL_TX_RETRY_LIMIT = 0x006,
 
     AL_MAC_ACA_ADDRESS_IB = 0x201,
     AL_MAC_SCA_ADDRESS_IB = 0x202,
@@ -188,6 +159,144 @@ typedef enum
     AL_MAC_LAST_RX_SNR_IB = 0x20A,
     AL_MAC_ESTIMATED_IMPDEDANCE_IB = 0x20B,
 } AL_IB_ATTRIBUTE;
+
+// *****************************************************************************
+/* AL Message Attributes definition
+
+   Summary:
+    Lists the available message attributes in the Meters And More Application
+    Layer.
+
+   Description:
+    This data type lists the available message attributes in the Meters And More
+    Application Layer.
+
+    Each message starts with an attribute (ATTR) that contains the command code
+    of the message. The length of this field is 1 byte.
+
+   Remarks:
+    None.
+*/
+typedef enum
+{
+    /* Reading operations */
+    AL_MSG_READ_REQ              = 2U,
+    AL_MSG_READ_REQ_AUTH         = 102U,
+    AL_MSG_READ_RESP             = 3U,
+    AL_MSG_READ_RESP_AUTH        = 103U,
+    AL_MSG_READTAB_REQ_SEL       = 6U,
+    AL_MSG_READTAB_REQ_SEL_AUTH  = 106U,
+    AL_MSG_READTAB_RESP_SEL      = 7U,
+    AL_MSG_READTAB_RESP_SEL_AUTH = 107U,
+    AL_MSG_READTAB_REQ           = 8U,
+    AL_MSG_READTAB_REQ_AUTH      = 108U,
+    AL_MSG_READTAB_RESP          = 9U,
+    AL_MSG_READTAB_RESP_AUTH     = 109U,
+    AL_MSG_BUFF_SELECT_REQ       = 22U,
+    AL_MSG_BUFF_SELECT_REQ_AUTH  = 122U,
+    AL_MSG_BUFF_SELECT_RESP      = 23U,
+    AL_MSG_BUFF_SELECT_RESP_AUTH = 123U,
+    AL_MSG_GETTAB_REQ            = 30U,
+    AL_MSG_GETTAB_REQ_AUTH       = 130U,
+    AL_MSG_GETTAB_RESP           = 31U,
+    AL_MSG_GETTAB_RESP_AUTH      = 131U,
+
+    /* Writing operations */
+    AL_MSG_WRITE_REQ             = 4U,
+    AL_MSG_WRITE_REQ_AUTH        = 104U,
+    AL_MSG_WRITETAB_REQ          = 10U,
+    AL_MSG_WRITETAB_REQ_AUTH     = 110U,
+    AL_MSG_SETTAB_REQ            = 14U,
+    AL_MSG_SETTAB_REQ_AUTH       = 114U,
+    AL_MSG_RESETTAB_REQ          = 16U,
+    AL_MSG_RESETTAB_REQ_AUTH     = 116U,
+    AL_MSG_SETIC_REQ             = 40U,
+    AL_MSG_SETIC_REQ_AUTH        = 140U,
+    AL_MSG_WRITETABIC_REQ        = 42U,
+    AL_MSG_WRITETABIC_REQ_AUTH   = 142U,
+
+    /* Network Management */
+    AL_MSG_ADDRESS_REQ           = 90U,
+    AL_MSG_ADDRESS_RESP          = 91U,
+    AL_MSG_TCT_SET_REQ           = 92U,
+    AL_MSG_REQADDR_REQ           = 94U,
+    AL_MSG_REQADDR_RESP          = 95U,
+    AL_MSG_NACK_RESP             = 247U,
+
+    /* Special message */
+    AL_MSG_COMMAND               = 18U,
+    AL_MSG_COMMAND_AUTH          = 118U,
+    AL_MSG_DATASPONT             = 20U,
+    AL_MSG_DATASPONT_AUTH        = 120U,
+    
+    /* Software download */
+    AL_MSG_REPROG_LOCAL          = 100U,
+    AL_MSG_REPROG_BROADCAST      = 101U,
+
+    /* LMON synchronization */
+    AL_MSG_CHALLENGE_REQ         = 112U,
+    AL_MSG_CHALLENGE_RESP        = 113U,
+    
+    /* Acknowledgements */
+    AL_MSG_ACK_A_NODE            = 253U,
+    AL_MSG_ACK_A_NODE_AUTH       = 243U,
+    AL_MSG_NACK_A_NODE           = 255U,
+    AL_MSG_NACK_A_NODE_AUTH      = 245U,
+    AL_MSG_ACK_B_NODE            = 251U,
+    AL_MSG_ACK_B_NODE_AUTH       = 241U,
+    AL_MSG_NACK_B_NODE           = 249U,
+    AL_MSG_NACK_B_NODE_AUTH      = 239U,
+
+} AL_MSG_ATTR;
+
+// *****************************************************************************
+/* AL Tx Status definition
+
+   Summary:
+    Transmission results defined in AL layer.
+
+   Description:
+    This enumeration identifies the possible Transmission result values
+    0 - Success
+    1 - Error
+
+   Remarks:
+    None.
+*/
+typedef enum
+{
+    AL_TX_STATUS_SUCCESS = 0x00,
+    AL_TX_STATUS_ERROR_BUSY = 0x01,
+    AL_TX_STATUS_ERROR_BAD_LEN = 0x02,
+    AL_TX_STATUS_ERROR_AES_CMAC = 0x03,
+    AL_TX_STATUS_ERROR_AES_ENCRYPT = 0x04,
+    AL_TX_STATUS_ERROR_AES_NO_KEY = 0x05,
+    AL_TX_STATUS_ERROR_RETRY_LIMIT = 0x06
+} AL_TX_STATUS;
+
+// *****************************************************************************
+/* AL Rx Status definition
+
+   Summary:
+    Reception results defined in AL layer.
+
+   Description:
+    This enumeration identifies the possible Reception result values
+    0 - Success
+    1 - Error
+
+   Remarks:
+    None.
+*/
+typedef enum
+{
+    AL_RX_STATUS_SUCCESS = 0x00,
+    AL_RX_STATUS_ERROR_BAD_LEN = 0x01,
+    AL_RX_STATUS_ERROR_AES_CMAC = 0x02,
+    AL_RX_STATUS_ERROR_AES_DECRYPT = 0x03,
+    AL_RX_STATUS_ERROR_AES_NO_KEY = 0x04,
+    AL_RX_STATUS_ERROR_BAD_TMAC = 0x05,
+} AL_RX_STATUS;
 
 // *****************************************************************************
 /* AL and DLL IB Value definition
@@ -224,24 +333,24 @@ typedef struct
 */
 typedef struct
 {
-  /* Message Code */
-  uint8_t command_message;
-  /* Message Type */
-  AL_AUTH message_type;
-  /* Decrypted status*/
-  crypto_Sym_Status_E decryption_status;
-  /* Authentication status */
-  uint16_t authentication_status;
-  /* Source 432 Address (Concentrator)  */
-  uint16_t srcAddress;
-  /* ACA & new verified LMON from Meter for table entry in MASTER*/
-  NODE_INFO node_info;
-  /* Pointer to received data*/
-  uint8_t app_data[MAX_LENGTH_432_DATA];
-  /* Length of the data */
-  uint16_t app_dataLen;
-  /* Data Request Tx Status, Set to 1 if Data confirm DLL_TX_STATUS_ERROR */
-  uint16_t Last_Request_Tx_Failure;
+  /* DATE-TIME (only in authenticated messages) */
+  uint64_t datetime;
+  /* LMON of Meter used for authentication, updated with this indication */
+  uint64_t lmon;
+  /* Pointer to AL received data (without message attribute)*/
+  uint8_t *apdu;
+  /* Length of the AL data */
+  uint16_t apduLen;
+  /* Source address */
+  MAC_ADDRESS srcAddress;
+  /* AL Message Attribute */
+  AL_MSG_ATTR attr;
+  /* Destination LSAP */
+  DLL_DSAP dsap;
+  /* ECC (Encryption Coding Control) */
+  DLL_ECC ecc;
+  /* Rx status */
+  AL_RX_STATUS rxStatus;
 } AL_DATA_IND_PARAMS;
 
 // *****************************************************************************
@@ -259,23 +368,29 @@ typedef struct
 */
 typedef struct
 {
-  /* Service class - MASTER ONLY */
-  SERVICE_CLASS serviceClass;
-  /* Destination route - MASTER ONLY */
-  ROUTING_ENTRY dstAddress;
+  /* DATE-TIME for authenticated messages */
+  uint64_t datetime;
+  /* LMON of Meter used for authentication - MASTER ONLY */
+  uint64_t lmon;
+  /* Pointer to AL Data buffer (without message attribute) */
+  uint8_t *apdu;
   /* Max length of the response - MASTER ONLY */
   uint16_t maxResponseLen;
-  /* Number of time slots alocated in data request with Service_Class RC - MASTER ONLY */
-  uint16_t timeSlotNum ;
-  /* ACA & new verified LMON from Meter for table entry in MASTER*/
-  NODE_INFO node_info;
-  /* Pointer to Data buffer (CM, Data) */
-  uint8_t *Txdata;
-  /* Length of the data */
-  uint16_t Txdata_Len;
-  /* POSIX timestamp */
-  uint64_t timestamp;
-} AL_DATA_REQ_PARAMS;
+  /* Number of time slots allocated in data request with Service_Class RC - MASTER ONLY */
+  uint16_t timeSlotNum;
+  /* Length of the AL data */
+  uint16_t apduLen;
+  /* Destination route - MASTER ONLY */
+  ROUTING_ENTRY dstAddress;
+  /* Service class - MASTER ONLY */
+  SERVICE_CLASS serviceClass;
+  /* AL Message Attribute */
+  AL_MSG_ATTR attr;
+  /* Destination LSAP */
+  DLL_DSAP dsap;
+  /* ECC (Encryption Coding Control) */
+  DLL_ECC ecc;
+} AL_DATA_REQUEST_PARAMS;
 
 // *****************************************************************************
 /* Meters And More AL Data request struct for Host Interface
@@ -300,7 +415,32 @@ typedef struct
   uint8_t *payload;
   /* Length of the data */
   uint16_t payloadLen;
-} AL_DATA_REQ_PARAMS_HI;
+} AL_DATA_REQUEST_PARAMS_HI;
+
+// *****************************************************************************
+/* Meters And More AL Data Confirm struct
+
+  Summary:
+    AL Data Confirm Parameters Structure.
+
+   Description:
+    Contains fields which define the information returned by the
+    AL Data Confirm Callback.
+
+  Remarks:
+    None.
+*/
+typedef struct
+{
+    /* Destination address */
+    MAC_ADDRESS dstAddress;
+    /* Destination LSAP */
+    DLL_DSAP dsap;
+    /* ECC (Encryption Coding Control) */
+    DLL_ECC ecc;
+    /* Tx status */
+    AL_TX_STATUS txStatus;
+} AL_DATA_CONFIRM_PARAMS;
 
 // *****************************************************************************
 /* Meters And More AL Event Indication struct
@@ -358,9 +498,10 @@ typedef struct
 {
   /* Application Layer task rate in milliseconds */
   uint8_t taskRateMs;
-
   /* Is master node (false in slave node) */
   bool isMaster;
+  /* Initial value of AL_TX_RETRY_LIMIT */
+  uint8_t txRetryLimit;
 } AL_INIT;
 
 // *****************************************************************************
@@ -390,7 +531,7 @@ typedef struct
     <code>
     void APP_MyDataIndEventHandler( AL_DATA_IND_PARAMS *indParams )
     {
-        if(indParams->app_dataLen > 0)
+        if(indParams->apduLen > 0)
         {
 
         }
@@ -398,6 +539,53 @@ typedef struct
     </code>
 */
 typedef void ( *AL_DATA_IND_CALLBACK )( AL_DATA_IND_PARAMS *indParams );
+
+// *****************************************************************************
+/* Meters And More AL module Data Confirm Function Pointer
+
+  Summary:
+    Pointer to a Meters And More DLL module Data Confirm Function Pointer.
+
+  Description:
+    This data type defines the required function signature for the Meters And More AL
+    module Data Confirm callback function. A client must
+    register a pointer using the callback register function whose function
+    signature (parameter and return value types) match the types specified by
+    this function pointer in order to receive related event callbacks
+    from the module.
+
+    The parameters and return values are described here and a partial example
+    implementation is provided.
+
+  Parameters:
+    cfmParams - Pointer to the object containing data related to the
+             result of last transmission.
+
+  Returns:
+    None.
+
+  Example:
+    <code>
+    void APP_MyDataCfmEventHandler( AL_DATA_CONFIRM_PARAMS *cfmParams )
+    {
+        switch(cfmParams->txStatus)
+        {
+            case AL_TX_STATUS_SUCCESS:
+                break;
+            default:
+                break;
+        }
+    }
+    </code>
+
+  Remarks:
+    - If the status field is AL_TX_STATUS_SUCCESS, it means that the data was
+      transferred successfully.
+
+    - Otherwise, it means that the data was not transferred successfully.
+
+*/
+typedef void ( *AL_DATA_CONFIRM_CALLBACK )( AL_DATA_CONFIRM_PARAMS *cfmParams );
 
 // *****************************************************************************
 /* Meters And More AL module Event Indication Function Pointer
@@ -434,7 +622,7 @@ typedef void ( *AL_EVENT_IND_CALLBACK )( AL_EVENT_IND_PARAMS *eventParams );
 
 // *****************************************************************************
 // *****************************************************************************
-// Section: Interface Functions
+// Section: AL Interface Functions
 // *****************************************************************************
 // *****************************************************************************
 
@@ -464,7 +652,7 @@ typedef void ( *AL_EVENT_IND_CALLBACK )( AL_EVENT_IND_PARAMS *eventParams );
     <code>
     void APP_Rx_Ind_callback(AL_DATA_IND_PARAMS *indParams )
     {
-        if (indParams->app_dataLen > 0){
+        if (indParams->apduLen > 0){
 
         }
     }
@@ -476,6 +664,51 @@ typedef void ( *AL_EVENT_IND_CALLBACK )( AL_EVENT_IND_PARAMS *eventParams );
     Callback can be set to a NULL pointer to stop receiving notifications.
 */
 AL_RESULT AL_DataIndicationCallbackRegister( AL_DATA_IND_CALLBACK callback );
+
+// *****************************************************************************
+/* Function:
+    AL_RESULT AL_DataConfirmCallbackRegister (
+        AL_DATA_CONFIRM_CALLBACK callback
+    );
+
+  Summary:
+    Allows a client to set a Meters And More AL AL_Data.confirm
+    event handling function for the module to call back when the requested
+    transmission has finished.
+
+  Description:
+    This function allows a client to register a Meters And More
+    AL AL_Data.confirm event handling function for the module to call back
+    when a Meters And More AL data confirm event occurs.
+
+  Parameters:
+    callback - Pointer to the callback function.
+
+  Returns:
+    None.
+
+  Example:
+    <code>
+    void APP_Tx_Cfm_callback(AL_DATA_CONFIRM_PARAMS *cfmParams)
+    {
+        if (cfmParams->txStatus == AL_TX_STATUS_SUCCESS)
+        {
+
+        }
+        else
+        {
+
+        }
+    }
+
+    DLL_DataConfirmCallbackRegister(APP_Tx_Cfm_callback);
+
+    </code>
+
+  Remarks:
+    Callback can be set to a NULL pointer to stop receiving notifications.
+*/
+AL_RESULT AL_DataConfirmCallbackRegister(AL_DATA_CONFIRM_CALLBACK callback);
 
 // *****************************************************************************
 /* Function:
@@ -521,7 +754,7 @@ AL_RESULT AL_EventIndicationCallbackRegister( AL_EVENT_IND_CALLBACK callback );
 // *****************************************************************************
 /* Function:
     void AL_DataRequest (
-        AL_DATA_REQ_PARAMS *reqParams
+        AL_DATA_REQUEST_PARAMS *reqParams
     );
 
   Summary:
@@ -543,16 +776,15 @@ AL_RESULT AL_EventIndicationCallbackRegister( AL_EVENT_IND_CALLBACK callback );
 
   Example:
     <code>
-    AL_DATA_REQ_PARAMS drParams;
+    AL_DATA_REQUEST_PARAMS drParams;
 
     drParams.serviceClass = SERVICE_CLASS_RA;
     drParams.dstAddress.macAddress.address = dest_addressBuff;
     drParams.maxResponseLen = 128;
     drParams.timeSlotNum = 8;
-    drParams.node_info.ACA = Dest_node_addrBuffer;
-    drParams.node_info.lmon.buff = Node_Lmon_DataBuffer;
-    drParams.Txdata = data;
-    drParams.Txdata_Len = 10;
+    drParams.lmon = Node_Lmon_Counter;
+    drParams.apdu = data;
+    drParams.apduLen = 10;
 	drParams.timestamp = 0x66FB3B80;
 
     AL_DataRequest(&drParams);
@@ -563,7 +795,7 @@ AL_RESULT AL_EventIndicationCallbackRegister( AL_EVENT_IND_CALLBACK callback );
 	This information to be sent by concentrator for each data request placed. This is applicable
 	only for Concentrator.
 */
-void AL_DataRequest( AL_DATA_REQ_PARAMS *reqParams );
+void AL_DataRequest( AL_DATA_REQUEST_PARAMS *reqParams );
 
 // *****************************************************************************
 /* Function:
@@ -720,7 +952,7 @@ SYS_STATUS AL_GetStatus(void);
     <code>
     AL_RESULT result;
     AL_IB_VALUE value;
-    result = AL_GetRequest(AL_LMON_IB, 0, &value);
+    result = AL_GetRequest(AL_AUTH_LMON_IB, 0, &value);
     if (result == AL_RESULT_SUCCESS)
     {
 
@@ -769,10 +1001,10 @@ AL_RESULT AL_GetRequest(AL_IB_ATTRIBUTE attribute, uint16_t index,
     AL_RESULT result;
     const AL_IB_VALUE value;
 
-    value.length = LMON_LENGTH;
-    memset(value.value, 0, LMON_LENGTH);
+    value.length = AL_LMON_LENGTH;
+    memset(value.value, 0, AL_LMON_LENGTH);
 
-    result = AL_SetRequest(AL_LMON_IB, 0, &value);
+    result = AL_SetRequest(AL_AUTH_LMON_IB, 0, &value);
     if (result == AL_RESULT_SUCCESS)
     {
 
@@ -788,7 +1020,7 @@ AL_RESULT AL_SetRequest(AL_IB_ATTRIBUTE attribute, uint16_t index,
 // *****************************************************************************
 /* Function:
     AL_M_STATUS AL_DataRequestHI (
-        AL_DATA_REQ_PARAMS_HI *reqParams
+        AL_DATA_REQUEST_PARAMS_HI *reqParams
     );
 
   Summary:
@@ -808,7 +1040,7 @@ AL_RESULT AL_SetRequest(AL_IB_ATTRIBUTE attribute, uint16_t index,
 
   Example:
     <code>
-    AL_DATA_REQ_PARAMS_HI drParams;
+    AL_DATA_REQUEST_PARAMS_HI drParams;
 
     drParams.dsap = 0x00;
     drParams.reqID = 0xAA;
@@ -821,7 +1053,61 @@ AL_RESULT AL_SetRequest(AL_IB_ATTRIBUTE attribute, uint16_t index,
   Remarks:
     Only available when Host Interface is used.
 */
-void AL_DataRequestHI(AL_DATA_REQ_PARAMS_HI *reqParams);
+void AL_DataRequestHI(AL_DATA_REQUEST_PARAMS_HI *reqParams);
+
+// *****************************************************************************
+/* Function:
+    AL_RESULT AL_PerformECB (
+        uint8_t *dataIn,
+        uint8_t dataLen,
+        uint8_t *dataOut,
+        uint8_t *key,
+        uint8_t keyLen
+    );
+
+  Summary:
+    The AL_PerformECB primitive provides AES-ECB Encryption capabilities.
+
+  Description:
+    This function is provided for the upper layers to take advantage of
+    encryption capabilities of AL.
+    It performs an AES-ECB Encryption to a data buffer using provided input
+    parameters and returns the encrypted data in the provided output parameter.
+
+  Precondition:
+    None.
+
+  Parameters:
+    dataIn - Pointer to data to be encrypted
+    dataLen - Length of data buffer to be encrypted (in bytes)
+    dataOut - Pointer to buffer where encrypted data will be written
+    key - Pointer to key to be used for encryption
+    keyLen - Length of key to be used for encryption (in bytes)
+
+  Returns:
+    AL_SUCCESS if encryption succeeds. AL_ERROR otherwise.
+
+  Example:
+    <code>
+    bool result;
+    uint8 rawData[64];
+    uint8 encryptedData[64];
+    uint8 aesKey[16];
+
+    memcpy(rawData, appData, sizeof(rawData));
+    memcpy(aesKey, appKey, sizeof(aesKey));
+
+    result = AL_PerformECB(rawData, 64, encryptedData, aesKey, 16);
+    if (result == AL_SUCCESS)
+    {
+        sendData(encryptedData);
+    }
+    </code>
+
+  Remarks:
+    None.
+*/
+AL_RESULT AL_PerformECB(uint8_t *dataIn, uint8_t dataLen, uint8_t *dataOut, uint8_t *key, uint8_t keyLen);
 
 #ifdef __cplusplus
 }

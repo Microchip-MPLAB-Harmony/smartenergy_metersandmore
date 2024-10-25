@@ -32,10 +32,13 @@ static AL_INIT alInitData = {
 
     /* Is master node (false in slave node) */
 <#if (METERSANDMORE_ROLE == "DCU")>
-    .isMaster = true
+    .isMaster = true,
 <#else>
-    .isMaster = false
+    .isMaster = false,
 </#if>
+
+    /* Initial value of AL_TX_RETRY_LIMIT */
+    .txRetryLimit = MM_AL_RETRIES_LIMIT
 
 };
 </#if>

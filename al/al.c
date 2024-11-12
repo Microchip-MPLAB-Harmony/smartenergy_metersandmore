@@ -445,7 +445,7 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
             apduLen -= AL_DATETIME_LENGTH;
 
             if ((AL_MSG_CHALLENGE_RESP == attr) ||
-                (((AL_MSG_NACK_A_NODE_AUTH == attr) || (AL_MSG_NACK_B_NODE_AUTH == attr)) && (10U == apdu[1])))
+                (((AL_MSG_NACK_A_NODE_AUTH == attr) || (AL_MSG_NACK_B_NODE_AUTH == attr)) && (AL_NACK_AUTH_PAYLOAD == apdu[0])))
             {
                 /* CHL.REQ and NACK Authenticated (Error Code 10) use LMON instead of DATE-TIME */
                 mon = datetimeLmon;
@@ -497,7 +497,7 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
         {
             /* Send Authenticated NACK with error code 10, containing LMON */
             /* Data Indication is still sent to upper layer */
-            apduResp[0] = 10;
+            apduResp[0] = AL_NACK_AUTH_PAYLOAD;
             request.apduLen = 1;
             request.attr = AL_MSG_NACK_A_NODE_AUTH;
         }
@@ -633,7 +633,16 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
             /* Send response */
             request.apdu = apduResp;
             request.dsap = indParams->dsap;
+            if (request.attr == AL_MSG_NACK_A_NODE_AUTH)
+            {
+                /* Set AES mode to ECB */
+                request.ecc = DLL_ECC_AES_ECB_READ_KEY;
+            }
+            else
+            {
+                /* Use AES mode from Indication */
                 request.ecc = indParams->ecc;
+            }
             alData.alDataReqInternal = true;
             AL_DataRequest(&request);
         }
@@ -848,7 +857,7 @@ void AL_DataRequest( AL_DATA_REQUEST_PARAMS *reqParams )
 
                 /* In Authenticated messages, 8 bytes are added for DATE-TIME or LMON */
                 if ((false == alData.isMaster) && ((AL_MSG_CHALLENGE_RESP == attr) ||
-                        (((AL_MSG_NACK_A_NODE_AUTH == attr) || (AL_MSG_NACK_B_NODE_AUTH == attr)) && (10U == reqParams->apdu[1]))))
+                        (((AL_MSG_NACK_A_NODE_AUTH == attr) || (AL_MSG_NACK_B_NODE_AUTH == attr)) && (AL_NACK_AUTH_PAYLOAD == reqParams->apdu[0]))))
                 {
                     /* CHL.REQ and NACK Authenticated (Error Code 10) use LMON instead of DATE-TIME */
                     datetimeLmon = mon;

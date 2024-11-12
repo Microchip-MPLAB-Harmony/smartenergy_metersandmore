@@ -77,6 +77,9 @@ extern "C" {
 /* Maximum length of an IB object */
 #define AL_IB_MAX_VALUE_LENGTH        (AL_KEY_LENGTH)
 
+/* Payload to indicate LMON mismatch */
+#define AL_NACK_AUTH_PAYLOAD    10U
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Data Types

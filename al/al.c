@@ -442,7 +442,6 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
             datetimeLmon += (uint64_t) *datetimeLmonBuff++;
             datetimeLmon <<= 8;
             datetimeLmon += (uint64_t) *datetimeLmonBuff++;
-            apduLen -= AL_DATETIME_LENGTH;
 
             if ((AL_MSG_CHALLENGE_RESP == attr) ||
                 (((AL_MSG_NACK_A_NODE_AUTH == attr) || (AL_MSG_NACK_B_NODE_AUTH == attr)) && (AL_NACK_AUTH_PAYLOAD == apdu[0])))
@@ -458,6 +457,7 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
             /* Compute truncated AES-CMAC (TMAC) */
             apduLen -= AL_TMAC_LENGTH;
             cmacStatus = lAL_CMacDigest(apdu, apduLen, key, tmac, mon, attr);
+
             if (CRYPTO_MAC_CIPHER_SUCCESS == cmacStatus)
             {
                 if (memcmp(tmac, &apdu[apduLen], AL_TMAC_LENGTH) != 0U)
@@ -478,6 +478,9 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
             {
                 rxStatus = AL_RX_STATUS_ERROR_AES_CMAC;
             }
+
+            /* Remove datetime from apdu after CMAC computation */
+            apduLen -= AL_DATETIME_LENGTH;
         }
         else
         {

@@ -323,7 +323,7 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
     }
 
     /* Use CMON = LMON + 1 */
-    mon = alData.lmon + 1U;
+    mon = alData.lmon + 1ULL;
 
     /* Check whether message is authenticated */
     authMsg = lAL_MsgAttrIsAuth(attr);
@@ -570,8 +570,14 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
                                     /* All filters passed. Send ADDRESS.RESP */
                                     request.apduLen = AL_NM_ADDRESS_RESP_LEN;
                                     request.attr = AL_MSG_ADDRESS_RESP;
-                                    (void) memcpy(apdu, getValue.value, MAC_ADDRESS_SIZE); /* ACA. ToDo: Review endianess */
-                                    lAL_NetworkManagementQualityParams(&apdu[1]);
+                                    /* Copy ACA but in reverse order, as MAC stores it in "communications mode" */
+                                    apduResp[0] = getValue.value[5];
+                                    apduResp[1] = getValue.value[4];
+                                    apduResp[2] = getValue.value[3];
+                                    apduResp[3] = getValue.value[2];
+                                    apduResp[4] = getValue.value[1];
+                                    apduResp[5] = getValue.value[0];
+                                    lAL_NetworkManagementQualityParams(&apduResp[6]);
                                     apdu[9] = 0xFF;
                                     apdu[10] = 0xFF;
                                     apdu[11] = 0xFF;
@@ -1288,7 +1294,7 @@ AL_RESULT AL_SetRequest(AL_IB_ATTRIBUTE attribute, uint16_t index, const AL_IB_V
 
         default:
             /* No AL IB, try with DLL */
-            result = (AL_RESULT) DLL_GetRequest((DLL_IB_ATTRIBUTE) attribute, index, (DLL_IB_VALUE *) ibValue);
+            result = (AL_RESULT) DLL_SetRequest((DLL_IB_ATTRIBUTE) attribute, index, (DLL_IB_VALUE *) ibValue);
     }
 
     return result;

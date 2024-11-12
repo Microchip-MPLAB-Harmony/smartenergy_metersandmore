@@ -899,7 +899,7 @@ SYS_STATUS DLL_GetStatus(void);
 
 // *****************************************************************************
 /* Function:
-    SYS_MODULE_OBJ DLL_Tasks (
+    void DLL_Tasks (
         SYS_MODULE_OBJ object
     );
 

@@ -1,13 +1,18 @@
 package:
   format-version: "1.0.0"
-  name: "replaceme"
+  name: "smartenergy_metersandmore"
+  version: "v1.0.0"
   type: "api"
-  status: "beta"
+  status: "production"
   required: false
-  version: "1.0.0"
 
   dependencies:
-    - name: "csp"
+    - name: "smartenergy"
       type: "package"
-      version: "3.14.0"
-
+      version: "dev"
+    - name: "core"
+      type: "package"
+      version: "v3.13.5"
+    - name: "crypto"
+      type: "package"
+      version: "v4.0.0-E1"

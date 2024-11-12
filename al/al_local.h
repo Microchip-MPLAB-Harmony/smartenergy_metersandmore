@@ -106,6 +106,7 @@ typedef enum
     AL_STATE_IDLE,
     AL_STATE_WAITING_TX_CFM,
     AL_STATE_WAITING_RX,
+    AL_STATE_WAITING_TIMEOUT,
 } AL_STATE;
 
 typedef struct

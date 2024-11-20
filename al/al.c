@@ -201,7 +201,7 @@ static crypto_Mac_Status_E lAL_CMacDigest(uint8_t *apdu, uint16_t apduLen, uint8
         aca = alData.acaOwn.address;
     }
 
-    /* AES-CMAC input: [ATTR, ACA(first 3 bytes), LMON/CMON, CRC] (Big Endian. To Do: Review ACA endianess) */
+    /* AES-CMAC input: [ATTR, ACA(first 3 bytes), LMON/CMON, CRC] */
     *cmacInputPtr++ = (uint8_t) attr;
     (void) memcpy(cmacInputPtr, aca, 3);
     cmacInputPtr += 3;
@@ -214,16 +214,13 @@ static crypto_Mac_Status_E lAL_CMacDigest(uint8_t *apdu, uint16_t apduLen, uint8
     *cmacInputPtr++ = (uint8_t) (mon >> 8);
     *cmacInputPtr++ = (uint8_t) mon;
     crc = lAL_CmacCrc(attr, aca, apdu, apduLen);
-    *cmacInputPtr++ = (uint8_t) (crc >> 24);
-    *cmacInputPtr++ = (uint8_t) (crc >> 16);
-    *cmacInputPtr++ = (uint8_t) (crc >> 8);
-    *cmacInputPtr = (uint8_t) crc;
+    (void) memcpy(cmacInputPtr, (uint8_t*)&crc, 4);
 
     /* Compute AES-CMAC */
     cmacStatus = Crypto_Mac_AesCmac_Direct(CRYPTO_HANDLER_SW_WOLFCRYPT, cmacInput, AL_CMAC_INPUT_LEN, cmacOutput, AL_CMAC_OUTPUT_LEN, key, AL_KEY_LENGTH, 1);
 
-    /* Truncate to 64 least significant bytes */
-    (void) memcpy(tmac, &cmacOutput[AL_CMAC_OUTPUT_LEN - AL_TMAC_LENGTH], AL_TMAC_LENGTH);
+    /* Truncate to first 8 bytes */
+    (void) memcpy(tmac, cmacOutput, AL_TMAC_LENGTH);
 
     return cmacStatus;
 }
@@ -493,22 +490,15 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
             uint64_t datetimeLmon;
             uint8_t *datetimeLmonBuff = &apdu[apduLen - AL_TMAC_LENGTH - AL_DATETIME_LENGTH];
 
-            /* In Authenticated messages, 8 bytes are added for DATE-TIME or LMON (Big Endian) */
+            /* In Authenticated messages, 8 bytes are added for DATE-TIME or LMON */
             datetimeLmon = (uint64_t) *datetimeLmonBuff++;
-            datetimeLmon <<= 8;
-            datetimeLmon += (uint64_t) *datetimeLmonBuff++;
-            datetimeLmon <<= 8;
-            datetimeLmon += (uint64_t) *datetimeLmonBuff++;
-            datetimeLmon <<= 8;
-            datetimeLmon += (uint64_t) *datetimeLmonBuff++;
-            datetimeLmon <<= 8;
-            datetimeLmon += (uint64_t) *datetimeLmonBuff++;
-            datetimeLmon <<= 8;
-            datetimeLmon += (uint64_t) *datetimeLmonBuff++;
-            datetimeLmon <<= 8;
-            datetimeLmon += (uint64_t) *datetimeLmonBuff++;
-            datetimeLmon <<= 8;
-            datetimeLmon += (uint64_t) *datetimeLmonBuff++;
+            datetimeLmon += ((uint64_t) *datetimeLmonBuff++) << 8;
+            datetimeLmon += ((uint64_t) *datetimeLmonBuff++) << 16;
+            datetimeLmon += ((uint64_t) *datetimeLmonBuff++) << 24;
+            datetimeLmon += ((uint64_t) *datetimeLmonBuff++) << 32;
+            datetimeLmon += ((uint64_t) *datetimeLmonBuff++) << 40;
+            datetimeLmon += ((uint64_t) *datetimeLmonBuff++) << 48;
+            datetimeLmon += ((uint64_t) *datetimeLmonBuff++) << 56;
 
             if ((AL_MSG_CHALLENGE_RESP == attr) ||
                 (((AL_MSG_NACK_A_NODE_AUTH == attr) || (AL_MSG_NACK_B_NODE_AUTH == attr)) && (AL_NACK_AUTH_PAYLOAD == apdu[0])))

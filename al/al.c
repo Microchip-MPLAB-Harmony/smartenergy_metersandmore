@@ -1240,15 +1240,13 @@ AL_RESULT AL_GetRequest(AL_IB_ATTRIBUTE attribute, uint16_t index, AL_IB_VALUE *
         case AL_AUTH_WRITE_KEY_K1_IB:
             /* Ignore index */
             ibValue->length = AL_KEY_LENGTH;
-            (void) memcpy(ibValue->value, &alData.keyWrite[12], 4);
-            (void) memcpy(&ibValue->value[4], alData.keyWrite, 12);
+            (void) memcpy(ibValue->value, alData.keyWrite, AL_KEY_LENGTH);
             break;
 
         case AL_AUTH_READ_KEY_K2_IB:
             /* Ignore index */
             ibValue->length = AL_KEY_LENGTH;
-            (void) memcpy(ibValue->value, &alData.keyRead[12], 4);
-            (void) memcpy(&ibValue->value[4], alData.keyRead, 12);
+            (void) memcpy(ibValue->value, alData.keyRead, AL_KEY_LENGTH);
             break;
 
         case AL_AUTH_DESTINATION_NODE_ACA_IB:
@@ -1296,8 +1294,7 @@ AL_RESULT AL_SetRequest(AL_IB_ATTRIBUTE attribute, uint16_t index, const AL_IB_V
             /* Ignore index */
             if (AL_KEY_LENGTH == ibValue->length)
             {
-                (void) memcpy(alData.keyWrite, &ibValue->value[4], 12);
-                (void) memcpy(&alData.keyWrite[12], ibValue->value, 4);
+                (void) memcpy(alData.keyWrite, ibValue->value, AL_KEY_LENGTH);
                 alData.keyReadValid = true;
                 result = AL_SUCCESS;
             }
@@ -1307,8 +1304,7 @@ AL_RESULT AL_SetRequest(AL_IB_ATTRIBUTE attribute, uint16_t index, const AL_IB_V
             /* Ignore index */
             if (AL_KEY_LENGTH == ibValue->length)
             {
-                (void) memcpy(alData.keyRead, &ibValue->value[4], 12);
-                (void) memcpy(&alData.keyRead[12], ibValue->value, 4);
+                (void) memcpy(alData.keyRead, ibValue->value, AL_KEY_LENGTH);
                 alData.keyWriteValid = true;
                 result = AL_SUCCESS;
             }

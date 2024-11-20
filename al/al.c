@@ -110,18 +110,17 @@ static inline uint32_t lAL_CmacCrc(AL_MSG_ATTR attr, uint8_t *aca, uint8_t *apdu
             crc = SRV_PCRC_GetValue(apdu, apduLen, PCRC_HT_GENERIC, PCRC_CRC32, crc);
             break;
     }
-
+    
     return crc;
 }
 
 static crypto_Mac_Status_E lAL_CMacDigest(uint8_t *apdu, uint16_t apduLen, uint8_t *key, uint8_t *tmac, uint64_t mon, AL_MSG_ATTR attr)
 {
     uint32_t crc;
-    DLL_IB_VALUE getValue;
     crypto_Mac_Status_E cmacStatus;
     uint8_t cmacOutput[AL_CMAC_OUTPUT_LEN];
     uint8_t cmacInput[AL_CMAC_INPUT_LEN];
-    uint8_t *aca = getValue.value;
+    uint8_t *aca;
     uint8_t *cmacInputPtr = cmacInput;
 
     if (true == alData.isMaster)
@@ -130,7 +129,7 @@ static crypto_Mac_Status_E lAL_CMacDigest(uint8_t *apdu, uint16_t apduLen, uint8
     }
     else
     {
-        (void) DLL_GetRequest(MAC_ACA_ADDRESS_IB, 0, &getValue);
+        aca = alData.acaOwn.address;
     }
 
     /* AES-CMAC input: [ATTR, ACA(first 3 bytes), LMON/CMON, CRC] (Big Endian. To Do: Review ACA endianess) */
@@ -168,8 +167,7 @@ static crypto_Sym_OpModes_E lAL_EncryptDecrypt(DLL_ECC ecc, uint64_t mon, uint8_
     aesMode = lAL_GetAesModeFromEcc(ecc);
     if (CRYPTO_SYM_OPMODE_CTR == aesMode)
     {
-        DLL_IB_VALUE getValue;
-        uint8_t *aca = getValue.value;
+        uint8_t *aca;
         uint8_t *ivPtr = *iv;
 
         if (true == alData.isMaster)
@@ -178,7 +176,7 @@ static crypto_Sym_OpModes_E lAL_EncryptDecrypt(DLL_ECC ecc, uint64_t mon, uint8_
         }
         else
         {
-            (void) DLL_GetRequest(MAC_ACA_ADDRESS_IB, 0, &getValue);
+            aca = alData.acaOwn.address;
         }
 
         /* Build Initialization Vector (IV): [ACA, LMON/CMON, 1] (Big Endian. To Do: Review ACA endianess) */
@@ -553,34 +551,26 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
 
                             if (true == sendResp)
                             {
-                                uint8_t acaLastByte;
+                                uint8_t acaLSB;
                                 uint8_t rightShiftAdd;
                                 uint8_t mask;
 
-                                /* Check address filtering. Read ACA. */
-                                (void) DLL_GetRequest(MAC_ACA_ADDRESS_IB, 0, &getValue);
-
-                                /* Respond if the remainder of ((ACA[5] + AddToAddress) >> RightShiftAdd) is 0 */
-                                acaLastByte = getValue.value[MAC_ADDRESS_SIZE - 1U]; /* ToDo: Review endianess */
-                                acaLastByte += apdu[2];
+                                /* Check address filtering */
+                                /* Respond if the remainder of ((ACA[LSB] + AddToAddress) >> RightShiftAdd) is 0 */
+                                acaLSB = alData.acaOwn.address[0];
+                                acaLSB += apdu[2];
                                 rightShiftAdd = apdu[3];
                                 mask = (1U << rightShiftAdd) - 1U;
-                                if ((acaLastByte & mask) == 0U)
+                                if ((acaLSB & mask) == 0U)
                                 {
                                     /* All filters passed. Send ADDRESS.RESP */
                                     request.apduLen = AL_NM_ADDRESS_RESP_LEN;
                                     request.attr = AL_MSG_ADDRESS_RESP;
-                                    /* Copy ACA but in reverse order, as MAC stores it in "communications mode" */
-                                    apduResp[0] = getValue.value[5];
-                                    apduResp[1] = getValue.value[4];
-                                    apduResp[2] = getValue.value[3];
-                                    apduResp[3] = getValue.value[2];
-                                    apduResp[4] = getValue.value[1];
-                                    apduResp[5] = getValue.value[0];
+                                    (void) memcpy(apduResp, alData.acaOwn.address, MAC_ADDRESS_SIZE);
                                     lAL_NetworkManagementQualityParams(&apduResp[6]);
-                                    apdu[9] = 0xFF;
-                                    apdu[10] = 0xFF;
-                                    apdu[11] = 0xFF;
+                                    apduResp[9] = 0xFF;
+                                    apduResp[10] = 0xFF;
+                                    apduResp[11] = 0xFF;
                                 }
                             }
                         }
@@ -1289,6 +1279,20 @@ AL_RESULT AL_SetRequest(AL_IB_ATTRIBUTE attribute, uint16_t index, const AL_IB_V
             {
                 alData.txRetryLimit = ibValue->value[0];
                 result = AL_SUCCESS;
+            }
+            break;
+
+        case AL_MAC_ACA_ADDRESS_IB:
+            /* Store own ACA (reversed) on AL and send Set to DLL */
+            if (MAC_ADDRESS_SIZE == ibValue->length)
+            {
+                alData.acaOwn.address[0] = ibValue->value[5];
+                alData.acaOwn.address[1] = ibValue->value[4];
+                alData.acaOwn.address[2] = ibValue->value[3];
+                alData.acaOwn.address[3] = ibValue->value[2];
+                alData.acaOwn.address[4] = ibValue->value[1];
+                alData.acaOwn.address[5] = ibValue->value[0];
+                result = (AL_RESULT) DLL_SetRequest((DLL_IB_ATTRIBUTE) attribute, index, (DLL_IB_VALUE *) ibValue);
             }
             break;
 

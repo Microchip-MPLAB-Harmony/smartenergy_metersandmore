@@ -139,6 +139,8 @@ typedef struct
     uint8_t nackCrcEtmField[AL_NACK_AUTH_ETM_LEN];
     /* ACA of slave destination node, used by DCU for Authentication */
     MAC_ADDRESS acaDestination;
+    /* Own ACA, used by Meter for Authentication */
+    MAC_ADDRESS acaOwn;
     /* Address parameter in last DL_DATA.indication */
     MAC_ADDRESS lastRxAddress;
     /* Status of the AL module */

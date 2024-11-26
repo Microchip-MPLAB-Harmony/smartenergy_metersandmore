@@ -382,6 +382,8 @@ typedef struct
   uint8_t *lsdu;
   /* Length of the data */
   uint16_t lsduLen;
+  /* Poll Flag from LLC */
+  bool pollFlag;
 } DLL_DATA_IND_PARAMS;
 
 // *****************************************************************************

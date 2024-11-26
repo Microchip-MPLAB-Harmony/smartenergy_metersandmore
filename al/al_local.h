@@ -94,6 +94,10 @@ extern "C" {
 /* Lengths of Authenticated NACK message */
 #define AL_NACK_AUTH_ETM_LEN         8U
 
+/* Default parameters to relay REQADDRESS.req frames */
+#define AL_REQ_ADDR_MAX_RESPONSE_LEN 90U
+#define AL_REQ_ADDR_TIME_SLOT_NUM    64U
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Data Types

@@ -79,7 +79,7 @@ static void lAL_TxTimeoutCallback(uintptr_t context)
 static inline bool lAL_MsgAttrIsAuth(AL_MSG_ATTR attr)
 {
     /* Check whether message is authenticated */
-    return ((attr >= AL_MSG_READ_REQ_AUTH) && (attr <= AL_MSG_NACK_RESP) && (attr != AL_MSG_CHALLENGE_REQ));
+    return ((attr >= AL_MSG_READ_REQ_AUTH) && (attr < AL_MSG_NACK_RESP) && (attr != AL_MSG_CHALLENGE_REQ) && (attr != AL_MSG_CHALLENGE_RESP));
 }
 
 static uint8_t * lAL_GetKeyFromEcc(DLL_ECC ecc)
@@ -129,14 +129,14 @@ static uint32_t getCRC32(uint8_t *inputBuf, uint8_t bufLen, uint32_t crcInitValu
 {
     uint32_t crc;
     uint8_t i;
-    
+
     crc = crcInitValue;
-    
+
     for (i = 0; i < bufLen; i++)
     {
         crc = crcTable32[(crc ^ inputBuf[i]) & 0xFF] ^ (crc >> 8);
     }
-    
+
     return crc;
 }
 
@@ -172,12 +172,12 @@ static inline uint32_t lAL_CmacCrc(AL_MSG_ATTR attr, uint8_t *aca, uint8_t *apdu
             crc = getCRC32(apdu, apduLen, crc);
             break;
     }
-    
+
     crc = crc ^ 0xFFFFFFFF;
-    
-    crcRet = ((crc & 0xFF000000) >> 24) + 
-            ((crc & 0x00FF0000) >> 8) + 
-            ((crc & 0x0000FF00) << 8) + 
+
+    crcRet = ((crc & 0xFF000000) >> 24) +
+            ((crc & 0x00FF0000) >> 8) +
+            ((crc & 0x0000FF00) << 8) +
             ((crc & 0x000000FF) << 24);
 
     return crcRet;
@@ -581,7 +581,7 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
                 switch (attr)
                 {
                     case AL_MSG_ADDRESS_REQ:
-                        
+
                         if (AL_NM_ADDRESS_REQ_LEN == apduLen)
                         {
                             DLL_IB_VALUE getValue;
@@ -636,10 +636,10 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
                         break;
 
                     case AL_MSG_ADDRESS_RESP:
+                        dataIndCallback = NULL; /* Data Indication not sent to upper layer */
                         if ((AL_STATE_WAITING_RX == alData.state) && (AL_NM_ADDRESS_RESP_LEN == apduLen))
                         {
                             uint8_t numNodes = alReqAddrRespBuf[0];
-                            dataIndCallback = NULL; /* Data Indication not sent to upper layer */
                             if (numNodes < AL_NM_REQADDR_RESP_MAX_NODES)
                             {
                                 /* Update number of found nodes and insert data in REQADDR.RESP */
@@ -650,10 +650,6 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
                         break;
 
                     case AL_MSG_TCT_SET_REQ:
-                        /* NACK.RESP has to be sent always */
-                        request.apduLen = AL_NM_NACK_REQ_LEN;
-                        request.attr = AL_MSG_NACK_RESP;
-                        lAL_NetworkManagementQualityParams(&apdu[1]);
                         dataIndCallback = NULL; /* Data Indication not sent to upper layer */
                         if ((AL_NM_TCT_SET_REQ_LEN == apduLen) && (apdu[0] > 0U))
                         {
@@ -666,6 +662,17 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
                             /* Send NACK */
                             apduResp[0] = 1;
                         }
+                        /* NACK.RESP has to be sent if Poll flag was set */
+                        if (indParams->pollFlag)
+                        {
+                            request.apduLen = AL_NM_NACK_REQ_LEN;
+                            request.attr = AL_MSG_NACK_RESP;
+                            lAL_NetworkManagementQualityParams(&apduResp[1]);
+                        }
+                        else
+                        {
+                            request.apduLen = 0;
+                        }
                         break;
 
                     case AL_MSG_REQADDR_REQ:
@@ -674,6 +681,9 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
                         {
                             /* Send ADDRESS.REQ with parameters from REQADDR.REQ and wait for responses */
                             (void) memcpy(apduResp, apdu, AL_NM_ADDRESS_REQ_LEN);
+                            request.maxResponseLen = AL_REQ_ADDR_MAX_RESPONSE_LEN;
+                            request.timeSlotNum = AL_REQ_ADDR_TIME_SLOT_NUM;
+                            request.serviceClass = SERVICE_CLASS_RC;
                             request.apduLen = AL_NM_ADDRESS_REQ_LEN;
                             request.attr = AL_MSG_ADDRESS_REQ;
                             alReqAddrRespBuf[0] = 0; /* Initialize number of found nodes */
@@ -1019,7 +1029,19 @@ void AL_DataRequest( AL_DATA_REQUEST_PARAMS *reqParams )
         }
         else
         {
-            alData.multiresponse = (AL_MSG_ADDRESS_REQ == attr);
+            if (AL_MSG_ADDRESS_REQ == attr)
+            {
+                alData.multiresponse = true;
+                /* Set RC Service class for further checks */
+                alData.dllDataReqParams.serviceClass = SERVICE_CLASS_RC;
+            }
+            else
+            {
+                alData.multiresponse = false;
+                /* Set S Service class for further checks */
+                alData.dllDataReqParams.serviceClass = SERVICE_CLASS_S;
+            }
+
             if (lAL_MsgAttrIsAuth((AL_MSG_ATTR) alDllLastRxBuff[0]) == true)
             {
                 /* If a repetition is detected, this response will be repeated without changing anything */
@@ -1032,7 +1054,7 @@ void AL_DataRequest( AL_DATA_REQUEST_PARAMS *reqParams )
         /* DCU always sets a Tx Timeout. Meter only sets Tx Timeout for ADDRESS.REQ message */
         if ((true == alData.isMaster) || (true == alData.multiresponse))
         {
-            
+
             alData.txTimeoutExpired = false;
             alData.txTimeoutHandle = SYS_TIME_CallbackRegisterUS(lAL_TxTimeoutCallback, 0, DLL_GetTxTimeout(), SYS_TIME_SINGLE);
         }
@@ -1172,7 +1194,7 @@ void AL_Tasks( SYS_MODULE_OBJ object )
         case AL_STATE_WAITING_TX_CFM:
             /* Nothing to do, wait for DL_DATA.CONFIRM */
             break;
-            
+
         case AL_STATE_WAITING_TIMEOUT:
             /* Wait until Timeout expires */
             if (true == alData.txTimeoutExpired)

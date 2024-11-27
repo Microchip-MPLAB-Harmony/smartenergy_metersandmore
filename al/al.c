@@ -33,7 +33,7 @@ static void lAL_TxTimeoutCallback(uintptr_t context)
 static inline bool lAL_MsgAttrIsAuth(AL_MSG_ATTR attr)
 {
     /* Check whether message is authenticated */
-    return ((attr >= AL_MSG_READ_REQ_AUTH) && (attr < AL_MSG_NACK_RESP) && (attr != AL_MSG_CHALLENGE_REQ) && (attr != AL_MSG_CHALLENGE_RESP));
+    return ((attr >= AL_MSG_READ_REQ_AUTH) && (attr < AL_MSG_NACK_RESP) && (attr != AL_MSG_CHALLENGE_REQ));
 }
 
 static uint8_t * lAL_GetKeyFromEcc(DLL_ECC ecc)
@@ -640,7 +640,8 @@ static void lAL_DllDataIndication(DLL_DATA_IND_PARAMS *indParams)
             /* Send response */
             request.apdu = apduResp;
             request.dsap = indParams->dsap;
-            if (request.attr == AL_MSG_NACK_A_NODE_AUTH)
+            if ((request.attr == AL_MSG_NACK_A_NODE_AUTH) ||
+                (request.attr == AL_MSG_CHALLENGE_RESP))
             {
                 /* Set AES mode to ECB */
                 request.ecc = DLL_ECC_AES_ECB_READ_KEY;
@@ -866,7 +867,7 @@ void AL_DataRequest( AL_DATA_REQUEST_PARAMS *reqParams )
                 if ((false == alData.isMaster) && ((AL_MSG_CHALLENGE_RESP == attr) ||
                         (((AL_MSG_NACK_A_NODE_AUTH == attr) || (AL_MSG_NACK_B_NODE_AUTH == attr)) && (AL_NACK_AUTH_PAYLOAD == reqParams->apdu[0]))))
                 {
-                    /* CHL.REQ and NACK Authenticated (Error Code 10) use LMON instead of DATE-TIME */
+                    /* CHL.RESP and NACK Authenticated (Error Code 10) use LMON instead of DATE-TIME */
                     datetimeLmon = mon;
                 }
 

@@ -89,7 +89,7 @@ static MMHI_DATA mmhiData = {0};
 static uint8_t mmhiTxBuffer[MMHI_FRAME_MAX_LENGTH];
 static uint8_t mmhiRxBuffer[MMHI_FRAME_MAX_LENGTH];
 
-static uint8_t mmhiDsapByProtocol[] = {0, 0, 0, 0, 3, 0, 1};
+static uint8_t mmhiDsapByProtocol[] = {0, 0, 2, 0, 3, 0, 1};
 
 static void lMMHI_ClearReceptionState(void);
 

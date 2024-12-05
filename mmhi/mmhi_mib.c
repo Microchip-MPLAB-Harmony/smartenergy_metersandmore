@@ -118,15 +118,15 @@ static MMHI_RESULT setTimingParams(uint8_t *paramsBuf)
 
     /* Set IBs */
     alValue.length = sizeof(uint32_t);
-    (void)memcpy(alValue.value, (uint8_t *)tEl32, MAC_ADDRESS_SIZE);
+    (void)memcpy(alValue.value, (uint8_t *)&tEl32, MAC_ADDRESS_SIZE);
     alResult = AL_SetRequest(AL_MAC_TIME_ELABORATION_US_IB, 0, (const AL_IB_VALUE *)&alValue);
     if (alResult == AL_SUCCESS)
     {
-        (void)memcpy(alValue.value, (uint8_t *)tDelay32, MAC_ADDRESS_SIZE);
+        (void)memcpy(alValue.value, (uint8_t *)&tDelay32, MAC_ADDRESS_SIZE);
         alResult = AL_SetRequest(AL_MAC_ADDITIONAL_DELAY_US_IB, 0, (const AL_IB_VALUE *)&alValue);
         if (alResult == AL_SUCCESS)
         {
-            (void)memcpy(alValue.value, (uint8_t *)tSlot32, MAC_ADDRESS_SIZE);
+            (void)memcpy(alValue.value, (uint8_t *)&tSlot32, MAC_ADDRESS_SIZE);
             alResult = AL_SetRequest(AL_MAC_TIME_SLOT_US_IB, 0, (const AL_IB_VALUE *)&alValue);
         }
         if (alResult == AL_SUCCESS)

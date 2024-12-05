@@ -408,6 +408,26 @@ void MMHI_MIB_WriteIndCallbackRegister(MMHI_MIB_WRITE_IND_CALLBACK callback)
 
 void MMHI_MIB_Tasks(void)
 {
+    AL_RESULT alResult;
+    AL_IB_VALUE alValue;
+
+    /* Check whether there is a change in any of IB requiring indication */
+    if (mmhiMibData.timing.tct != 0)
+    {
+        alResult = AL_GetRequest(AL_NM_TCT_IB, 0, &alValue);
+        if (alResult == AL_SUCCESS)
+        {
+            /* Compare values */
+            if (alValue.value[0] != mmhiMibData.timing.tct)
+            {
+                mmhiMibData.timing.tct = alValue.value[0];
+                mmhiMibWriteIndex = MIB_MIB_ID_TIMING;
+                mmhiMibWriteData.dataLength = sizeof(MMHI_MIB_TIMING_PARAMETERS);
+                (void)memcpy(mmhiMibWriteData.dataValue, &mmhiMibData.timing, mmhiMibWriteData.dataLength);
+            }
+        }
+    }
+
     if (mmhiMibWriteIndex > 0)
     {
         mmhiMibWriteIndex = 0;

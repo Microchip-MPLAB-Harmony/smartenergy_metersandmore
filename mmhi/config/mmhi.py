@@ -96,9 +96,9 @@ def instantiateComponent(mmHiComponent):
 
     mmHiManufCommands = mmHiComponent.createBooleanSymbol("MMHI_MANUF_COMMANDS", None)
     mmHiManufCommands.setLabel("Enable Manufacturer commands")
-    mmHiManufCommands.setDefaultValue(True)
+    mmHiManufCommands.setDefaultValue(False)
     mmHiManufCommands.setHelp(mm_hi_helpkeyword)
-    
+
     #####################################################################################################################################
     # Meters And More Host Interafce Files
 
@@ -131,7 +131,7 @@ def instantiateComponent(mmHiComponent):
     mmHiHdrDefFile.setOutputName("mmhi_definitions.h")
     mmHiHdrDefFile.setDestPath("stack/metersandmore/mmhi")
     mmHiHdrDefFile.setProjectPath("config/" + configName + "/stack/metersandmore/mmhi/")
-    mmHiHdrDefFile.setType("HEADER")    
+    mmHiHdrDefFile.setType("HEADER")
 
     mmHiMIBSrcFile = mmHiComponent.createFileSymbol("MMHI_MIB_SOURCE", None)
     mmHiMIBSrcFile.setSourcePath("mmhi/mmhi_mib.c")
@@ -200,7 +200,7 @@ def onAttachmentConnected(source, target):
         # Database.sendMessage(remoteID, "UART_NON_BLOCKING_MODE", {"isEnabled":True, "isReadOnly":True})
         # Database.sendMessage(remoteID, "UART_NON_BLOCKING_FIFO_MODE", {"isEnabled":True, "isReadOnly":True})
         # Database.sendMessage(remoteID, "UART_NON_BLOCKING_DMA_TX_MODE", {"isEnabled":True, "isReadOnly":True})
-        
+
 def onAttachmentDisconnected(source, target):
     localComponent = source["component"]
     remoteComponent = target["component"]

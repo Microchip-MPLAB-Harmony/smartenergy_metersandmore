@@ -56,7 +56,7 @@
 <#assign PLIB = MMHI_UART_DEVICE[0..3]>
 <#if PLIB == "FLEX">
 #include "peripheral/flexcom/usart/plib_${MMHI_UART_DEVICE?lower_case}_usart.h"
-<#elseif PLIB == "SERC"> 
+<#elseif PLIB == "SERC">
 #include "peripheral/sercom/usart/plib_${MMHI_UART_DEVICE?lower_case}_usart.h"
 <#else>
 #warning SERIAL PLIB not supported.
@@ -75,7 +75,7 @@
 #define MMHI_USART_ERROR_OVERRUN   FLEXCOM_USART_ERROR_OVERRUN
 #define MMHI_USART_ERROR_PARITY    FLEXCOM_USART_ERROR_PARITY
 #define MMHI_USART_ERROR_FRAMING   FLEXCOM_USART_ERROR_FRAMING
-<#elseif PLIB == "SERC"> 
+<#elseif PLIB == "SERC">
 #define MMHI_USART_ERROR_NONE      SERCOM_USART_ERROR_NONE
 #define MMHI_USART_ERROR_OVERRUN   SERCOM_USART_ERROR_OVERRUN
 #define MMHI_USART_ERROR_PARITY    SERCOM_USART_ERROR_PARITY
@@ -146,7 +146,7 @@
     Command Frame Start / Restart
 
   Description:
-    Used to mark the start of frame: 0x02 is used for first packet transmission, 
+    Used to mark the start of frame: 0x02 is used for first packet transmission,
     0x03 is used for retransmission (if receiving NAK or not receiving ACK).
 */
 typedef enum
@@ -156,7 +156,7 @@ typedef enum
     MMHI_FS_STATUS = 0x3FU,
     MMHI_FS_ACK = 0x06U,
     MMHI_FS_NACK = 0x15U,
- 
+
 } MMHI_CMD_FRAME_START;
 
 // *****************************************************************************
@@ -166,7 +166,7 @@ typedef enum
     Lower Layer Basic Component Status Message
 
   Description:
-    The status message is a frame sent by the EUT to notify the host controller 
+    The status message is a frame sent by the EUT to notify the host controller
     its availability to receive and process a frame
 */
 typedef struct
@@ -191,7 +191,7 @@ typedef struct
     Lower Layer Basic Component Status Message
 
   Description:
-    The status message is a frame sent by the EUT to notify the host controller 
+    The status message is a frame sent by the EUT to notify the host controller
     its availability to receive and process a frame
 */
 typedef struct
@@ -253,37 +253,40 @@ typedef struct
 
     /* Status message */
     MMHI_STATUS_MESSAGE statusMessage;
-    
+
     /* Received frame data */
     MMHI_CMD_FRAME rcvFrameData;
 
     /* Retry flag */
     bool retryCmd;
-    
+
     /* Inter Character Timer handler */
     SYS_TIME_HANDLE ticTimer;
-    
+
     /* Acknowledge Timer handler */
     SYS_TIME_HANDLE tackTimer;
-    
+
     /* Command timeout after Modem Status Timer handler */
     SYS_TIME_HANDLE tsrTimer;
-    
+
     /* Delay Time between 2 consecutive transmissions */
     SYS_TIME_HANDLE txDelayTimer;
-    
+
     /* NACK counter */
     uint8_t nackCounter;
 
     /* MIB Response Data */
     MMHI_MIB_DATA mibData;
-    
+
+    /* Flag to indicate that SW reset must be performed */
+    bool rstConfirmSent;
+
     /* Flag to indicate that SW reset must be performed */
     bool swReset;
 
     /* Callback function to handle MAC DATA commands */
     MMHI_MAC_DATA_IND_CALLBACK macDataCallback;
-    
+
 } MMHI_DATA;
 
 // *****************************************************************************
@@ -293,7 +296,7 @@ typedef struct
     Data to store relation between custom commands and callbacks routine to be raised.
 
   Description:
-    The status message is a frame sent by the EUT to notify the host controller 
+    The status message is a frame sent by the EUT to notify the host controller
     its availability to receive and process a frame
 */
 typedef struct

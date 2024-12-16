@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<Package name="smartenergy_metersandmore">
+<Package name="smartenergy_metersandmore" version: "v1.0.0">
     <Dependencies>
-        <Dependency name="smartenergy" version="dev"/>
-        <Dependency name="core" version="v3.13.5"/>
-        <Dependency name="crypto_v4" version="v4.0.0-E1"/>
+        <Dependency name="smartenergy" version="v1.3.0"/>
+        <Dependency name="core" version="v3.14.0"/>
+        <Dependency name="crypto_v4" version="v4.0.0-E3"/>
     </Dependencies>
 </Package>

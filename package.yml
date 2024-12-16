@@ -9,7 +9,7 @@ package:
   dependencies:
     - name: "smartenergy"
       type: "package"
-      version: "dev"
+      version: "v1.3.0"
     - name: "core"
       type: "package"
       version: "v3.14.0"

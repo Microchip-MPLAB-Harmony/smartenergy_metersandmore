@@ -33,6 +33,7 @@ def loadModule():
     mmPalComponent.addDependency("mmPal_DrvPhy_dependency", "DRV_PLC_PHY", True, True)
     mmPalComponent.addDependency("mmPal_PCoup_dependency", "PCOUP", True, True)
     mmPalComponent.setDisplayType("Meters And More PAL")
+    mmPalComponent.setHelpKeyword("MM_Physical_Abstraction_Layer")
 
     ###########  Meters And More Stack Configurations  ###########
     global mmStackConfigComponent
@@ -43,6 +44,7 @@ def loadModule():
     mmStackConfigComponent.addDependency("libsrvRandom", "SE Random", True, True)
     mmStackConfigComponent.addDependency("libsrvCrc", "PCRC", True, True)
     mmStackConfigComponent.addDependency("libSysTime", "SYS_TIME", True, True)
+    mmStackConfigComponent.setHelpKeyword("MPLAB_Harmony_Smart_Energy_Meters_And_More_Stack")
 
     ###########  Meters And More Stack Host Interface module  ###########
     mmDllCertComponent = Module.CreateComponent("mmHi", "Meters And More HI", "/SmartEnergy/MetersAndMore/MMHI", "mmhi/config/mmhi.py")
@@ -50,3 +52,4 @@ def loadModule():
     mmDllCertComponent.addDependency("mmHi_stack_dependency", "Meters And More Stack", True, True)
     mmDllCertComponent.addDependency("mmHi_sysTime_dependency", "SYS_TIME", True, True)
     mmDllCertComponent.addDependency("mmHi_console_dependency", "UART", False, True)
+    mmDllCertComponent.setHelpKeyword("MM_HostInterface")

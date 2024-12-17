@@ -188,10 +188,13 @@ static void lPAL_DataCfmCb(DRV_PLC_PHY_TRANSMISSION_CFM_OBJ *cfmObj, uintptr_t c
             mmhiCommand = MMHI_CMD_PLC_PHY_DATA_NCFM;
 </#if>
             break;
+        default:
+            result = PAL_RESULT_ERROR;
+            break;
     }
 
 <#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
-    if (palData.mmhiTxRequest == true) 
+    if (palData.mmhiTxRequest == true)
     {
         palData.mmhiTxRequest = false;
         MMHI_SendCommandFrame(mmhiCommand, &mmhiResult, 1);
@@ -224,7 +227,7 @@ static void lPAL_DataIndCb(DRV_PLC_PHY_RECEPTION_OBJ *indObj, uintptr_t context)
     /* Avoid warning */
     (void)context;
 
-    if (indObj->crcOk == 1)
+    if (indObj->crcOk == 1U)
     {
         /* Correct CRC */
         rxParams.frameDuration = indObj->frameDuration;
@@ -250,11 +253,11 @@ static void lPAL_DataIndCb(DRV_PLC_PHY_RECEPTION_OBJ *indObj, uintptr_t context)
         MMHI_SendCommandFrame(MMHI_CMD_PLC_PHY_DATA_IND, indObj->pReceivedData, indObj->dataLength);
 </#if>
     }
-    else if (indObj->crcOk == 0xFE)
+    else if (indObj->crcOk == 0xFEU)
     {
         /* Timeout Error */
     }
-    else if (indObj->crcOk == 0xFF)
+    else if (indObj->crcOk == 0xFFU)
     {
         /* CRC Capability Disabled */
         /* Enable it */
@@ -262,7 +265,7 @@ static void lPAL_DataIndCb(DRV_PLC_PHY_RECEPTION_OBJ *indObj, uintptr_t context)
         pibObj.length = 1;
         pibObj.pData = &enable;
 
-        DRV_PLC_PHY_PIBSet(palData.drvHandle, &pibObj);
+        (void) DRV_PLC_PHY_PIBSet(palData.drvHandle, &pibObj);
     }
     else
     {
@@ -368,7 +371,7 @@ void PAL_TxRequest(uint8_t *pData, uint16_t length, uint8_t nbFrame, uint32_t de
         }
 
 <#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
-        if (palData.mmhiTxRequest == true) 
+        if (palData.mmhiTxRequest == true)
         {
             uint8_t error = MMHI_ERROR_BUSY;
 
@@ -504,6 +507,13 @@ void PAL_Tasks(void)
         {
             /* Reset PAL to reinitialize Driver */
             PAL_Reset();
+            break;
+        }
+
+        default:
+        {
+            /* Unknown state, go to Idle */
+            palData.state = PAL_STATE_IDLE;
             break;
         }
     }

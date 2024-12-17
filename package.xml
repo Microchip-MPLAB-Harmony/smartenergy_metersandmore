@@ -2,7 +2,7 @@
 <Package name="smartenergy_metersandmore" version: "v1.0.0">
     <Dependencies>
         <Dependency name="smartenergy" version="v1.3.0"/>
-        <Dependency name="core" version="v3.14.0"/>
+        <Dependency name="core" version="v3.14.1"/>
         <Dependency name="crypto_v4" version="v4.0.0-E3"/>
     </Dependencies>
 </Package>

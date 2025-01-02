@@ -196,12 +196,13 @@ def instantiateComponent(mmStackComponent):
     # Meters And More Application Layer FILES
 
     mmAlSrcFile = mmStackComponent.createFileSymbol("METERSANDMORE_AL_SOURCE", None)
-    mmAlSrcFile.setSourcePath("al/al.c")
+    mmAlSrcFile.setSourcePath("al/al.c.ftl")
     mmAlSrcFile.setOutputName("al.c")
     mmAlSrcFile.setDestPath("stack/metersandmore/al")
     mmAlSrcFile.setProjectPath("config/" + configName + "/stack/metersandmore/al/")
     mmAlSrcFile.setType("SOURCE")
     mmAlSrcFile.setDependencies(enableAlFile, ["METERSANDMORE_INC_AL"])
+    mmAlSrcFile.setMarkup(True)
 
     mmAlHdrFile = mmStackComponent.createFileSymbol("METERSANDMORE_AL_HEADER", None)
     mmAlHdrFile.setSourcePath("al/al.h")

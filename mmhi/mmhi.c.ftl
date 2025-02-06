@@ -131,7 +131,11 @@ static void lMMHI_TxDelayTimerCallback ( uintptr_t context )
 
     if ((mmhiData.swReset == true) && (mmhiData.rstConfirmSent == true))
     {
+<#if __PROCESSOR?matches("PIC32CX.*MT.*")>
         RSTC_Reset(RSTC_ALL_RESET);
+<#else>
+        NVIC_SystemReset();
+</#if>
     }
 
     SYS_CONSOLE_Message(SYS_CONSOLE_INDEX_0, "TxDelay!!!\r\n");
@@ -206,7 +210,11 @@ static void lMMHI_USART_WriteCallback( uintptr_t context )
     }
 }
 
+<#if eic??>
+static void lMMHI_ExternalInterruptRTSHandler( uintptr_t context )
+<#else>
 static void lMMHI_ExternalInterruptRTSHandler( PIO_PIN pin, uintptr_t context )
+</#if>
 {
     /* Send Status message */
     mmhiData.startFrameTxMask |= MMHI_FRAME_START_MASK_STATUS_Msk;
@@ -660,9 +668,12 @@ static MMHI_RESULT lMMHI_CheckRcvFrame(void)
 static void lMMHI_sendResetIndication(void)
 {
     uint8_t *pData = mmhiTxBuffer;
+<#if __PROCESSOR?matches("PIC32CX.*MT.*")>
     uint32_t rstCause;
+</#if>
     MMHI_RESET_CAUSE mmhcRstCause;
 
+<#if __PROCESSOR?matches("PIC32CX.*MT.*")>
     /* Get reset cause */
     rstCause = (RSTC_ResetCauseGet() >> RSTC_SR_RSTTYP_Pos);
 
@@ -688,6 +699,9 @@ static void lMMHI_sendResetIndication(void)
             mmhcRstCause = MMHI_RST_HW;
             break;
     }
+<#else>
+    mmhcRstCause = MMHI_RST_HW;
+</#if>
 
     *pData++ = (uint8_t)MMHI_FS_COMMAND;
     *pData++ = 0;
@@ -822,11 +836,11 @@ MMHI_HANDLE MMHI_Open( SYS_MODULE_OBJ object )
 
     /* Enable External RTS pin interrupt and register callback */
     SYS_INT_SourceStatusClear(MMHI_EXT_INT_RTS_SRC);
-    (void) PIO_PinInterruptCallbackRegister((PIO_PIN)MMHI_EXT_INT_RTS_PIN,
-            lMMHI_ExternalInterruptRTSHandler, ctx);
-<#if PLIB == "SERC">
+<#if eic??>
+    EIC_CallbackRegister(MMHI_EXT_INT_RTS_PIN, lMMHI_ExternalInterruptRTSHandler, ctx);
     EIC_InterruptEnable(MMHI_EXT_INT_RTS_PIN);
 <#else>
+    (void) PIO_PinInterruptCallbackRegister((PIO_PIN)MMHI_EXT_INT_RTS_PIN, lMMHI_ExternalInterruptRTSHandler, ctx);
     PIO_PinInterruptEnable((PIO_PIN)MMHI_EXT_INT_RTS_PIN);
 </#if>
 

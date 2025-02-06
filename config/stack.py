@@ -39,6 +39,8 @@ def instantiateComponent(mmStackComponent):
     #### Code Generation ####
     ############################################################################
     configName = Variables.get("__CONFIGURATION_NAME")
+    deviceNode = ATDF.getNode("/avr-tools-device-file/devices/device")
+    architecture = deviceNode.getAttribute("architecture")
 
     # Select Meters And More role
     mmRoles = ["-- Select a Role from list --", "Meter", "DCU"]
@@ -180,8 +182,12 @@ def instantiateComponent(mmStackComponent):
     # Meters And More DLL FILES
     global mmDllLibFile
     mmDllLibFile = mmStackComponent.createLibrarySymbol("METERSANDMORE_DLL_LIBRARY", None)
-    mmDllLibFile.setSourcePath("libs/metersandmore_lib_dll.a")
-    mmDllLibFile.setOutputName("metersandmore_lib_dll.a")
+    if "M0PLUS" in architecture:
+        mmDllLibFile.setSourcePath("libs/metersandmore_lib_dll_cm0.a")
+        mmDllLibFile.setOutputName("metersandmore_lib_dll_cm0.a")
+    else:
+        mmDllLibFile.setSourcePath("libs/metersandmore_lib_dll.a")
+        mmDllLibFile.setOutputName("metersandmore_lib_dll.a")
     mmDllLibFile.setDestPath("stack/metersandmore/dll")
     mmDllLibFile.setEnabled(True)
 

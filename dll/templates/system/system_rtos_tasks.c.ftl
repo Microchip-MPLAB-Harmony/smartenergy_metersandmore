@@ -1,6 +1,6 @@
 
 <#if (HarmonyCore.SELECT_RTOS)?? && HarmonyCore.SELECT_RTOS == "FreeRTOS">
-    <#lt>static void lMm_STACK_Tasks(  void *pvParameters  )
+    <#lt>static void lMM_STACK_Tasks(  void *pvParameters  )
     <#lt>{
     <#lt>    while(true)
     <#lt>    {
@@ -17,7 +17,7 @@
     <#lt>TX_THREAD      lMM_STACK_Task_TCB;
     <#lt>uint8_t*       lMM_STACK_Task_Stk_Ptr;
 
-    <#lt>static void lMm_STACK_Tasks( ULONG thread_input )
+    <#lt>static void lMM_STACK_Tasks( ULONG thread_input )
     <#lt>{
     <#lt>    while(true)
     <#lt>    {
@@ -31,10 +31,10 @@
     <#lt>    }
     <#lt>}
 <#elseif (HarmonyCore.SELECT_RTOS)?? && HarmonyCore.SELECT_RTOS == "MicriumOSIII">
-    <#lt>OS_TCB  lMm_STACK_Tasks_TCB;
-    <#lt>CPU_STK lMm_STACK_TasksStk[MM_STACK_RTOS_STACK_SIZE];
+    <#lt>OS_TCB  lMM_STACK_Tasks_TCB;
+    <#lt>CPU_STK lMM_STACK_TasksStk[MM_STACK_RTOS_STACK_SIZE];
 
-    <#lt>static void lMm_STACK_Tasks(  void *pvParameters  )
+    <#lt>static void lMM_STACK_Tasks(  void *pvParameters  )
     <#lt>{
     <#lt>    OS_ERR os_err;
     <#lt>    while(true)
@@ -49,7 +49,7 @@
     <#lt>    }
     <#lt>}
 <#elseif (HarmonyCore.SELECT_RTOS)?? && HarmonyCore.SELECT_RTOS == "MbedOS">
-    <#lt>static void lMm_STACK_Tasks( void *pvParameters )
+    <#lt>static void lMM_STACK_Tasks( void *pvParameters )
     <#lt>{
     <#lt>    while(true)
     <#lt>    {

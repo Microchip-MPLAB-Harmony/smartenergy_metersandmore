@@ -9,7 +9,7 @@
     </#if>
 
 <#elseif HarmonyCore.SELECT_RTOS == "FreeRTOS">
-    (void) xTaskCreate( lMM_STACK_TASKS,
+    (void) xTaskCreate( lMM_STACK_Tasks,
         "MM_STACK_TASKS",
         MM_STACK_RTOS_STACK_SIZE,
         (void*)NULL,
@@ -25,7 +25,7 @@
 
     (void) tx_thread_create(&lMM_STACK_Task_TCB,
         "MM_STACK_TASKS",
-        lMM_STACK_TASKS,
+        lMM_STACK_Tasks,
         0,
         lMM_STACK_Task_Stk_Ptr,
         MM_STACK_RTOS_STACK_SIZE,
@@ -36,12 +36,12 @@
     );
 <#elseif HarmonyCore.SELECT_RTOS == "MicriumOSIII">
     <#assign MM_STACK_RTOS_TASK_OPTIONS = "OS_OPT_TASK_NONE" + G3_RTOS_TASK_OPT_STK_CHK?then(' | OS_OPT_TASK_STK_CHK', '') + G3_RTOS_TASK_OPT_STK_CLR?then(' | OS_OPT_TASK_STK_CLR', '') + G3_RTOS_TASK_OPT_SAVE_FP?then(' | OS_OPT_TASK_SAVE_FP', '') + G3_RTOS_TASK_OPT_NO_TLS?then(' | OS_OPT_TASK_NO_TLS', '')>
-    (void) OSTaskCreate((OS_TCB      *)&lMM_STACK_TASKS_TCB,
+    (void) OSTaskCreate((OS_TCB      *)&lMM_STACK_Tasks_TCB,
                  (CPU_CHAR    *)"MM_STACK_TASKS",
-                 (OS_TASK_PTR  )lMM_STACK_TASKS,
+                 (OS_TASK_PTR  )lMM_STACK_Tasks,
                  (void        *)0,
                  (OS_PRIO      )MM_STACK_RTOS_TASK_PRIORITY,
-                 (CPU_STK     *)&lMM_STACK_TASKSStk[0],
+                 (CPU_STK     *)&lMM_STACK_TasksStk[0],
                  (CPU_STK_SIZE )0u,
                  (CPU_STK_SIZE )MM_STACK_RTOS_STACK_SIZE,
     <#if MicriumOSIII.UCOSIII_CFG_TASK_Q_EN == true>
@@ -58,6 +58,6 @@
                  (OS_OPT       )(${MM_STACK_RTOS_TASK_OPTIONS}),
                  (OS_ERR      *)&os_err);
 <#elseif HarmonyCore.SELECT_RTOS == "MbedOS">
-    Thread MM_STACK_thread((osPriority)(osPriorityNormal + (MM_STACK_RTOS_TASK_PRIORITY - 1)), MM_STACK_RTOS_STACK_SIZE, NULL, "lMM_STACK_TASKS");
-    (void) MM_STACK_thread.start(callback(lMM_STACK_TASKS, (void *)NULL));
+    Thread MM_STACK_thread((osPriority)(osPriorityNormal + (MM_STACK_RTOS_TASK_PRIORITY - 1)), MM_STACK_RTOS_STACK_SIZE, NULL, "lMM_STACK_Tasks");
+    (void) MM_STACK_thread.start(callback(lMM_STACK_Tasks, (void *)NULL));
 </#if>

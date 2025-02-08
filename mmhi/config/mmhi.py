@@ -99,6 +99,96 @@ def instantiateComponent(mmHiComponent):
     mmHiManufCommands.setDefaultValue(False)
     mmHiManufCommands.setHelp(mm_hi_helpkeyword)
 
+    # RTOS CONFIG
+    mmHiRTOSMenu = mmHiComponent.createMenuSymbol("MMHI_RTOS_MENU", None)
+    mmHiRTOSMenu.setLabel("RTOS settings")
+    mmHiRTOSMenu.setDescription("RTOS settings")
+    mmHiRTOSMenu.setVisible(getActiveRtos() != "BareMetal")
+    mmHiRTOSMenu.setDependencies(showRTOSMenu, ["HarmonyCore.SELECT_RTOS"])
+    mmHiRTOSMenu.setHelp(mm_hi_helpkeyword)
+
+    mmHiRTOSStackSize = mmHiComponent.createIntegerSymbol("MMHI_RTOS_STACK_SIZE", mmHiRTOSMenu)
+    mmHiRTOSStackSize.setLabel("Stack Size (in bytes)")
+    mmHiRTOSStackSize.setDefaultValue(3584)
+    mmHiRTOSStackSize.setMin(1024)
+    mmHiRTOSStackSize.setMax(16*1024)
+    mmHiRTOSStackSize.setHelp(mm_hi_helpkeyword)
+
+    mmHiRTOSTaskPriority = mmHiComponent.createIntegerSymbol("MMHI_RTOS_TASK_PRIORITY", mmHiRTOSMenu)
+    mmHiRTOSTaskPriority.setLabel("Task Priority")
+    mmHiRTOSTaskPriority.setDefaultValue(1)
+    mmHiRTOSTaskPriority.setMin(0)
+    mmHiRTOSTaskPriority.setHelp(mm_hi_helpkeyword)
+
+    mmHiRTOSUseDelay = mmHiComponent.createBooleanSymbol("MMHI_RTOS_TASK_USE_DELAY", mmHiRTOSMenu)
+    mmHiRTOSUseDelay.setLabel("Use Task Delay")
+    mmHiRTOSUseDelay.setDescription("Specifies whether task delay is used or not")
+    mmHiRTOSUseDelay.setDefaultValue(True)
+    mmHiRTOSUseDelay.setReadOnly(True)
+    mmHiRTOSUseDelay.setHelp(mm_hi_helpkeyword)
+
+    mmHiRTOSDelay = mmHiComponent.createIntegerSymbol("MMHI_RTOS_TASK_DELAY_MS", mmHiRTOSUseDelay)
+    mmHiRTOSDelay.setLabel("Task Delay in ms")
+    mmHiRTOSDelay.setDescription("Specifies the Meters And More stack task delay in ms")
+    mmHiRTOSDelay.setDefaultValue(5)
+    mmHiRTOSDelay.setMin(1)
+    mmHiRTOSDelay.setMax(20)
+    mmHiRTOSDelay.setHelp(mm_hi_helpkeyword)
+
+    mmHiRTOSMsgQSize = mmHiComponent.createIntegerSymbol("MMHI_RTOS_TASK_MSG_QTY", mmHiRTOSMenu)
+    mmHiRTOSMsgQSize.setLabel("Maximum Message Queue Size")
+    mmHiRTOSMsgQSize.setDescription("A µC/OS-III task contains an optional internal message queue (if OS_CFG_TASK_Q_EN is set to DEF_ENABLED in os_cfg.h). This argument specifies the maximum number of messages that the task can receive through this message queue. The user may specify that the task is unable to receive messages by setting this argument to 0")
+    mmHiRTOSMsgQSize.setDefaultValue(0)
+    mmHiRTOSMsgQSize.setMin(0)
+    mmHiRTOSMsgQSize.setVisible(getActiveRtos() == "MicriumOSIII")
+    mmHiRTOSMsgQSize.setDependencies(commandRtosMicriumOSIIIAppTaskVisibility, ["HarmonyCore.SELECT_RTOS"])
+    mmHiRTOSMsgQSize.setHelp(mm_hi_helpkeyword)
+
+    mmHiRTOSTaskTimeQuanta = mmHiComponent.createIntegerSymbol("MMHI_RTOS_TASK_TIME_QUANTA", mmHiRTOSMenu)
+    mmHiRTOSTaskTimeQuanta.setLabel("Task Time Quanta")
+    mmHiRTOSTaskTimeQuanta.setDescription("The amount of time (in clock ticks) for the time quanta when Round Robin is enabled. If you specify 0, then the default time quanta will be used which is the tick rate divided by 10.")
+    mmHiRTOSTaskTimeQuanta.setDefaultValue(0)
+    mmHiRTOSTaskTimeQuanta.setMin(0)
+    mmHiRTOSTaskTimeQuanta.setVisible(getActiveRtos() == "MicriumOSIII")
+    mmHiRTOSTaskTimeQuanta.setDependencies(commandRtosMicriumOSIIIAppTaskVisibility, ["HarmonyCore.SELECT_RTOS"])
+    mmHiRTOSTaskTimeQuanta.setHelp(mm_hi_helpkeyword)
+
+    mmHiRTOSTaskSpecificOpt = mmHiComponent.createBooleanSymbol("MMHI_RTOS_TASK_OPT_NONE", mmHiRTOSMenu)
+    mmHiRTOSTaskSpecificOpt.setLabel("Task Specific Options")
+    mmHiRTOSTaskSpecificOpt.setDescription("Contains task-specific options. Each option consists of one bit. The option is selected when the bit is set. The current version of µC/OS-III supports the following options:")
+    mmHiRTOSTaskSpecificOpt.setDefaultValue(True)
+    mmHiRTOSTaskSpecificOpt.setVisible(getActiveRtos() == "MicriumOSIII")
+    mmHiRTOSTaskSpecificOpt.setDependencies(commandRtosMicriumOSIIIAppTaskVisibility, ["HarmonyCore.SELECT_RTOS"])
+    mmHiRTOSTaskSpecificOpt.setHelp(mm_hi_helpkeyword)
+
+    mmHiRTOSTaskStkChk = mmHiComponent.createBooleanSymbol("MMHI_RTOS_TASK_OPT_STK_CHK", mmHiRTOSTaskSpecificOpt)
+    mmHiRTOSTaskStkChk.setLabel("Stack checking is allowed for the task")
+    mmHiRTOSTaskStkChk.setDescription("Specifies whether stack checking is allowed for the task")
+    mmHiRTOSTaskStkChk.setDefaultValue(True)
+    mmHiRTOSTaskStkChk.setDependencies(commandRtosMicriumOSIIITaskOptVisibility, ["MMHI_RTOS_TASK_OPT_NONE"])
+    mmHiRTOSTaskStkChk.setHelp(mm_hi_helpkeyword)
+
+    mmHiRTOSTaskStkClr = mmHiComponent.createBooleanSymbol("MMHI_RTOS_TASK_OPT_STK_CLR", mmHiRTOSTaskSpecificOpt)
+    mmHiRTOSTaskStkClr.setLabel("Stack needs to be cleared")
+    mmHiRTOSTaskStkClr.setDescription("Specifies whether the stack needs to be cleared")
+    mmHiRTOSTaskStkClr.setDefaultValue(True)
+    mmHiRTOSTaskStkClr.setDependencies(commandRtosMicriumOSIIITaskOptVisibility, ["MMHI_RTOS_TASK_OPT_NONE"])
+    mmHiRTOSTaskStkClr.setHelp(mm_hi_helpkeyword)
+
+    mmHiRTOSTaskSaveFp = mmHiComponent.createBooleanSymbol("MMHI_RTOS_TASK_OPT_SAVE_FP", mmHiRTOSTaskSpecificOpt)
+    mmHiRTOSTaskSaveFp.setLabel("Floating-point registers needs to be saved")
+    mmHiRTOSTaskSaveFp.setDescription("Specifies whether floating-point registers are saved. This option is only valid if the processor has floating-point hardware and the processor-specific code saves the floating-point registers")
+    mmHiRTOSTaskSaveFp.setDefaultValue(False)
+    mmHiRTOSTaskSaveFp.setDependencies(commandRtosMicriumOSIIITaskOptVisibility, ["MMHI_RTOS_TASK_OPT_NONE"])
+    mmHiRTOSTaskSaveFp.setHelp(mm_hi_helpkeyword)
+
+    mmHiRTOSTaskNoTls = mmHiComponent.createBooleanSymbol("MMHI_RTOS_TASK_OPT_NO_TLS", mmHiRTOSTaskSpecificOpt)
+    mmHiRTOSTaskNoTls.setLabel("TLS (Thread Local Storage) support needed for the task")
+    mmHiRTOSTaskNoTls.setDescription("If the caller doesn’t want or need TLS (Thread Local Storage) support for the task being created. If you do not include this option, TLS will be supported by default. TLS support was added in V3.03.00")
+    mmHiRTOSTaskNoTls.setDefaultValue(False)
+    mmHiRTOSTaskNoTls.setDependencies(commandRtosMicriumOSIIITaskOptVisibility, ["MMHI_RTOS_TASK_OPT_NONE"])
+    mmHiRTOSTaskNoTls.setHelp(mm_hi_helpkeyword)
+
     #####################################################################################################################################
     # Meters And More Host Interafce Files
 
@@ -184,6 +274,32 @@ def instantiateComponent(mmHiComponent):
     mmHiSystemTasksFile.setOutputName("core.LIST_SYSTEM_TASKS_C_CALL_LIB_TASKS")
     mmHiSystemTasksFile.setSourcePath("mmhi/templates/system/system_tasks.c.ftl")
     mmHiSystemTasksFile.setMarkup(True)
+
+    mmHiSystemRtosTasksFile = mmHiComponent.createFileSymbol("MMHI_SYS_RTOS_TASK", None)
+    mmHiSystemRtosTasksFile.setType("STRING")
+    mmHiSystemRtosTasksFile.setOutputName("core.LIST_SYSTEM_RTOS_TASKS_C_DEFINITIONS")
+    mmHiSystemRtosTasksFile.setSourcePath("mmhi/templates/system/system_rtos_tasks.c.ftl")
+    mmHiSystemRtosTasksFile.setMarkup(True)
+    mmHiSystemRtosTasksFile.setEnabled(getActiveRtos() != "BareMetal")
+    mmHiSystemRtosTasksFile.setDependencies(genRtosTask, ["HarmonyCore.SELECT_RTOS"])
+
+def showTaskRate(symbol, event):
+    symbol.setVisible(event["value"] == "BareMetal")
+
+def showRTOSMenu(symbol, event):
+    symbol.setVisible(event["value"] != "BareMetal")
+
+def genRtosTask(symbol, event):
+    symbol.setEnabled(event["value"] != "BareMetal")
+
+def commandRtosMicriumOSIIIAppTaskVisibility(symbol, event):
+    symbol.setVisible(event["value"] == "MicriumOSIII")
+
+def commandRtosMicriumOSIIITaskOptVisibility(symbol, event):
+    symbol.setVisible(event["value"])
+
+def getActiveRtos():
+    return Database.getSymbolValue("HarmonyCore", "SELECT_RTOS")
 
 def onAttachmentConnected(source, target):
     localComponent = source["component"]

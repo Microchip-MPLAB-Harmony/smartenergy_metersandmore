@@ -28,6 +28,43 @@ def externalInterruptTrigger(symbol, event):
     intSrc = "PIO" + key[1] + "_IRQn"
     symbol.setValue(intSrc, 1)
 
+def getEICSignals():
+    eicSignalsList = []
+    for signal in eicSignalsATDF:
+        index = signal.getAttribute("index")
+        if (index != None):
+            eicPin = "EIC_PIN_{}".format(index)
+            if eicPin not in eicSignalsList:
+                eicSignalsList.append(eicPin)
+
+    if (eicSignalsList == []):
+        eicSignalsList = ["None"]
+
+    return eicSignalsList
+
+def getEICSignalsFromPin(pin):
+    eicList = []
+    eicPad = "{}{:02d}".format(pin.replace("R","P")[:2],int(pin[2:]))
+    for signal in eicSignalsATDF:
+        pad = signal.getAttribute("pad")
+        index = signal.getAttribute("index")
+        if ((pad in eicPad) and (index!=None)):
+            eicList.append("EIC_PIN_" + index)
+
+    return eicList
+
+def checkEICSignals(symbol, event):
+    index = mmHiRTSPin.getValue()
+    pinDesc = mmHiRTSPin.getKeyDescription(index)
+    eic = plcEICSignal.getValue()
+
+    eicSignalsFromPin = getEICSignalsFromPin(pinDesc)
+
+    if eic in eicSignalsFromPin:
+        symbol.setVisible(False)
+    else:
+        symbol.setVisible(True)
+
 def sort_alphanumeric(l):
     import re
     convert = lambda text: int(text) if text.isdigit() else text.lower()
@@ -58,6 +95,7 @@ def instantiateComponent(mmHiComponent):
     mmHiConsoleDevice.setReadOnly(True)
     mmHiConsoleDevice.setDefaultValue("")
 
+    global mmHiRTSPin
     mmHiRTSPin = mmHiComponent.createKeyValueSetSymbol("MMHI_RTS_PIN", None)
     mmHiRTSPin.setLabel("RTS Pin")
     mmHiRTSPin.setDefaultValue(0)
@@ -75,9 +113,35 @@ def instantiateComponent(mmHiComponent):
         description = pad
         mmHiRTSPin.addKey(key, value, description)
 
+    # Check EIC peripheral
+    periphNode = ATDF.getNode("/avr-tools-device-file/devices/device/peripherals")
+    peripherals = periphNode.getChildren()
+    eicFound = False
+    for module in range (0, len(peripherals)):
+        if str(peripherals[module].getAttribute("name")) == "EIC":
+            eicFound = True
+    
+    if (eicFound):
+        global eicSignalsATDF
+        eicSignalsATDF = ATDF.getNode('/avr-tools-device-file/devices/device/peripherals/module@[name="EIC"]/instance/signals').getChildren()
+
+        global plcEICSignal
+        eicSignals = getEICSignals()
+        plcEICSignal = mmHiComponent.createComboSymbol("MMHI_EIC_SIGNAL", mmHiRTSPin, eicSignals)
+        plcEICSignal.setLabel("EIC signal")
+        plcEICSignal.setDefaultValue(eicSignals[0])
+
+        plcEICSignalComment = mmHiComponent.createCommentSymbol("MMHI_EIC_SIGNAL_COMMENT", mmHiRTSPin)
+        plcEICSignalComment.setVisible(False)
+        plcEICSignalComment.setLabel("***Selected EIC signal cannot be assigned to PIN value. Please check it with the PIN Manager***")
+        plcEICSignalComment.setDependencies(checkEICSignals, ["MMHI_RTS_PIN" ,"MMHI_EIC_SIGNAL"])
+
     mmHiExtIntSource = mmHiComponent.createStringSymbol("MMHI_EXT_INT_SRC", None)
     mmHiExtIntSource.setLabel("External Interrupt Source")
-    mmHiExtIntSource.setDefaultValue("PIOA_IRQn")
+    if eicFound:
+        mmHiExtIntSource.setDefaultValue("EIC_IRQn")
+    else:
+        mmHiExtIntSource.setDefaultValue("PIOA_IRQn")
     mmHiExtIntSource.setVisible(False)
     mmHiExtIntSource.setReadOnly(True)
     mmHiExtIntSource.setHelp(mm_hi_helpkeyword)

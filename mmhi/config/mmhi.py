@@ -23,47 +23,40 @@ Microchip or any third party.
 """
 mm_hi_helpkeyword = "mm_hi_configurations"
 
+global eicPinDict
+eicPinDParams= {}
+
 def externalInterruptTrigger(symbol, event):
     key = event["symbol"].getKeyDescription(event["value"])
     intSrc = "PIO" + key[1] + "_IRQn"
     symbol.setValue(intSrc, 1)
 
-def getEICSignals():
-    eicSignalsList = []
-    for signal in eicSignalsATDF:
-        index = signal.getAttribute("index")
-        if (index != None):
-            eicPin = "EIC_PIN_{}".format(index)
-            if eicPin not in eicSignalsList:
-                eicSignalsList.append(eicPin)
+def updateEICSignals(symbol, event):
+    global pinMap
 
-    if (eicSignalsList == []):
-        eicSignalsList = ["None"]
-
-    return eicSignalsList
-
-def getEICSignalsFromPin(pin):
-    eicList = []
-    eicPad = "{}{:02d}".format(pin.replace("R","P")[:2],int(pin[2:]))
-    for signal in eicSignalsATDF:
-        pad = signal.getAttribute("pad")
-        index = signal.getAttribute("index")
-        if ((pad in eicPad) and (index!=None)):
-            eicList.append("EIC_PIN_" + index)
-
-    return eicList
-
-def checkEICSignals(symbol, event):
-    index = mmHiRTSPin.getValue()
-    pinDesc = mmHiRTSPin.getKeyDescription(index)
-    eic = plcEICSignal.getValue()
-
-    eicSignalsFromPin = getEICSignalsFromPin(pinDesc)
-
-    if eic in eicSignalsFromPin:
-        symbol.setVisible(False)
+    rtsPinSymbol = event["symbol"]
+    newValue = rtsPinSymbol.getSelectedValue()
+    if newValue == "SELECT":
+        pinNumber = eicPinDParams['pinNumber']
+        if pinNumber != None:
+            symbol.setValue("")
+            Database.sendMessage("core", "PIN_CLEAR_CONFIG_VALUE", {'pinNumber': pinNumber, 'setting' : 'function'})
+            eicPinDParams[pinNumber] = None
     else:
-        symbol.setVisible(True)
+        pinId = rtsPinSymbol.getSelectedKey().split("_")[-1]
+        pinNumber = pinMap[pinId]
+
+        symbol.setValue(newValue)
+
+        prevPinNumber = eicPinDParams.get('pinNumber')
+        if prevPinNumber != None:
+            Database.sendMessage("core", "PIN_CLEAR_CONFIG_VALUE", {'pinNumber': prevPinNumber, 'setting' : 'function'})
+
+        eicPinDParams['pinNumber'] = pinNumber
+        eicPinDParams['setting'] = 'function'
+        eicPinDParams['value'] = 'EIC_EXTINT{}'.format(newValue.split("_")[-1])
+        Database.sendMessage("core", "PIN_SET_CONFIG_VALUE", eicPinDParams)
+
 
 def sort_alphanumeric(l):
     import re
@@ -89,6 +82,14 @@ def instantiateComponent(mmHiComponent):
     ############################################################################
     configName = Variables.get("__CONFIGURATION_NAME")
 
+    global pinMap
+    pinMap = dict()
+    # Send message to core to get available pins
+    availablePinDictionary = {}
+    availablePinDictionary = Database.sendMessage("core", "PIN_LIST", availablePinDictionary)
+    for pinNumber, pinId in availablePinDictionary.items():
+        pinMap[str(pinId)] = int(pinNumber)
+
     mmHiConsoleDevice = mmHiComponent.createStringSymbol("MMHI_UART_DEVICE", None)
     mmHiConsoleDevice.setLabel("Device Used")
     mmHiConsoleDevice.setHelp(mm_hi_helpkeyword)
@@ -103,38 +104,55 @@ def instantiateComponent(mmHiComponent):
     mmHiRTSPin.setHelp(mm_hi_helpkeyword)
     mmHiRTSPin.setDisplayMode("Description")
 
-    # Send message to core to get available pins
-    availablePinDictionary = {}
-    availablePinDictionary = Database.sendMessage("core", "PIN_LIST", availablePinDictionary)
-
-    for pad in sort_alphanumeric(availablePinDictionary.values()):
-        key = "SYS_PORT_PIN_" + pad
-        value = list(availablePinDictionary.keys())[list(availablePinDictionary.values()).index(pad)]
-        description = pad
-        mmHiRTSPin.addKey(key, value, description)
-
-    # Check EIC peripheral
-    periphNode = ATDF.getNode("/avr-tools-device-file/devices/device/peripherals")
-    peripherals = periphNode.getChildren()
     eicFound = False
-    for module in range (0, len(peripherals)):
-        if str(peripherals[module].getAttribute("name")) == "EIC":
-            eicFound = True
+    if Database.isComponentAvailable("eic"):
+        eicFound = True
+        eicPeripheral = ATDF.getNode('/avr-tools-device-file/devices/device/peripherals/module@[name="EIC"]')
+        eicVersion = eicPeripheral.getAttribute("id")
+        if eicVersion == 'U2217':
+            eicSignalDict = {}
+            eicPadList = []
+            eicSignalList = ATDF.getNode('/avr-tools-device-file/devices/device/peripherals/module@[name="EIC"]/instance/signals').getChildren()
+            for eicSignal in eicSignalList:
+                pad = eicSignal.getAttribute("pad")
+                group = eicSignal.getAttribute("group")
+                index = eicSignal.getAttribute("index")
+                if group == "EXTINT":
+                    if pad not in eicPadList:
+                        eicPadList.append(pad)
+                        eicSignalDict[pad] = "EIC_PIN_{}".format(index)
+
+            eicPadList = sorted(eicPadList)
+            mmHiRTSPin.addKey("SELECT", "SELECT", "Select RTS Pin")
+            for pad in eicPadList:
+                key = "SYS_PORT_PIN_" + pad
+                value = eicSignalDict[pad]
+                description = pad
+                mmHiRTSPin.addKey(key, value, description)
+
+            # pad, value = list(eicSignalDict.items())[0]
+            plcEICSignal = mmHiComponent.createStringSymbol("MMHI_EIC_SIGNAL", mmHiRTSPin)
+            plcEICSignal.setLabel("EIC signal")
+            plcEICSignal.setDefaultValue("")
+            plcEICSignal.setReadOnly(True)
+            plcEICSignal.setDependencies(updateEICSignals, ["MMHI_RTS_PIN"])
+
+        else:
+            plcEICSignalComment = mmHiComponent.createCommentSymbol("MMHI_EIC_SIGNAL_COMMENT", mmHiRTSPin)
+            plcEICSignalComment.setVisible(True)
+            plcEICSignalComment.setLabel("***This device is not compatible with MMHI. Please contact to support team.***")
     
-    if (eicFound):
-        global eicSignalsATDF
-        eicSignalsATDF = ATDF.getNode('/avr-tools-device-file/devices/device/peripherals/module@[name="EIC"]/instance/signals').getChildren()
+    else:
 
-        global plcEICSignal
-        eicSignals = getEICSignals()
-        plcEICSignal = mmHiComponent.createComboSymbol("MMHI_EIC_SIGNAL", mmHiRTSPin, eicSignals)
-        plcEICSignal.setLabel("EIC signal")
-        plcEICSignal.setDefaultValue(eicSignals[0])
+        # Send message to core to get available pins
+        availablePinDictionary = {}
+        availablePinDictionary = Database.sendMessage("core", "PIN_LIST", availablePinDictionary)
 
-        plcEICSignalComment = mmHiComponent.createCommentSymbol("MMHI_EIC_SIGNAL_COMMENT", mmHiRTSPin)
-        plcEICSignalComment.setVisible(False)
-        plcEICSignalComment.setLabel("***Selected EIC signal cannot be assigned to PIN value. Please check it with the PIN Manager***")
-        plcEICSignalComment.setDependencies(checkEICSignals, ["MMHI_RTS_PIN" ,"MMHI_EIC_SIGNAL"])
+        for pad in sort_alphanumeric(availablePinDictionary.values()):
+            key = "SYS_PORT_PIN_" + pad
+            value = list(availablePinDictionary.keys())[list(availablePinDictionary.values()).index(pad)]
+            description = pad
+            mmHiRTSPin.addKey(key, value, description)
 
     mmHiExtIntSource = mmHiComponent.createStringSymbol("MMHI_EXT_INT_SRC", None)
     mmHiExtIntSource.setLabel("External Interrupt Source")

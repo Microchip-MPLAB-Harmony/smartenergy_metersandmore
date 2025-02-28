@@ -31,6 +31,13 @@ def showSymbol(symbol, event):
     # Enable/disable AL file
     symbol.setVisible(event["value"])
 
+def showUsiInstance(symbol, event):
+    symbol.setVisible(event["value"])
+
+    if (event["value"] == True):
+        usiInstances = filter(lambda k: "srv_usi_" in k, Database.getActiveComponentIDs())
+        symbol.setMax(len(usiInstances) - 1)
+
 def instantiateComponent(mmStackComponent):
 
     Log.writeInfoMessage("Loading M&M Stack module")
@@ -66,6 +73,23 @@ def instantiateComponent(mmStackComponent):
     mmAppLayerRetryLimit.setMax(10)
     mmAppLayerRetryLimit.setHelp(mm_stack_helpkeyword)
     mmAppLayerRetryLimit.setDependencies(showSymbol, ["METERSANDMORE_INC_AL"])
+
+    # AL Serialization
+    mmAppLayerSerializationEnable = mmStackComponent.createBooleanSymbol("AL_SERIALIZATION_EN", mmIncAppLayer)
+    mmAppLayerSerializationEnable.setLabel("Enable AL Serialization")
+    mmAppLayerSerializationEnable.setDescription("Enable/disable AL serialization through USI")
+    mmAppLayerSerializationEnable.setDefaultValue(False)
+    mmAppLayerSerializationEnable.setHelp(mm_stack_helpkeyword)
+
+    mmAppLayerSerializationUsiInstance = mmStackComponent.createIntegerSymbol("AL_SERIALIZATION_USI_INSTANCE", mmAppLayerSerializationEnable)
+    mmAppLayerSerializationUsiInstance.setLabel("USI Instance")
+    mmAppLayerSerializationUsiInstance.setDescription("USI instance used for AL serialization")
+    mmAppLayerSerializationUsiInstance.setDefaultValue(0)
+    mmAppLayerSerializationUsiInstance.setMax(0)
+    mmAppLayerSerializationUsiInstance.setMin(0)
+    mmAppLayerSerializationUsiInstance.setVisible(False)
+    mmAppLayerSerializationUsiInstance.setDependencies(showUsiInstance, ["AL_SERIALIZATION_EN"])
+    mmAppLayerSerializationUsiInstance.setHelp(mm_stack_helpkeyword)
 
     # AL Description Comments
     mmAppLayerComment1 = mmStackComponent.createCommentSymbol("METERSANDMORE_AL_COMMENT1", None)
@@ -225,6 +249,26 @@ def instantiateComponent(mmStackComponent):
     mmAlLocalHdrFile.setProjectPath("config/" + configName + "/stack/metersandmore/al/")
     mmAlLocalHdrFile.setType("HEADER")
     mmAlLocalHdrFile.setDependencies(enableAlFile, ["METERSANDMORE_INC_AL"])
+
+    #### AL Serialization Files #################################################
+    mmAlSerialHeader = mmStackComponent.createFileSymbol("METERSANDMORE_AL_SERIAL_HEADER", None)
+    mmAlSerialHeader.setSourcePath("al_serial/al_serial.h")
+    mmAlSerialHeader.setOutputName("al_serial.h")
+    mmAlSerialHeader.setDestPath("stack/metersandmore/al")
+    mmAlSerialHeader.setProjectPath("config/" + configName + "/stack/metersandmore/al")
+    mmAlSerialHeader.setType("HEADER")
+    mmAlSerialHeader.setEnabled(False)
+    mmAlSerialHeader.setDependencies(enableAlFile, ["AL_SERIALIZATION_EN"])
+
+    mmAlSerialSoruce = mmStackComponent.createFileSymbol("METERSANDMORE_AL_SERIAL_SOURCE", None)
+    mmAlSerialSoruce.setSourcePath("al_serial/al_serial.c.ftl")
+    mmAlSerialSoruce.setOutputName("al_serial.c")
+    mmAlSerialSoruce.setDestPath("stack/metersandmore/al")
+    mmAlSerialSoruce.setProjectPath("config/" + configName + "/stack/metersandmore/al")
+    mmAlSerialSoruce.setType("SOURCE")
+    mmAlSerialSoruce.setEnabled(False)
+    mmAlSerialSoruce.setDependencies(enableAlFile, ["AL_SERIALIZATION_EN"])
+    mmAlSerialSoruce.setMarkup(True)
 
     #####################################################################################################################################
     # Meters And More DLL TEMPLATES

@@ -1092,10 +1092,10 @@ void AL_DataRequestHI(AL_DATA_REQUEST_PARAMS_HI *reqParams);
 
   Example:
     <code>
-    bool result;
-    uint8 rawData[64];
-    uint8 encryptedData[64];
-    uint8 aesKey[16];
+    AL_RESULT result;
+    uint8_t rawData[64];
+    uint8_t encryptedData[64];
+    uint8_t aesKey[16];
 
     memcpy(rawData, appData, sizeof(rawData));
     memcpy(aesKey, appKey, sizeof(aesKey));

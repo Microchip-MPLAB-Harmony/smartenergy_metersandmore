@@ -19,4 +19,11 @@
 <#if METERSANDMORE_INC_AL == true>
     <#lt>/* Meters And More AL retry limit */
     <#lt>#define MM_AL_RETRIES_LIMIT            ${METERSANDMORE_AL_RETRY_LIMIT}U
+    <#if AL_SERIALIZATION_EN == true>
+
+        <#lt>/* AL Serialization Identification */
+        <#lt>#define MM_AL_SERIAL_INDEX_0            0U
+        <#lt>#define MM_AL_SERIAL_INSTANCES_NUMBER   1U
+        <#lt>#define MM_AL_SERIAL_USI_INDEX          ${AL_SERIALIZATION_USI_INSTANCE}U
+    </#if>
 </#if>

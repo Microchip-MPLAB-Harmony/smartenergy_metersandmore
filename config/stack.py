@@ -52,7 +52,7 @@ def instantiateComponent(mmStackComponent):
     # Select Meters And More role
     mmRoles = ["-- Select a Role from list --", "Meter", "DCU"]
     mmRole = mmStackComponent.createComboSymbol("METERSANDMORE_ROLE", None, mmRoles)
-    mmRole.setLabel("Role for Meters And More node")
+    mmRole.setLabel("Default role for Meters And More node")
     mmRole.setVisible(True)
     mmRole.setDescription("Select Meters And More Mode")
     mmRole.setHelp(mm_stack_helpkeyword)

@@ -6,6 +6,9 @@
 
     /* Maintain Meters And More AL */
     AL_Tasks(sysObj.metersandmoreAl);
+        <#if AL_SERIALIZATION_EN == true>
+    AL_SERIAL_Tasks(sysObj.metersandmoreAlSerial);
+        </#if>
     </#if>
 
 <#elseif HarmonyCore.SELECT_RTOS == "FreeRTOS">

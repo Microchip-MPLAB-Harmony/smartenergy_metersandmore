@@ -9,6 +9,9 @@
     <#if METERSANDMORE_INC_AL == true>
     <#lt>        /* Maintain Meters And More AL */
     <#lt>        AL_Tasks(sysObj.metersandmoreAl);
+        <#if AL_SERIALIZATION_EN == true>
+    <#lt>        AL_SERIAL_Tasks(sysObj.metersandmoreAlSerial);
+        </#if>
     </#if>
     <#lt>        vTaskDelay(MM_STACK_RTOS_TASK_DELAY_MS / portTICK_PERIOD_MS);
     <#lt>    }
@@ -26,6 +29,9 @@
     <#if METERSANDMORE_INC_AL == true>
     <#lt>        /* Maintain Meters And More AL */
     <#lt>        AL_Tasks(sysObj.metersandmoreAl);
+        <#if AL_SERIALIZATION_EN == true>
+    <#lt>        AL_SERIAL_Tasks(sysObj.metersandmoreAlSerial);
+        </#if>
     </#if>
     <#lt>        tx_thread_sleep((ULONG)(MM_STACK_RTOS_TASK_DELAY_MS / (TX_TICK_PERIOD_MS)));
     <#lt>    }
@@ -44,6 +50,9 @@
     <#if METERSANDMORE_INC_AL == true>
     <#lt>        /* Maintain Meters And More AL */
     <#lt>        AL_Tasks(sysObj.metersandmoreAl);
+        <#if AL_SERIALIZATION_EN == true>
+    <#lt>        AL_SERIAL_Tasks(sysObj.metersandmoreAlSerial);
+        </#if>
     </#if>
     <#lt>        OSTimeDly(MM_STACK_RTOS_TASK_DELAY_MS, OS_OPT_TIME_DLY, &os_err);
     <#lt>    }
@@ -58,6 +67,9 @@
     <#if METERSANDMORE_INC_AL == true>
     <#lt>        /* Maintain Meters And More AL */
     <#lt>        AL_Tasks(sysObj.metersandmoreAl);
+        <#if AL_SERIALIZATION_EN == true>
+    <#lt>        AL_SERIAL_Tasks(sysObj.metersandmoreAlSerial);
+        </#if>
     </#if>
     <#lt>        thread_sleep_for((uint32_t)(MM_STACK_RTOS_TASK_DELAY_MS / MBED_OS_TICK_PERIOD_MS));
     <#lt>    }

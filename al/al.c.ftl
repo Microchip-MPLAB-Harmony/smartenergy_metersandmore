@@ -213,6 +213,8 @@ static inline AL_TX_STATUS lAL_Encrypt(uint8_t *inputOutput, uint16_t len, uint8
     crypto_Sym_OpModes_E aesMode;
     crypto_Sym_Status_E aesResult;
     uint8_t *ivPtr = iv;
+    uint16_t lenAdjusted = (len + 15) >> 4;
+    lenAdjusted <<= 4;
 
     /* Get AES Mode depending on ECC and fill Initialization Vector (IV) for AES-CTR */
     aesMode = lAL_EncryptDecrypt(ecc, mon, &ivPtr);
@@ -228,7 +230,11 @@ static inline AL_TX_STATUS lAL_Encrypt(uint8_t *inputOutput, uint16_t len, uint8
         return AL_TX_STATUS_ERROR_AES_NO_KEY;
     }
 
-    aesResult = Crypto_Sym_Aes_EncryptDirect(CRYPTO_HANDLER_SW_WOLFCRYPT, aesMode, inputOutput, len, inputOutput, key, AL_KEY_LENGTH, ivPtr, 1);
+<#if (lib_crypto.CRYPTO_HW_AES_ECB?? && lib_crypto.CRYPTO_HW_AES_ECB == true) && (lib_crypto.CRYPTO_HW_AES_CTR?? && lib_crypto.CRYPTO_HW_AES_CTR == true)>
+    aesResult = Crypto_Sym_Aes_EncryptDirect(CRYPTO_HANDLER_HW_INTERNAL, aesMode, inputOutput, lenAdjusted, inputOutput, key, AL_KEY_LENGTH, ivPtr, 1);
+<#else>
+    aesResult = Crypto_Sym_Aes_EncryptDirect(CRYPTO_HANDLER_SW_WOLFCRYPT, aesMode, inputOutput, lenAdjusted, inputOutput, key, AL_KEY_LENGTH, ivPtr, 1);
+</#if>
     if (aesResult != CRYPTO_SYM_CIPHER_SUCCESS)
     {
         return AL_TX_STATUS_ERROR_AES_ENCRYPT;
@@ -243,6 +249,8 @@ static inline AL_RX_STATUS lAL_Decrypt(uint8_t *inputOutput, uint16_t len, uint8
     crypto_Sym_OpModes_E aesMode;
     crypto_Sym_Status_E aesResult;
     uint8_t *ivPtr = iv;
+    uint16_t lenAdjusted = (len + 15) >> 4;
+    lenAdjusted <<= 4;
 
     /* Get AES Mode depending on ECC and fill Initialization Vector (IV) for AES-CTR */
     aesMode = lAL_EncryptDecrypt(ecc, mon, &ivPtr);
@@ -257,7 +265,11 @@ static inline AL_RX_STATUS lAL_Decrypt(uint8_t *inputOutput, uint16_t len, uint8
         return AL_RX_STATUS_ERROR_AES_NO_KEY;
     }
 
-    aesResult = Crypto_Sym_Aes_DecryptDirect(CRYPTO_HANDLER_SW_WOLFCRYPT, aesMode, inputOutput, len, inputOutput, key, AL_KEY_LENGTH, ivPtr, 1);
+<#if (lib_crypto.CRYPTO_HW_AES_ECB?? && lib_crypto.CRYPTO_HW_AES_ECB == true) && (lib_crypto.CRYPTO_HW_AES_CTR?? && lib_crypto.CRYPTO_HW_AES_CTR == true)>
+    aesResult = Crypto_Sym_Aes_DecryptDirect(CRYPTO_HANDLER_HW_INTERNAL, aesMode, inputOutput, lenAdjusted, inputOutput, key, AL_KEY_LENGTH, ivPtr, 1);
+<#else>
+    aesResult = Crypto_Sym_Aes_DecryptDirect(CRYPTO_HANDLER_SW_WOLFCRYPT, aesMode, inputOutput, lenAdjusted, inputOutput, key, AL_KEY_LENGTH, ivPtr, 1);
+</#if>
     if (aesResult != CRYPTO_SYM_CIPHER_SUCCESS)
     {
         return AL_RX_STATUS_ERROR_AES_DECRYPT;
@@ -1524,8 +1536,16 @@ void AL_DataRequestHI(AL_DATA_REQUEST_PARAMS_HI *reqParams)
 
 AL_RESULT AL_PerformECB(uint8_t *dataIn, uint8_t dataLen, uint8_t *dataOut, uint8_t *key, uint8_t keyLen)
 {
+    uint8_t dataLenAdjusted = (dataLen + 15) >> 4;
+    dataLenAdjusted <<= 4;
+
+<#if (lib_crypto.CRYPTO_HW_AES_ECB?? && lib_crypto.CRYPTO_HW_AES_ECB == true)>
+    crypto_Sym_Status_E aesResult = Crypto_Sym_Aes_EncryptDirect(CRYPTO_HANDLER_HW_INTERNAL,
+            CRYPTO_SYM_OPMODE_ECB, dataIn, dataLenAdjusted, dataOut, key, keyLen, NULL, 1);
+<#else>
     crypto_Sym_Status_E aesResult = Crypto_Sym_Aes_EncryptDirect(CRYPTO_HANDLER_SW_WOLFCRYPT,
-            CRYPTO_SYM_OPMODE_ECB, dataIn, dataLen, dataOut, key, keyLen, NULL, 1);
+            CRYPTO_SYM_OPMODE_ECB, dataIn, dataLenAdjusted, dataOut, key, keyLen, NULL, 1);
+</#if>
 
     if (CRYPTO_SYM_CIPHER_SUCCESS == aesResult)
     {

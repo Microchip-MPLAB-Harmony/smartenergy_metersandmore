@@ -3,6 +3,30 @@
 
 # Microchip MPLAB® Harmony 3 Release Notes
 
+## Harmony 3 Smart Energy Meters And More v1.1.0
+
+### New Features
+
+This release adds the following features:
+- A Serialization Layer on top of Meters And More Stack, which communicates with USI (Unified Serial Interface) to connect to an external Host, creating a Meters And More Modem Solution.
+- Provides support to FreeRTOS projects.
+- Provides support and adds libraries for Cortex M0+ devices.
+
+### Known Issues
+
+- None
+
+### Development Tools
+
+- [MPLAB® X IDE v6.25](https://www.microchip.com/mplab/mplab-x-ide)
+- [MPLAB® XC32 C/C++ Compiler v4.60](https://www.microchip.com/mplab/compilers)
+- MPLAB® X IDE plug-ins:
+  - MPLAB® Code Configurator 5.5.2 or higher
+
+### Notes
+
+- None.
+
 ## Harmony 3 Smart Energy Meters And More v1.0.0
 
 ### New Features

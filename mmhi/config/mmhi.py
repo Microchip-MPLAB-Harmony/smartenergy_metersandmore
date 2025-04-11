@@ -104,9 +104,15 @@ def instantiateComponent(mmHiComponent):
     mmHiRTSPin.setHelp(mm_hi_helpkeyword)
     mmHiRTSPin.setDisplayMode("Description")
 
+    # Check EIC peripheral
+    periphNode = ATDF.getNode("/avr-tools-device-file/devices/device/peripherals")
+    peripherals = periphNode.getChildren()
     eicFound = False
-    if Database.isComponentAvailable("eic"):
-        eicFound = True
+    for module in range (0, len(peripherals)):
+        if str(peripherals[module].getAttribute("name")) == "EIC":
+            eicFound = True
+
+    if eicFound:
         eicPeripheral = ATDF.getNode('/avr-tools-device-file/devices/device/peripherals/module@[name="EIC"]')
         eicVersion = eicPeripheral.getAttribute("id")
         if eicVersion == 'U2217':

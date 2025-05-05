@@ -165,8 +165,12 @@ static void lPAL_DataCfmCb(DRV_PLC_PHY_TRANSMISSION_CFM_OBJ *cfmObj, uintptr_t c
             break;
         case DRV_PLC_PHY_TX_RESULT_BUSY_TX:
         case DRV_PLC_PHY_TX_RESULT_PROCESS:
+<#if drvPlcPhy.DRV_PLC_MODE == "PL460">
         case DRV_PLC_PHY_TX_RESULT_HIGH_TEMP_120:
+</#if>
+<#if drvPlcPhy.DRV_PLC_MODE == "PL460" && drvPlcPhy.DRV_PLC_THERMAL_MONITOR == true>
         case DRV_PLC_PHY_TX_RESULT_HIGH_TEMP_110:
+</#if>
             result = PAL_RESULT_DENIED;
 <#if (mmHi??) && (mmHi.MMHI_MANUF_COMMANDS == true)>
             mmhiResult = MMHI_ERROR_BUSY;

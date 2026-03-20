@@ -15,7 +15,7 @@ This repository contains the MPLAB® Harmony 3 Meters And More PLC Stack impleme
 Refer to the following links for release notes, training materials, and interface reference information.
 
 - [Release Notes](./release_notes.md)
-- [Microchip SLA](Microchip_SLA001.md)
+- [License](License.md)
 
 # Documentation
 
@@ -41,7 +41,7 @@ To view the documentation offline, follow these steps:
 
 ____
 
-[![License](https://img.shields.io/badge/license-Harmony%20license-orange.svg)](https://github.com/Microchip-MPLAB-Harmony/smartenergy_metersandmore/blob/master/Microchip_SLA001.md)
+[![License](https://img.shields.io/badge/license-Harmony%20license-orange.svg)](https://github.com/Microchip-MPLAB-Harmony/smartenergy_metersandmore/blob/master/License.md)
 [![Commit activity](https://img.shields.io/github/commit-activity/y/Microchip-MPLAB-Harmony/smartenergy_metersandmore.svg)](https://github.com/Microchip-MPLAB-Harmony/smartenergy_metersandmore/graphs/commit-activity)
 [![Contributors](https://img.shields.io/github/contributors-anon/Microchip-MPLAB-Harmony/smartenergy_metersandmore.svg)]()
 

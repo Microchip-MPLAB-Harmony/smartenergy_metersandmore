@@ -3,6 +3,31 @@
 
 # Microchip MPLAB® Harmony 3 Release Notes
 
+## Harmony 3 Smart Energy Meters And More v1.2.0
+
+### New Features
+
+- Updated to work with latest Tools versions and package dependencies.
+
+### Bug fixes
+
+- None.
+
+### Known Issues
+
+- None.
+
+### Development Tools
+
+- [MPLAB® X IDE v6.25](https://www.microchip.com/mplab/mplab-x-ide)
+- [MPLAB® XC32 C/C++ Compiler v5.00](https://www.microchip.com/mplab/compilers)
+- MPLAB® X IDE plug-ins:
+  - MPLAB® Code Configurator 5.6.3 or higher
+
+### Notes
+
+- None.
+
 ## Harmony 3 Smart Energy Meters And More v1.1.0
 
 ### New Features

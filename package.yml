@@ -13,3 +13,6 @@ package:
     - name: "crypto_v4"
       type: "package"
       version: "v4.0.0-E3"
+    - name: "wolfssl"
+      type: "package"
+      version: "v5.7.0"
